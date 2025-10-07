@@ -1,0 +1,610 @@
+﻿// Hàm để ẩn tất cả các form và khu vực kết quả
+function hideAllElements() {
+    const forms = ["task-stock-status-form", "update-status-form", "search-status-form"];
+    const results = ["task-stock-status-result", "update-status-result", "search-status-result"];
+
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.classList.add("hidden");
+        } else {
+            console.warn(`Form with ID ${formId} not found.`);
+        }
+    });
+
+    results.forEach(resultId => {
+        const result = document.getElementById(resultId);
+        if (result) {
+            result.classList.add("hidden");
+        } else {
+            console.warn(`Result with ID ${resultId} not found.`);
+        }
+    });
+
+    // Xóa giá trị của các trường nhập liệu khi ẩn form
+    const snStatusUpdate = document.getElementById("sn-status-update");
+    const statusOptions = document.getElementById("status-options");
+    const searchStatusUpdate = document.getElementById("search-status-update");
+    const searchStatusOptions = document.getElementById("search-status-options");
+
+    if (snStatusUpdate) snStatusUpdate.value = "";
+    if (statusOptions) statusOptions.selectedIndex = 0;
+    if (searchStatusUpdate) searchStatusUpdate.value = "";
+    if (searchStatusOptions) searchStatusOptions.selectedIndex = 0;
+}
+
+// Hàm tạo và tải xuống file Excel
+function exportToExcel(data, filename) {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "ScrapDetails");
+    XLSX.writeFile(workbook, filename);
+}
+
+// Hàm gọi API và hiển thị bảng dữ liệu cho TASK_STOCK_STATUS
+async function loadFindBoardStatus() {
+    const resultDiv = document.getElementById("task-stock-status-result");
+
+    // Hiển thị thông báo "đang tải dữ liệu"
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <strong>Thông báo:</strong> Đang tải dữ liệu...
+        </div>
+    `;
+
+    try {
+        // Gọi API để lấy dữ liệu FindBoardStatus
+        const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-find-board-status", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Sắp xếp dữ liệu theo CreateTime (từ cũ đến mới)
+            const sortedData = result.sort((a, b) => new Date(a.createTime) - new Date(b.createTime));
+
+            // Xây dựng bảng HTML với cột checkbox
+            let tableHtml = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="select-all"></th>
+                                <th>Internal Task</th>
+                                <th>Approve Scrap Person</th>
+                                <th>Description</th>
+                                <th>After/Before</th>
+                                <th>Create Time</th>
+                                <th>Total Q'ty</th>
+                                <th>Qty Scraped</th>
+                                <th>Qty Find Ok</th>
+                                <th>Qty Wait Find</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            sortedData.forEach(item => {
+                // Xác định màu nền cho cột Status
+                let statusBackgroundColor = "";
+                if (item.status === "close") {
+                    statusBackgroundColor = "#28a745"; // Màu xanh lá cây (Bootstrap success)
+                } else if (item.status === "on-going") {
+                    statusBackgroundColor = "#ffc107"; // Màu vàng (Bootstrap warning)
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td class="checkbox-column"><input type="checkbox" name="task-stock-checkbox" value="${item.internalTask}"></td>
+                        <td>${item.internalTask}</td>
+                        <td>${item.approveScrapPerson}</td>
+                        <td>${item.description}</td>
+                        <td>${item.afterBefore}</td>
+                        <td>${item.createTime}</td>
+                        <td>${item.totalQty}</td>
+                        <td>${item.qtyScraped}</td>
+                        <td>${item.qtyFindOk}</td>
+                        <td>${item.qtyWaitFind}</td>
+                        <td style="background-color: ${statusBackgroundColor}; color: ${statusBackgroundColor === "#ffc107" ? "#000" : "#fff"};">
+                            ${item.status}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            resultDiv.innerHTML = tableHtml;
+
+            // Thêm sự kiện cho checkbox "Select All"
+            document.getElementById("select-all").addEventListener("change", function () {
+                const checkboxes = document.getElementsByName("task-stock-checkbox");
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> ${result.message}
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+            </div>
+        `;
+        console.error("Error:", error);
+    }
+}
+
+// Hàm gọi API và hiển thị bảng dữ liệu cho SEARCH_STATUS
+async function searchStatus(searchType, searchValues) {
+    const resultDiv = document.getElementById("search-status-result");
+
+    // Hiển thị thông báo "đang tải dữ liệu"
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <strong>Thông báo:</strong> Đang tìm kiếm dữ liệu...
+        </div>
+    `;
+
+    const requestData = {
+        internalTasks: searchType === "2" ? searchValues : [],
+        sNs: searchType === "1" ? searchValues : []
+    };
+
+    try {
+        // Gọi API /api/Scrap/detail-task-status
+        const response = await fetch("http://10.220.130.119:9090/api/Scrap/detail-task-status", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Sắp xếp dữ liệu theo CreateTime (từ cũ đến mới)
+            const sortedData = result.data.sort((a, b) => new Date(a.createTime) - new Date(b.createTime));
+
+            // Nếu tìm kiếm theo SN (searchType === "1"), so sánh danh sách SN gửi vào với SN trả về
+            let unmatchedSNs = [];
+            if (searchType === "1") {
+                const returnedSNs = sortedData.map(item => item.sn);
+                unmatchedSNs = searchValues.filter(sn => !returnedSNs.includes(sn));
+            }
+
+            // Xây dựng bảng HTML với cột checkbox
+            let tableHtml = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="select-all-search"></th>
+                                <th>SN</th>
+                                <th>Internal Task</th>
+                                <th>Description</th>
+                                <th>Approve Scrap Person</th>
+                                <th>KanBan Status</th>
+                                <th>Sloc</th>
+                                <th>Task Number</th>
+                                <th>PO</th>
+                                <th>Cost</th>
+                                <th>Remark</th>
+                                <th>Created By</th>
+                                <th>Create Time</th>
+                                <th>Apply Time</th>
+                                <th>Apply Task Status</th>
+                                <th>Find Board Status</th>
+                                <th>Purpose</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            sortedData.forEach(item => {
+                tableHtml += `
+                    <tr>
+                        <td class="checkbox-column"><input type="checkbox" name="search-status-checkbox" value="${item.sn}"></td>
+                        <td>${item.sn ?? "N/A"}</td>
+                        <td>${item.internalTask ?? "N/A"}</td>
+                        <td>${item.description ?? "N/A"}</td>
+                        <td>${item.approveScrapPerson ?? "N/A"}</td>
+                        <td>${item.kanBanStatus ?? "N/A"}</td>
+                        <td>${item.sloc ?? "N/A"}</td>
+                        <td>${item.taskNumber ?? "N/A"}</td>
+                        <td>${item.po ?? "N/A"}</td>
+                        <td>${item.cost ?? "N/A"}</td>
+                        <td>${item.remark ?? "N/A"}</td>
+                        <td>${item.createdBy ?? "N/A"}</td>
+                        <td>${item.createTime ?? "N/A"}</td>
+                        <td>${item.applyTime ?? "N/A"}</td>
+                        <td>${item.applyTaskStatus ?? "N/A"}</td>
+                        <td>${item.findBoardStatus ?? "N/A"}</td>
+                        <td>${item.purpose ?? "N/A"}</td>
+                        <td>${item.category ?? "N/A"}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Thêm thông báo về các SN không tìm thấy (nếu có)
+            let unmatchedSNsHtml = "";
+            if (unmatchedSNs.length > 0) {
+                unmatchedSNsHtml = `
+                    <div class="alert alert-warning mt-3">
+                        <strong>Cảnh báo:</strong> Các SN sau không tồn tại trong ScrapList: ${unmatchedSNs.join(", ")}
+                    </div>
+                `;
+            }
+
+            // Kết hợp bảng dữ liệu và thông báo (nếu có)
+            resultDiv.innerHTML = tableHtml + unmatchedSNsHtml;
+
+            // Thêm sự kiện cho checkbox "Select All"
+            document.getElementById("select-all-search").addEventListener("change", function () {
+                const checkboxes = document.getElementsByName("search-status-checkbox");
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> ${result.message}
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+            </div>
+        `;
+        console.error("Error:", error);
+    }
+}
+
+// Ẩn tất cả các form và khu vực kết quả ngay lập tức khi trang tải
+hideAllElements();
+
+// Xử lý sự kiện khi trang tải lần đầu
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOMContentLoaded triggered");
+    hideAllElements();
+
+    // Xử lý sự kiện thay đổi giá trị trong dropdown
+    document.getElementById("search-options").addEventListener("change", async function () {
+        console.log("Dropdown changed to:", this.value);
+        hideAllElements();
+
+        const selectedValue = this.value;
+
+        if (selectedValue === "TASK_STOCK_STATUS") {
+            document.getElementById("task-stock-status-form").classList.remove("hidden");
+            document.getElementById("task-stock-status-result").classList.remove("hidden");
+
+            // Gọi API và hiển thị bảng ngay khi chọn TASK_STOCK_STATUS
+            await loadFindBoardStatus();
+        } else if (selectedValue === "UPDATE_STATUS") {
+            document.getElementById("update-status-form").classList.remove("hidden");
+            document.getElementById("update-status-result").classList.remove("hidden");
+        } else if (selectedValue === "SEARCH_STATUS") {
+            document.getElementById("search-status-form").classList.remove("hidden");
+            document.getElementById("search-status-result").classList.remove("hidden");
+        }
+    });
+
+    // Xử lý sự kiện khi nhấn nút "Load List" trong TASK_STOCK_STATUS
+    document.getElementById("task-stock-status-btn").addEventListener("click", async function () {
+        const resultDiv = document.getElementById("task-stock-status-result");
+
+        // Lấy danh sách InternalTask từ các checkbox được chọn
+        const checkboxes = document.querySelectorAll('input[name="task-stock-checkbox"]:checked');
+        const selectedInternalTasks = Array.from(checkboxes).map(checkbox => checkbox.value);
+
+        if (selectedInternalTasks.length === 0) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn ít nhất một Internal Task để tải dữ liệu.
+                </div>
+            `;
+            return;
+        }
+
+        // Hiển thị thông báo "đang tải dữ liệu"
+        resultDiv.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Thông báo:</strong> Đang tải dữ liệu để xuất Excel...
+            </div>
+        `;
+
+        const requestData = {
+            internalTasks: selectedInternalTasks,
+            sNs: [] // Để trống vì không sử dụng SN trong trường hợp này
+        };
+
+        try {
+            // Gọi API /api/Scrap/detail-task-status
+            const response = await fetch("http://10.220.130.119:9090/api/Scrap/detail-task-status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Chuyển dữ liệu thành định dạng cho file Excel
+                const excelData = result.data.map(item => ({
+                    SN: item.sn ?? "N/A",
+                    InternalTask: item.internalTask ?? "N/A",
+                    Description: item.description ?? "N/A",
+                    ApproveScrapPerson: item.approveScrapPerson ?? "N/A",
+                    KanBanStatus: item.kanBanStatus ?? "N/A",
+                    Sloc: item.sloc ?? "N/A",
+                    TaskNumber: item.taskNumber ?? "N/A",
+                    PO: item.po ?? "N/A",
+                    Cost: item.cost ?? "N/A",
+                    Remark: item.remark ?? "N/A",
+                    CreatedBy: item.createdBy ?? "N/A",
+                    CreateTime: item.createTime ?? "N/A",
+                    ApplyTime: item.applyTime ?? "N/A",
+                    ApplyTaskStatus: item.applyTaskStatus ?? "N/A",
+                    FindBoardStatus: item.findBoardStatus ?? "N/A",
+                    Purpose: item.purpose ?? "N/A",
+                    Category: item.category ?? "N/A"
+                }));
+
+                // Tạo và tải xuống file Excel
+                const now = new Date();
+                const filename = `ScrapDetails_${now.toISOString().replace(/[:.]/g, '-')}.xlsx`;
+                exportToExcel(excelData, filename);
+
+                // Hiển thị thông báo thành công
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Thành công:</strong> File Excel đã được tải xuống.
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Lỗi:</strong> ${result.message}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+                </div>
+            `;
+            console.error("Error:", error);
+        }
+    });
+
+    // Xử lý sự kiện khi nhấn nút "Update" trong form UPDATE_STATUS
+    document.getElementById("update-status-btn").addEventListener("click", async function () {
+        const resultDiv = document.getElementById("update-status-result");
+
+        // Lấy danh sách SN từ textarea
+        const snInput = document.getElementById("sn-status-update").value.trim();
+        const sNs = snInput.split(/\r?\n/).map(sn => sn.trim()).filter(sn => sn);
+
+        // Lấy trạng thái từ dropdown
+        const status = document.getElementById("status-options").value;
+
+        // Kiểm tra dữ liệu đầu vào
+        if (!sNs.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một Serial Number hợp lệ.
+                </div>
+            `;
+            return;
+        }
+
+        if (!status || (status !== "1" && status !== "2")) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn trạng thái hợp lệ (Đã tìm thấy hoặc Đã chuyển kho phế).
+                </div>
+            `;
+            return;
+        }
+
+        // Hiển thị thông báo "đang xử lý"
+        resultDiv.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Thông báo:</strong> Đang cập nhật trạng thái...
+            </div>
+        `;
+
+        const requestData = {
+            sNs: sNs,
+            status: status
+        };
+
+        try {
+            // Gọi API /api/Scrap/update-status-find-board
+            const response = await fetch("http://10.220.130.119:9090/api/Scrap/update-status-find-board", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Thành công:</strong> ${result.message}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Lỗi:</strong> ${result.message}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+                </div>
+            `;
+            console.error("Error:", error);
+        }
+    });
+
+    // Xử lý sự kiện khi nhấn nút "Search" trong form SEARCH_STATUS
+    document.getElementById("search-status-btn").addEventListener("click", async function () {
+        const resultDiv = document.getElementById("search-status-result");
+
+        // Lấy danh sách SN hoặc InternalTask từ textarea
+        const searchInput = document.getElementById("search-status-update").value.trim();
+        const searchValues = searchInput.split(/\r?\n/).map(value => value.trim()).filter(value => value);
+
+        // Lấy loại tìm kiếm từ dropdown
+        const searchType = document.getElementById("search-status-options").value;
+
+        // Kiểm tra dữ liệu đầu vào
+        if (!searchValues.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một SN hoặc Internal Task hợp lệ.
+                </div>
+            `;
+            return;
+        }
+
+        if (!searchType || (searchType !== "1" && searchType !== "2")) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn loại tìm kiếm hợp lệ (Tìm kiếm theo SN hoặc Internal Task).
+                </div>
+            `;
+            return;
+        }
+
+        // Gọi hàm tìm kiếm
+        await searchStatus(searchType, searchValues);
+    });
+
+    // Xử lý sự kiện khi nhấn nút "Load List" trong form SEARCH_STATUS
+    document.getElementById("load-status-btn").addEventListener("click", async function () {
+        const resultDiv = document.getElementById("search-status-result");
+
+        // Lấy danh sách SN từ các checkbox được chọn
+        const checkboxes = document.querySelectorAll('input[name="search-status-checkbox"]:checked');
+        const selectedSNs = Array.from(checkboxes).map(checkbox => checkbox.value);
+
+        if (selectedSNs.length === 0) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn ít nhất một SN để tải dữ liệu.
+                </div>
+            `;
+            return;
+        }
+
+        // Hiển thị thông báo "đang tải dữ liệu"
+        resultDiv.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Thông báo:</strong> Đang tải dữ liệu để xuất Excel...
+            </div>
+        `;
+
+        const requestData = {
+            internalTasks: [],
+            sNs: selectedSNs
+        };
+
+        try {
+            // Gọi API /api/Scrap/detail-task-status
+            const response = await fetch("http://10.220.130.119:9090/api/Scrap/detail-task-status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Chuyển dữ liệu thành định dạng cho file Excel
+                const excelData = result.data.map(item => ({
+                    SN: item.sn ?? "N/A",
+                    InternalTask: item.internalTask ?? "N/A",
+                    Description: item.description ?? "N/A",
+                    ApproveScrapPerson: item.approveScrapPerson ?? "N/A",
+                    KanBanStatus: item.kanBanStatus ?? "N/A",
+                    Sloc: item.sloc ?? "N/A",
+                    TaskNumber: item.taskNumber ?? "N/A",
+                    PO: item.po ?? "N/A",
+                    Cost: item.cost ?? "N/A",
+                    Remark: item.remark ?? "N/A",
+                    CreatedBy: item.createdBy ?? "N/A",
+                    CreateTime: item.createTime ?? "N/A",
+                    ApplyTime: item.applyTime ?? "N/A",
+                    ApplyTaskStatus: item.applyTaskStatus ?? "N/A",
+                    FindBoardStatus: item.findBoardStatus ?? "N/A",
+                    Purpose: item.purpose ?? "N/A",
+                    Category: item.category ?? "N/A"
+                }));
+
+                // Tạo và tải xuống file Excel
+                const now = new Date();
+                const filename = `SearchStatusDetails_${now.toISOString().replace(/[:.]/g, '-')}.xlsx`;
+                exportToExcel(excelData, filename);
+
+                // Hiển thị thông báo thành công
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Thành công:</strong> File Excel đã được tải xuống.
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Lỗi:</strong> ${result.message}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+                </div>
+            `;
+            console.error("Error:", error);
+        }
+    });
+});

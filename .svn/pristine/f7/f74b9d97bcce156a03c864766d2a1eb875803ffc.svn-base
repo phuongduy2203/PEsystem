@@ -1,0 +1,91 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEARCH DATA</title>
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
+    <link href="~/assets/areas/bonepile/css/bonepile.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
+
+</head>
+
+<body>
+
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') == 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+                document.write(`
+                                                <style>
+                                                    #sidebar {width:260px;}
+                                                    #sidebar .nav-link span, #sidebar .dashboard-container span{opacity:1;}
+                                                    #mainContent { margin-left: 260px; }
+                                                    .header { left: 260px; width: calc(100% - 260px); }
+                                                </style>
+                                                    `);
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+                document.write(`
+                                                    <style>
+                                                        #sidebar { width: 70px; }
+                                                        #sidebar .nav-link span, #sidebar .dashboard-container span { opacity: 0; }
+                                                        #mainContent { margin-left: 70px; }
+                                                        .header { left: 70px; width: calc(100% - 70px); }
+                                                    </style>
+                                                `);
+            }
+        })();
+    </script>
+
+    <div class="layout">
+
+        <header class="header d-flex justify-content-between align-items-center" id="header">
+        </header>
+
+        <!-- Sidebar dọc -->
+        <div id="sidebar" class="sidebar">
+            <!-- Logo and Dashboard with fixed checkbox -->
+            <div class="dashboard-container">
+                <a href="@Url.Action("Home", "Home", new { area = "" })">
+                    <img src="~/assets/img/searching.png" style="width:48px; height:48px;" class="logo" />
+                </a>
+                <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">
+                    SEARCH DATA
+                </span>
+                <span><input type="checkbox" id="toggleSidebarFixed" title="" /></span>
+            </div>
+            <nav class="nav flex-column">
+                <!-- Menu Items -->
+                <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+                <a href="@Url.Action("Index", "Home", new { area = "SearchData" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-dashboard"></i> <span>Dashboard</span></a>
+            </nav>
+        </div>
+
+        <main id="mainContent">
+            <!--HTML CỦA SPINER-->
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/lib/jquery-3.7.0.min.js"></script> <!-- jQuery -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script> <!-- DataTables core -->
+    <script src="~/lib/datatables.bootstrap5.min.js"></script> <!-- Bootstrap5 integration -->
+    <script src="~/lib/datatables.buttons.min.js"></script> <!-- Buttons extension -->
+    <script src="~/lib/buttons.html5.min.js"></script> <!-- HTML5 export -->
+    <script src="~/lib/axios.min.js"></script> <!-- Axios -->
+    <script src="~/lib/jszip.min.js"></script> <!-- JSZip (Excel support) -->
+    <script src="~/lib/excel/xlsx.full.min.js"></script> <!-- Excel Export (optional) -->
+    <script src="~/lib/chart.umd.min.js"></script> <!-- Chart.js -->
+    <script src="~/lib/chartjs-plugin-datalabels.js"></script>
+    <script src="~/js/site.min.js" asp-append-version="true"></script> <!-- Site Scripts -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> <!-- Bootstrap JS -->
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

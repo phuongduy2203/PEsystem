@@ -1,0 +1,954 @@
+D:\Project\API_WEB\bin\Debug\net6.0\api_appsettings.Development.json
+D:\Project\API_WEB\bin\Debug\net6.0\api_appsettings.json
+D:\Project\API_WEB\bin\Debug\net6.0\API_WEB.exe
+D:\Project\API_WEB\bin\Debug\net6.0\API_WEB.deps.json
+D:\Project\API_WEB\bin\Debug\net6.0\API_WEB.runtimeconfig.json
+D:\Project\API_WEB\bin\Debug\net6.0\API_WEB.dll
+D:\Project\API_WEB\bin\Debug\net6.0\API_WEB.pdb
+D:\Project\API_WEB\bin\Debug\net6.0\Azure.Core.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Azure.Identity.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ClosedXML.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ClosedXML.Parser.dll
+D:\Project\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.dll
+D:\Project\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.Framework.dll
+D:\Project\API_WEB\bin\Debug\net6.0\EPPlus.dll
+D:\Project\API_WEB\bin\Debug\net6.0\EPPlus.Interfaces.dll
+D:\Project\API_WEB\bin\Debug\net6.0\EPPlus.System.Drawing.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ExcelNumberFormat.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Humanizer.dll
+D:\Project\API_WEB\bin\Debug\net6.0\MessagePack.dll
+D:\Project\API_WEB\bin\Debug\net6.0\MessagePack.Annotations.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Razor.Language.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Build.Locator.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.AnalyzerUtilities.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Features.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Features.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Razor.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Scripting.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Features.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Data.SqlClient.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.DiaSymReader.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.DotNet.Scaffolding.Shared.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Json.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Physical.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileSystemGlobbing.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Primitives.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.Extensions.Msal.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Abstractions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.IO.RecyclableMemoryStream.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.OpenApi.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.SqlServer.Server.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Debugger.Contracts.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Core.dll
+D:\Project\API_WEB\bin\Debug\net6.0\dotnet-aspnet-codegenerator-design.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Templating.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Utils.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGenerators.Mvc.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Newtonsoft.Json.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Common.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Configuration.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.DependencyResolver.Core.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Frameworks.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.LibraryModel.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Packaging.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.ProjectModel.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Protocol.dll
+D:\Project\API_WEB\bin\Debug\net6.0\NuGet.Versioning.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Oracle.EntityFrameworkCore.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Oracle.ManagedDataAccess.dll
+D:\Project\API_WEB\bin\Debug\net6.0\RBush.dll
+D:\Project\API_WEB\bin\Debug\net6.0\SixLabors.Fonts.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.Swagger.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+D:\Project\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.ClientModel.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Composition.AttributedModel.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Composition.Convention.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Composition.Hosting.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Composition.Runtime.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Composition.TypedParts.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Configuration.ConfigurationManager.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Diagnostics.DiagnosticSource.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.DirectoryServices.Protocols.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Drawing.Common.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Formats.Asn1.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.IO.Packaging.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Memory.Data.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Runtime.Caching.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Security.Permissions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Text.Encoding.CodePages.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Text.Encodings.Web.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Text.Json.dll
+D:\Project\API_WEB\bin\Debug\net6.0\System.Windows.Extensions.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\de\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\es\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\fr\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\it\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ja\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ko\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\ru\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-arm\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\linux\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\osx\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Text.Encoding.CodePages.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\browser\lib\net6.0\System.Text.Encodings.Web.dll
+D:\Project\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.csproj.AssemblyReference.cache
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfoInputs.cache
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfo.cs
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CoreCompileInputs.cache
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cs
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cache
+D:\Project\API_WEB\obj\Debug\net6.0\staticwebassets.build.json
+D:\Project\API_WEB\obj\Debug\net6.0\staticwebassets.development.json
+D:\Project\API_WEB\obj\Debug\net6.0\scopedcss\bundle\API_WEB.styles.css
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CopyComplete
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.dll
+D:\Project\API_WEB\obj\Debug\net6.0\refint\API_WEB.dll
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.pdb
+D:\Project\API_WEB\obj\Debug\net6.0\API_WEB.genruntimeconfig.cache
+D:\Project\API_WEB\obj\Debug\net6.0\ref\API_WEB.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\api_appsettings.Development.json
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\api_appsettings.json
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.exe
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.deps.json
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.runtimeconfig.json
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.pdb
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Azure.Core.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Azure.Identity.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ClosedXML.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ClosedXML.Parser.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.Framework.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.Interfaces.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.System.Drawing.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ExcelNumberFormat.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Humanizer.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\MessagePack.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\MessagePack.Annotations.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Razor.Language.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Build.Locator.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.AnalyzerUtilities.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Features.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Features.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Razor.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Scripting.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Features.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Data.SqlClient.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.DiaSymReader.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.DotNet.Scaffolding.Shared.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Json.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Physical.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileSystemGlobbing.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Primitives.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.Extensions.Msal.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Abstractions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IO.RecyclableMemoryStream.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.OpenApi.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.SqlServer.Server.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Debugger.Contracts.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Core.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\dotnet-aspnet-codegenerator-design.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Templating.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Utils.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGenerators.Mvc.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Newtonsoft.Json.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Common.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Configuration.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.DependencyResolver.Core.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Frameworks.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.LibraryModel.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Packaging.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.ProjectModel.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Protocol.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Versioning.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Oracle.EntityFrameworkCore.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Oracle.ManagedDataAccess.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\RBush.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\SixLabors.Fonts.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.Swagger.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.ClientModel.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.AttributedModel.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Convention.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Hosting.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Runtime.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.TypedParts.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Configuration.ConfigurationManager.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Diagnostics.DiagnosticSource.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.DirectoryServices.Protocols.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Drawing.Common.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Formats.Asn1.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.IO.Packaging.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Memory.Data.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Runtime.Caching.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Permissions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Encoding.CodePages.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Encodings.Web.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Json.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\System.Windows.Extensions.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\linux\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\osx\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Text.Encoding.CodePages.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\browser\lib\net6.0\System.Text.Encodings.Web.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.AssemblyReference.cache
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.GeneratedMSBuildEditorConfig.editorconfig
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfoInputs.cache
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfo.cs
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CoreCompileInputs.cache
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cs
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cache
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\staticwebassets.build.json
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\staticwebassets.development.json
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\scopedcss\bundle\API_WEB.styles.css
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CopyComplete
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.dll
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\refint\API_WEB.dll
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.pdb
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.genruntimeconfig.cache
+D:\SourceCode\PESystem\API_WEB\obj\Debug\net6.0\ref\API_WEB.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Caching.Memory.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.DependencyInjection.dll
+D:\SourceCode\PESystem\API_WEB\bin\Debug\net6.0\Aspose.Slides.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\api_appsettings.Development.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.exe
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\api_appsettings.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.deps.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.runtimeconfig.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\API_WEB.pdb
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Aspose.Slides.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Azure.Core.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Azure.Identity.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ClosedXML.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ClosedXML.Parser.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\DocumentFormat.OpenXml.Framework.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.Interfaces.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\EPPlus.System.Drawing.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ExcelNumberFormat.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Humanizer.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\MessagePack.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\MessagePack.Annotations.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.AspNetCore.Razor.Language.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Build.Locator.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.AnalyzerUtilities.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Features.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Features.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Razor.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Scripting.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Features.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Data.SqlClient.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.DiaSymReader.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.DotNet.Scaffolding.Shared.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Caching.Memory.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Configuration.Json.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.DependencyInjection.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Physical.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.FileSystemGlobbing.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Extensions.Primitives.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Identity.Client.Extensions.Msal.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Abstractions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.IO.RecyclableMemoryStream.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.OpenApi.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.SqlServer.Server.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Debugger.Contracts.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Core.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\dotnet-aspnet-codegenerator-design.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Templating.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGeneration.Utils.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.VisualStudio.Web.CodeGenerators.Mvc.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Newtonsoft.Json.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Common.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Configuration.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.DependencyResolver.Core.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Frameworks.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.LibraryModel.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Packaging.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.ProjectModel.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Protocol.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\NuGet.Versioning.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Oracle.EntityFrameworkCore.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Oracle.ManagedDataAccess.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\RBush.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\SixLabors.Fonts.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.Swagger.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.ClientModel.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.AttributedModel.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Convention.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Hosting.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.Runtime.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Composition.TypedParts.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Configuration.ConfigurationManager.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Diagnostics.DiagnosticSource.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.DirectoryServices.Protocols.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Drawing.Common.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Formats.Asn1.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.IO.Packaging.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Memory.Data.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Runtime.Caching.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Security.Permissions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Encoding.CodePages.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Encodings.Web.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Text.Json.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\System.Windows.Extensions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Scripting.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Features.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.VisualBasic.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\de\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\es\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\fr\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\it\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ja\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ko\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\pt-BR\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\ru\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win-arm64\lib\net6.0\dotnet-aspnet-codegenerator-design.exe
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Diagnostics.PerformanceCounter.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\linux\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\osx\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.DirectoryServices.Protocols.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Text.Encoding.CodePages.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\browser\lib\net6.0\System.Text.Encodings.Web.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.AssemblyReference.cache
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.GeneratedMSBuildEditorConfig.editorconfig
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfoInputs.cache
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.AssemblyInfo.cs
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CoreCompileInputs.cache
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cs
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.MvcApplicationPartsAssemblyInfo.cache
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\staticwebassets.build.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\staticwebassets.development.json
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\scopedcss\bundle\API_WEB.styles.css
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.csproj.CopyComplete
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\refint\API_WEB.dll
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.pdb
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\API_WEB.genruntimeconfig.cache
+D:\1.SourceCode - he thong\PESystem\API_WEB\obj\Debug\net6.0\ref\API_WEB.dll

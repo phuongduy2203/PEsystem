@@ -1,0 +1,13 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.SmartFA.Controllers
+{
+    public class SearchController : Controller
+    {
+        [Area("SmartFA")]
+        public IActionResult Index()
+        {
+            return PartialView(); // Return full view for direct navigation
+        }
+    }
+}

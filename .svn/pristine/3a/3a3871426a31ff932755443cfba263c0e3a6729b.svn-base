@@ -1,0 +1,97 @@
+﻿@model RegisterModel
+@{
+    Layout = "~/Views/Shared/_Layout_Login.cshtml";
+    ViewData["Title"] = "Register";
+}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card no-transition p-4 shadow" style="width: 100%; max-width: 400px; border-radius: 12px;">
+        <div class="text-center mb-2">
+            <img src="~/assets/img/logo.jpg" alt="Logo" style="width: 70px;">
+        </div>
+        <h3 class="text-center mb-2">Adventure starts here 🚀</h3>
+        <p class="text-muted text-center mb-4">Make your app management easy and fun!</p>
+        <form method="post" asp-controller="Account" asp-action="Register">
+            <div class="form-group mb-2">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="Username" placeholder="Username" required />
+            </div>
+            <div class="form-group mb-2">
+                <label for="fulName" class="form-label">FullName</label>
+                <input type="text" class="form-control" id="fullName" name="FullName" placeholder="FullName" required />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="Email" class="form-label">Email</label>
+                <input type="text" class="form-control" id="email" name="Email" placeholder="Email" required />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="department" class="form-label">Department</label>
+                <select class="form-select" id="department" name="Department" required>
+                    <option value="PE">PE</option>
+                    <option value="RE">RE</option>
+                    <option value="PQE">PQE</option>
+                    <option value="ME-SMT">ME-SMT</option>
+                    <option value="ME-SI">ME-SI</option>
+                    <option value="SQE">SQE</option>
+                    <option value="PD-SI">PD-SI</option>
+                    <option value="PD-SMT">PD-SMT</option>
+                    <option value="PD-PTH">PD-PTH</option>
+                    <option value="IPQC">IPQC</option>
+                    <option value="TE">TE</option>
+                    <option value="PM">PM</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="Password" placeholder="Password" required />
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', 'passwordToggleIcon')" tabindex="-1">
+                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group mb-2">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="confirmPassword" name="ConfirmPassword" placeholder="Confirm password" required />
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirmPassword', 'passwordToggleIconConfirm')" tabindex="-1">
+                        <i class="fas fa-eye" id="passwordToggleIconConfirm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4" style="background-color: #76B900; border: none;">Sign Up</button>
+        </form>
+
+        <!-- Dòng quay lại đăng nhập -->
+        <p class="text-center mt-3">
+            Already have an account?
+            <a href="@Url.Action("Login", "Account")" class="text-decoration-none">Sign in instead</a>
+        </p>
+        <div class="d-flex justify-content-center align-items-center mt-4">
+            <hr class="w-25"> <span class="px-2 text-muted">or</span> <hr class="w-25">
+        </div>
+        <div class="d-flex justify-content-center align-items-center mt-3">
+            <a href="#" class="btn btn-light btn-sm mx-1">
+                <img src="~/assets/img/honhai.png" style="width:13.35px; height:14.67px;" />
+            </a>
+            <a href="#" class="btn btn-light btn-sm mx-1"><i class="fab fa-github"></i></a>
+            <a href="#" class="btn btn-light btn-sm mx-1"><i class="fab fa-google"></i></a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function (event) {
+        let inputs = document.querySelectorAll("input, select");
+        for (let input of inputs) {
+            if (!input.value.trim()) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                event.preventDefault();
+                return;
+            }
+        }
+    });
+</script>

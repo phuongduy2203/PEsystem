@@ -1,0 +1,406 @@
+﻿document.addEventListener('DOMContentLoaded', () => {
+    const scanEl = document.getElementById('scan-log');
+    const foundEl = document.getElementById('repairCount');
+    const fromInput = document.getElementById('fromTime');
+    const toInput = document.getElementById('toTime');
+    const applyBtn = document.getElementById('applyTime');
+    const spinner = document.getElementById('spinner-overlay');
+    const listTitle = document.getElementById('listDetailTitle');
+    const detailModalEl = document.getElementById('listDetailModal');
+    const summaryModalEl = document.getElementById('scanSummaryModal');
+    const summaryTitleEl = document.getElementById('scanSummaryTitle');
+    const totalScanBtn = document.getElementById('view-total-scan');
+    const foundScanBtn = document.getElementById('view-found-scan');
+    let listsTable;
+    let itemsTable;
+    let summaryTable;
+    const detailModal = detailModalEl && typeof bootstrap !== 'undefined'
+        ? new bootstrap.Modal(detailModalEl)
+        : null;
+    const summaryModal = summaryModalEl && typeof bootstrap !== 'undefined'
+        ? new bootstrap.Modal(summaryModalEl)
+        : null;
+
+    function toggleSpinner(show) {
+        if (!spinner) return;
+        spinner.style.display = show ? 'flex' : 'none';
+    }
+
+    function setDefaultRange() {
+        if (!fromInput || !toInput) return;
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        fromInput.value = start.toISOString().slice(0, 16);
+        toInput.value = now.toISOString().slice(0, 16);
+    }
+
+    async function updateCounts() {
+        if (!scanEl || !foundEl) return;
+        const params = new URLSearchParams();
+        if (fromInput?.value) params.append('from', new Date(fromInput.value).toISOString());
+        if (toInput?.value) params.append('to', new Date(toInput.value).toISOString());
+
+        try {
+            const scanResp = await fetch(`http://10.220.130.119:9090/api/scan/count?${params.toString()}`);
+            const scanData = await scanResp.json();
+            scanEl.textContent = scanData.count ?? 0;
+        } catch {
+            scanEl.textContent = 'N/A';
+        }
+        try {
+            const foundResp = await fetch(`http://10.220.130.119:9090/api/scan/found-count?${params.toString()}`);
+            const foundData = await foundResp.json();
+            foundEl.textContent = foundData.count ?? 0;
+        } catch {
+            foundEl.textContent = 'N/A';
+        }
+    }
+
+    function isFoundValue(value) {
+        if (value === undefined || value === null) {
+            return false;
+        }
+        if (typeof value === 'boolean') {
+            return value;
+        }
+        if (typeof value === 'number') {
+            return value !== 0;
+        }
+        if (typeof value === 'string') {
+            const normalized = value.trim().toLowerCase();
+            if (normalized === '' || normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'n') {
+                return false;
+            }
+            return ['1', 'true', 'yes', 'y', 'found'].includes(normalized);
+        }
+        return Boolean(value);
+    }
+
+    function renderSearchLists(data) {
+        const lists = Array.isArray(data)
+            ? data.slice().sort((a, b) => {
+                const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return bTime - aTime;
+            })
+            : [];
+        if (!listsTable) {
+            listsTable = $('#searchListsTable').DataTable({
+                data: lists,
+                dom: '<"top d-flex align-items-center"fB>rt<"bottom"ip>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img src="/assets/img/excel.png" style="height:32px; margin:5px;">',
+                        title: 'Search List',
+                        exportOptions: {
+                            columns: ':visible:not(:last-child)'
+                        }
+                    }
+                ],
+                columns: [
+                    { data: 'listName', title: 'List Name', defaultContent: '' },
+                    {
+                        data: 'totalItems',
+                        title: 'Tổng SN',
+                        render: value => (value ?? 0)
+                    },
+                    {
+                        data: 'foundItems',
+                        title: 'Đã tìm thấy',
+                        render: value => (value ?? 0)
+                    },
+                    { data: 'createdBy', title: 'Người tạo', defaultContent: '' },
+                    {
+                        data: 'createdAt',
+                        title: 'Ngày tạo',
+                        render: (value, type) => {
+                            if (!value) {
+                                return '';
+                            }
+                            const date = new Date(value);
+                            if (Number.isNaN(date.getTime())) {
+                                return '';
+                            }
+                            if (type === 'sort' || type === 'type') {
+                                return date.getTime();
+                            }
+                            return date.toLocaleString();
+                        },
+                        defaultContent: ''
+                    },
+                    {
+                        data: null,
+                        title: 'Chi tiết',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center',
+                        defaultContent: '',
+                        render: () => '<button type="button" class="btn btn-link detail-link p-0" data-action="detail">Detail</button>'
+                    }
+                ],
+                order: [[4, 'desc']],
+                language: {
+                    emptyTable: 'Không có dữ liệu'
+                }
+            });
+
+            $('#searchListsTable tbody').on('click', 'button[data-action="detail"]', function () {
+                const rowData = listsTable.row($(this).closest('tr')).data();
+                if (rowData) {
+                    showListItems(rowData);
+                }
+            });
+        } else {
+            listsTable.clear().rows.add(lists);
+        }
+        listsTable.order([4, 'desc']);
+        listsTable.draw();
+    }
+
+    function renderListItems(items) {
+        const data = Array.isArray(items) ? items : [];
+        if (!itemsTable) {
+            itemsTable = $('#listItemsTable').DataTable({
+                data,
+                dom: '<"top d-flex align-items-center"fB>rt<"bottom"ip>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img src="/assets/img/excel.png" style="height:32px; margin:5px;">',
+                        title: () => (listTitle?.textContent?.trim() || 'Danh sách SerialNumber')
+                    }
+                ],
+                columns: [
+                    { data: 'serialNumber', title: 'Serial Number', defaultContent: '' },
+                    {
+                        data: 'isFound',
+                        title: 'Đã tìm thấy',
+                        render: value => (isFoundValue(value) ? 'Có' : 'Không')
+                    },
+                    {
+                        data: 'scanTime',
+                        title: 'Thời gian scan',
+                        render: (value, type) => {
+                            if (!value) {
+                                return '';
+                            }
+                            const date = new Date(value);
+                            if (Number.isNaN(date.getTime())) {
+                                return '';
+                            }
+                            if (type === 'sort' || type === 'type') {
+                                return date.getTime();
+                            }
+                            return date.toLocaleString();
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                language: {
+                    emptyTable: 'Không có dữ liệu'
+                },
+                rowCallback: (row, rowData) => {
+                    if (rowData && isFoundValue(rowData.isFound)) {
+                        row.classList.add('table-success');
+                    } else {
+                        row.classList.remove('table-success');
+                    }
+                }
+            });
+        } else {
+            itemsTable.clear().rows.add(data);
+            itemsTable.order([0, 'asc']);
+            itemsTable.draw();
+        }
+    }
+
+    function showListItems(listData) {
+        if (!listData) return;
+        if (listTitle) {
+            const name = listData.listName ?? '';
+            listTitle.textContent = name ? `Danh sách SerialNumber - ${name}` : 'Danh sách SerialNumber';
+        }
+        const items = Array.isArray(listData.items)
+            ? listData.items
+            : Array.isArray(listData.serials)
+                ? listData.serials
+                : Array.isArray(listData.serialNumbers)
+                    ? listData.serialNumbers
+                    : [];
+        renderListItems(items);
+        if (detailModal) {
+            detailModal.show();
+        }
+    }
+
+    function normalizeSummaryRecord(record) {
+        if (!record || typeof record !== 'object') {
+            return {
+                serialNumber: '',
+                listName: '',
+                isFound: false,
+                scanTime: ''
+            };
+        }
+        const serialNumber = record.serialNumber ?? record.serial ?? record.serial_number ?? '';
+        const listName = record.listName ?? record.list ?? record.list_name ?? '';
+        const scanTime = record.scanTime ?? record.scan_time ?? record.createdAt ?? record.updatedAt ?? '';
+        const isFoundRaw = record.isFound ?? record.found ?? record.is_found ?? record.status;
+        return {
+            serialNumber,
+            listName,
+            isFound: isFoundValue(isFoundRaw),
+            scanTime
+        };
+    }
+
+    function renderSummaryTable(items) {
+        const data = Array.isArray(items) ? items : [];
+        if (!summaryTable) {
+            summaryTable = $('#scanSummaryTable').DataTable({
+                data,
+                dom: '<"top d-flex align-items-center"fB>rt<"bottom"ip>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img src="/assets/img/excel.png" style="height:32px; margin:5px;">',
+                        title: () => (summaryTitleEl?.textContent?.trim() || 'Dữ liệu Scan')
+                    }
+                ],
+                columns: [
+                    { data: 'serialNumber', title: 'Serial Number', defaultContent: '' },
+                    { data: 'listName', title: 'List Name', defaultContent: '' },
+                    {
+                        data: 'isFound',
+                        title: 'Đã tìm thấy',
+                        render: value => (isFoundValue(value) ? 'Có' : 'Không')
+                    },
+                    {
+                        data: 'scanTime',
+                        title: 'Thời gian scan',
+                        render: (value, type) => {
+                            if (!value) {
+                                return '';
+                            }
+                            const date = new Date(value);
+                            if (Number.isNaN(date.getTime())) {
+                                return '';
+                            }
+                            if (type === 'sort' || type === 'type') {
+                                return date.getTime();
+                            }
+                            return date.toLocaleString();
+                        }
+                    }
+                ],
+                order: [[3, 'desc']],
+                language: {
+                    emptyTable: 'Không có dữ liệu'
+                },
+                rowCallback: (row, rowData) => {
+                    if (rowData && isFoundValue(rowData.isFound)) {
+                        row.classList.add('table-success');
+                    } else {
+                        row.classList.remove('table-success');
+                    }
+                }
+            });
+        } else {
+            summaryTable.clear().rows.add(data);
+            summaryTable.order([3, 'desc']);
+            summaryTable.draw();
+        }
+    }
+
+    async function fetchScanSummary() {
+        try {
+            const resp = await fetch('http://10.220.130.119:9090/api/scan/summary');
+            if (!resp.ok) {
+                return [];
+            }
+            const payload = await resp.json();
+            if (Array.isArray(payload)) {
+                return payload.map(normalizeSummaryRecord);
+            }
+            if (Array.isArray(payload?.data)) {
+                return payload.data.map(normalizeSummaryRecord);
+            }
+            if (Array.isArray(payload?.items)) {
+                return payload.items.map(normalizeSummaryRecord);
+            }
+            return [];
+        } catch {
+            return [];
+        }
+    }
+
+    async function openSummaryModal(filterType) {
+        toggleSpinner(true);
+        try {
+            const summaryData = await fetchScanSummary();
+            const filtered = filterType === 'found'
+                ? summaryData.filter(item => item.isFound)
+                : summaryData;
+            if (summaryTitleEl) {
+                summaryTitleEl.textContent = filterType === 'found'
+                    ? 'Danh sách Serial Number đã tìm thấy'
+                    : 'Danh sách Serial Number đã scan';
+            }
+            renderSummaryTable(filtered);
+            if (summaryModal) {
+                summaryModal.show();
+            }
+        } finally {
+            toggleSpinner(false);
+        }
+    }
+
+    async function loadSearchLists() {
+        toggleSpinner(true);
+        try {
+            const resp = await fetch('http://10.220.130.119:9090/api/scan/search-lists/details');
+            if (!resp.ok) {
+                renderSearchLists([]);
+                return;
+            }
+            const payload = await resp.json();
+            renderSearchLists(payload?.lists ?? []);
+        } catch {
+            renderSearchLists([]);
+        } finally {
+            toggleSpinner(false);
+        }
+    }
+
+    applyBtn?.addEventListener('click', e => {
+        e.preventDefault();
+        updateCounts();
+    });
+
+    totalScanBtn?.addEventListener('click', e => {
+        e.preventDefault();
+        openSummaryModal('total');
+    });
+
+    foundScanBtn?.addEventListener('click', e => {
+        e.preventDefault();
+        openSummaryModal('found');
+    });
+
+    detailModalEl?.addEventListener('shown.bs.modal', () => {
+        if (itemsTable) {
+            itemsTable.columns.adjust();
+        }
+    });
+
+    summaryModalEl?.addEventListener('shown.bs.modal', () => {
+        if (summaryTable) {
+            summaryTable.columns.adjust();
+        }
+    });
+
+    setDefaultRange();
+    updateCounts();
+    loadSearchLists();
+});

@@ -1,0 +1,15 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.SmartFA.Controllers
+{
+    public class HomeController : Controller
+    {
+        [Area("SmartFA")]
+        [Authorize(Policy = "SmartFAAccess")]
+        public IActionResult Index()
+        {
+            return PartialView(); // Return full view for direct navigation
+        }
+    }
+}

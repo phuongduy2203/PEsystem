@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "SmartFA Area";
+}
+@{
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+<section class="dashboard section">
+    <div class="row d-flex flex-wrap">
+        <!-- Biểu đồ Số lượng vào/ra -->
+        <div class="col-md-6">
+            <div class="card shadow-lg rounded-lg border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title text-center font-weight-bold">TRẠNG THÁI</h5>
+                    </div>
+                    <div id="statusChart" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ TOP MODEL -->
+        <div class="col-md-6">
+            <div class="card shadow-lg rounded-lg border-0">
+                <div class="card-body p-4">
+                    <h5 class="d-flex justify-content-between align-items-center">TOP MODEL</h5>
+                    <div id="container" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal chứa DataTable -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-lg-custom">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">Danh Sách Serial Numbers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body table-responsive">
+                    <table id="modal-sn-table" class="table table-bordered datatable-table table-striped">
+                        <thead>
+                            <tr>
+                                <th>SerialNumber</th>
+                                <th>ProductLine</th>
+                                <th>ModelName</th>
+                                <th>WIP</th>
+                                <th>TestGroup</th>
+                                <th>TestCode</th>
+                                <th>Data1</th>
+                                <th>Cur_status</th>
+                                <th>ConfirmPerson</th>
+                                <th>ConfirmTime</th>
+                                <th>HandoverStatus</th>
+                                <th>Location</th>
+                                <th>Kệ</th>
+                                <th>Cột</th>
+                                <th>Tầng</th>
+                                <th>Khay</th>
+                                <th>Ô</th>
+                                <th>Mượn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dữ liệu sẽ được chèn tại đây -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button id="exportExcelBtn" class="btn btn-primary">
+                        <img src="~/assets/img/excel.png" alt="Excel Icon" style="width:24px; height:24px;">
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<style>
+     .modal-lg-custom {
+        max-width: 90% !important;
+    }
+</style>
+@section Scripts {
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/assets/vendor/chart.js/highcharts.js"></script>
+    <script src="~/assets/vendor/echarts/echarts.min.js"></script>
+    <script src="~/assets/areas/smartfa/js/dashboardfa.js?v=@DateTime.Now.Ticks"></script>
+}

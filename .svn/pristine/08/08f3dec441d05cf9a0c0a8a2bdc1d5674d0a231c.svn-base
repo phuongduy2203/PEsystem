@@ -1,0 +1,322 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using API_WEB.Models.Bonepile;
+using API_WEB.ModelsDB;
+using API_WEB.ModelsOracle;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Oracle.ManagedDataAccess.Client;
+
+namespace API_WEB.Services.Repositories
+{
+    /// <summary>
+    /// BonepileWaitingSyncService — viết lại
+    ///  - Lấy danh sách SN từ query Oracle (giống API)
+    ///  - Chỉ giữ SN có status WaitingLink hoặc WaitingKanBanIn
+    ///  - Insert bản ghi mới vào BonepileWaitings
+    ///  - Update TimeInLink / TimeInKanban bằng cách check lại WIP_GROUP của R107
+    /// </summary>
+    public class BonepileWaitingSyncService : BackgroundService
+    {
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<BonepileWaitingSyncService> _logger;
+        private static readonly TimeSpan Interval = TimeSpan.FromMinutes(20);
+
+        public BonepileWaitingSyncService(IServiceProvider serviceProvider, ILogger<BonepileWaitingSyncService> logger)
+        {
+            _serviceProvider = serviceProvider;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("BonepileWaitingSyncService started.");
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var sqlContext = scope.ServiceProvider.GetRequiredService<CSDL_NE>();
+                    var oracleContext = scope.ServiceProvider.GetRequiredService<OracleDbContext>();
+
+                    await SyncWaitingStatusesAsync(sqlContext, oracleContext, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error running BonepileWaitingSyncService");
+                }
+
+                await Task.Delay(Interval, stoppingToken);
+            }
+            _logger.LogInformation("BonepileWaitingSyncService stopped.");
+        }
+
+        private static async Task SyncWaitingStatusesAsync(CSDL_NE sqlContext, OracleDbContext oracleContext, CancellationToken ct)
+        {
+            var start = "2025/03/16 11:00"; // FIX CỐ ĐỊNH
+            var end = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
+
+            var data = await ExecuteOracleFullQuery(oracleContext, start, end, ct);
+            if (data.Count == 0) return;
+
+            // ScrapLists
+            var snList = data.Select(d => d.SN).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+            var scrapDict = (await sqlContext.ScrapLists
+                .AsNoTracking()
+                .Where(s => snList.Contains(s.SN))
+                .Select(s => new { s.SN, s.Category })
+                .ToListAsync(ct))
+                .ToDictionary(x => x.SN, x => x.Category);
+
+            var waitingLinks = new HashSet<string>();
+            var waitingKanbans = new HashSet<string>();
+
+            foreach (var b in data)
+            {
+                var scrapCat = scrapDict.TryGetValue(b.SN, out var cat) ? cat : null;
+                var status = ClassifyStatus(b, scrapCat);
+                if (status == "WaitingLink") waitingLinks.Add(b.SN);
+                if (status == "WaitingKanBanIn") waitingKanbans.Add(b.SN);
+            }
+
+            var toAdd = new List<BonepileWaiting>();
+            foreach (var sn in waitingLinks)
+                await AddIfNeeded(sqlContext, toAdd, sn, "WaitingLink", ct);
+            foreach (var sn in waitingKanbans)
+                await AddIfNeeded(sqlContext, toAdd, sn, "WaitingKanBanIn", ct);
+
+            if (toAdd.Any())
+            {
+                sqlContext.BonepileWaitings.AddRange(toAdd);
+                await sqlContext.SaveChangesAsync(ct);
+            }
+
+            await UpdateWaitingTimesAsync(sqlContext, oracleContext, ct);
+        }
+
+        private static string ClassifyStatus(BonepileResult b, string? scrapCategory)
+        {
+            if (!string.IsNullOrEmpty(scrapCategory))
+                return scrapCategory == "Scrap" ? "Scrap" : "WaitingApproveScrap";
+
+            var wip = b.WIP_GROUP ?? string.Empty;
+            if (wip.Contains("B31M")) return "WaitingLink";
+            if (b.ERROR_FLAG == "0" && wip.Contains("KANBAN_IN")) return "WaitingKanBanIn";
+
+            return b.ERROR_FLAG switch
+            {
+                "7" => "Repair",
+                "8" => "CheckOut",
+                "1" => "CheckIn",
+                "0" => "Online",
+                _ => "Unknown"
+            };
+        }
+
+        private static async Task<List<BonepileResult>> ExecuteOracleFullQuery(OracleDbContext oracleContext, string startDate, string endDate, CancellationToken ct)
+        {
+            var result = new List<BonepileResult>();
+            await using var conn = new OracleConnection(oracleContext.Database.GetDbConnection().ConnectionString);
+            await conn.OpenAsync(ct);
+
+            string sql = @"
+                SELECT 
+                    c.SERIAL_NUMBER, 
+                    c.MODEL_NAME, 
+                    c.PRODUCT_LINE, 
+                    c.MO_NUMBER, 
+                    c.FAIL_STATION, 
+                    c.SYMPTOM, 
+                    c.ERROR_DESC, 
+                    c.TIME, 
+                    c.FLAG, 
+                    c.PO_NO, 
+                    c.PO_ITEM, 
+                    c.FAILURE_AGING, 
+                    c.WIP_GROUP, 
+                    c.VERSION_CODE, 
+                    c.WORK_FLAG,
+                    CASE 
+                        WHEN c.ERROR_FLAG = '0' AND c.MO_NEW IS NOT NULL THEN '0'
+                        WHEN c.ERROR_FLAG = '0' AND c.MO_NEW IS NULL THEN '2'
+                        ELSE c.ERROR_FLAG 
+                    END AS ERROR_FLAG,
+                    c.MO_NEW, 
+                    c.STATUS, 
+                    c.CHECKIN_REPAIR_TIME, 
+                    c.CHECKOUT_REPAIR_TIME,
+                    CASE 
+                        WHEN s.SERIAL_NUMBER IS NOT NULL THEN 'SCRAP' 
+                        ELSE '' 
+                    END AS SCRAP_STATUS
+                FROM (
+                    SELECT 
+                        a.*, 
+                        b.MO_NUMBER1, 
+                        b.DATA1, 
+                        b.ERROR_FLAG, 
+                        b.WORK_FLAG, 
+                        b.WIP_GROUP, 
+                        b.VERSION_CODE,
+                        CASE 
+                            WHEN a.MO_NUMBER <> b.MO_NUMBER1 THEN b.MO_NUMBER1
+                            WHEN a.MO_NUMBER = b.MO_NUMBER1 
+                                AND b.ERROR_FLAG NOT IN ('1', '7', '8') 
+                                AND b.DATA1 IS NOT NULL THEN b.DATA1
+                            ELSE '' 
+                        END AS MO_NEW,
+                        CASE 
+                            WHEN a.FAILURE_AGING <= 7 THEN 'Normal <7 DAY'
+                            WHEN a.FAILURE_AGING > 7 AND a.FAILURE_AGING < 14 THEN 'Medium >7,<14 DAY'
+                            ELSE 'High >14 DAY'
+                        END AS STATUS,
+                        r.IN_DATETIME AS CHECKIN_REPAIR_TIME,
+                        r.OUT_DATETIME AS CHECKOUT_REPAIR_TIME
+                    FROM (
+                        SELECT 
+                            a.SERIAL_NUMBER, 
+                            a.MODEL_NAME, 
+                            a.PRODUCT_LINE, 
+                            a.MO_NUMBER, 
+                            a.TEST_STATION AS FAIL_STATION, 
+                            a.SYMPTOM, 
+                            b.ERROR_DESC, 
+                            a.TIME, 
+                            a.FLAG, 
+                            a.PO_NO, 
+                            a.PO_ITEM, 
+                            ROUND((SYSDATE - a.TIME), 2) AS FAILURE_AGING
+                        FROM SFISM4.NVIDIA_BONPILE_SN_LOG a
+                        INNER JOIN SFIS1.C_ERROR_CODE_T b 
+                            ON a.SYMPTOM = b.ERROR_CODE
+                        WHERE a.TIME BETWEEN TO_DATE(:start_date, 'YYYY/MM/DD HH24:MI') 
+                            AND TO_DATE(:end_date, 'YYYY/MM/DD HH24:MI')
+                            AND NOT EXISTS (
+                                SELECT 1 
+                                FROM SFISM4.Z_KANBAN_TRACKING_T z 
+                                WHERE z.SERIAL_NUMBER = a.SERIAL_NUMBER
+                            )
+                            AND NOT EXISTS (
+                                SELECT 1 
+                                FROM SFISM4.R_NV_REPAIR_BONEPILE_T r 
+                                WHERE r.SERIAL_NUMBER = a.SERIAL_NUMBER 
+                                AND r.DATA7 = 'SCRAP'
+                            )
+                            AND a.PRODUCT_LINE NOT LIKE 'SA%'
+                            AND a.PRODUCT_LINE NOT LIKE 'Switch%'
+                            AND a.MODEL_NAME NOT LIKE 'SA%'
+                    ) a
+                    LEFT JOIN (
+                        SELECT 
+                            a.SERIAL_NUMBER, 
+                            a.MO_NUMBER AS MO_NUMBER1, 
+                            b.DATA1, 
+                            a.ERROR_FLAG, 
+                            a.WORK_FLAG, 
+                            a.WIP_GROUP, 
+                            a.VERSION_CODE
+                        FROM SFISM4.R107 a
+                        LEFT JOIN SFISM4.R_KEYPART_BLACK_WHITE_LIST_T b 
+                            ON a.SERIAL_NUMBER = b.KEY_PART_SN 
+                            AND b.TYPE = 'LINK_MO'
+                    ) b 
+                        ON a.SERIAL_NUMBER = b.SERIAL_NUMBER
+                    LEFT JOIN SFISM4.R_REPAIR_IN_OUT_T r 
+                        ON a.SERIAL_NUMBER = r.SERIAL_NUMBER 
+                        AND a.FAIL_STATION = r.STATION_NAME 
+                        AND a.MO_NUMBER = r.MO_NUMBER
+                ) c
+                LEFT JOIN (
+                    SELECT SERIAL_NUMBER, TEST_GROUP, TEST_CODE
+                    FROM SFISM4.R109 
+                    WHERE REASON_CODE = 'B001'
+                ) s 
+                    ON c.SERIAL_NUMBER = s.SERIAL_NUMBER 
+                    AND c.FAIL_STATION = s.TEST_GROUP 
+                    AND c.SYMPTOM = s.TEST_CODE
+                ORDER BY c.TIME";
+
+
+            using var cmd = new OracleCommand(sql, conn);
+            cmd.Parameters.Add("start_date", OracleDbType.Varchar2).Value = startDate;
+            cmd.Parameters.Add("end_date", OracleDbType.Varchar2).Value = endDate;
+            using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                result.Add(new BonepileResult
+                {
+                    SN = reader["SERIAL_NUMBER"].ToString(),
+                    WIP_GROUP = reader["WIP_GROUP"].ToString(),
+                    ERROR_FLAG = reader["ERROR_FLAG"].ToString()
+                });
+            }
+            return result;
+        }
+
+        private static async Task AddIfNeeded(CSDL_NE sqlContext, List<BonepileWaiting> toAdd, string serial, string status, CancellationToken ct)
+        {
+            var last = await sqlContext.BonepileWaitings
+                .AsNoTracking()
+                .Where(w => w.SerialNumber == serial && w.Status == status)
+                .OrderByDescending(w => w.Id)
+                .FirstOrDefaultAsync(ct);
+
+            bool closed = status switch
+            {
+                "WaitingLink" => last?.TimeInLink != null,
+                "WaitingKanBanIn" => last?.TimeInKanban != null,
+                _ => true
+            };
+
+            if (last == null || closed)
+            {
+                toAdd.Add(new BonepileWaiting
+                {
+                    SerialNumber = serial,
+                    Status = status,
+                    CreatedAt = DateTime.Now
+                });
+            }
+        }
+
+        private static async Task UpdateWaitingTimesAsync(CSDL_NE sqlContext, OracleDbContext oracleContext, CancellationToken ct)
+        {
+            // Lấy các record còn mở
+            var waitingLinks = await sqlContext.BonepileWaitings
+                .Where(w => w.Status == "WaitingLink" && w.TimeInLink == null)
+                .ToListAsync(ct);
+
+            foreach (var item in waitingLinks)
+            {
+                var r107 = await oracleContext.OracleDataR107
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(o => o.SERIAL_NUMBER == item.SerialNumber, ct);
+                if (r107 != null && (r107.WIP_GROUP ?? string.Empty).Contains("B31M") == false)
+                    item.TimeInLink = DateTime.Now;
+            }
+
+            var waitingKanbans = await sqlContext.BonepileWaitings
+                .Where(w => w.Status == "WaitingKanBanIn" && w.TimeInKanban == null)
+                .ToListAsync(ct);
+
+            foreach (var item in waitingKanbans)
+            {
+                var r107 = await oracleContext.OracleDataZKanbanTracking
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(o => o.SERIAL_NUMBER == item.SerialNumber, ct);
+
+                if (r107 != null)
+                {
+                    item.TimeInKanban = DateTime.Now;
+                }
+            }
+
+            await sqlContext.SaveChangesAsync(ct);
+        }
+    }
+}

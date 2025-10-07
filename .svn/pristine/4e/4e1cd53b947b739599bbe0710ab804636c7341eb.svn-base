@@ -1,0 +1,211 @@
+﻿$(document).ready(function () {
+    let pathHistory = []; // Mảng lưu lịch sử các đường dẫn
+
+    // Nội dung tiếp tục
+    function loadData(path) {
+        // Lưu đường dẫn hiện tại vào mảng trước khi tải đường dẫn mới
+        if (pathHistory.length === 0 || path !== pathHistory[pathHistory.length - 1]) {
+            pathHistory.push(path);
+        }
+
+        // xử lý hiển thị
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/get-data',
+            type: 'GET',
+            data: { path: path },
+            success: function (response) {
+                if (response && response.items && Array.isArray(response.items)) {
+                    $('#data-link').text(`Đường dẫn hiện tại: ${response.currentPath || 'Không xác định'}`);
+                    $('#data-cloud-results').empty();
+                    response.items.forEach(item => {
+                        const icon = item.type === "Folder" ? "fas fa-folder" : "fas fa-file";
+
+                        // Phần tử hiển thị file/folder
+                        const folderElement = $('<div>')
+                            .addClass('data-item d-flex align-items-center')
+                            .attr('custom-path', item.path) // Sử dụng custom-path
+                            .attr('custom-type', item.type) // Sử dụng custom-type
+                            .html(`
+                            <input type="checkbox" class="select-item me-2" custom-path="${item.path}" custom-type="${item.type}" />
+                            <i class="${icon} me-2"></i> ${item.name}
+                        `);
+
+                        $('#data-cloud-results').append(folderElement);
+                    });
+                } else {
+                    $('#data-cloud-results').html('<p style="color:wheat; font-size: 16px;">Không có dữ liệu để hiển thị.</p>');
+                }
+            },
+            error: function (xhr) {
+                alert(`Lỗi: ${xhr.responseText}`);
+            }
+        });
+    }
+
+    // Gắn sự kiện click cho file/folder sử dụng Event Delegation
+    $('#data-cloud-results').on('click', '.data-item', function (event) {
+        // Bỏ qua nếu click vào checkbox
+        if ($(event.target).hasClass('select-item')) {
+            return;
+        }
+
+        const itemPath = $(this).attr('custom-path'); // Dùng custom-path
+        const itemType = $(this).attr('custom-type'); // Dùng custom-type
+
+        if (itemType === "Folder") {
+            loadData(itemPath); // Tải dữ liệu nếu là thư mục
+        } else {
+            //alert(`Đây là file: ${itemPath}`);
+        }
+    });
+
+    // Ngăn checkbox kích hoạt hành động của parent
+    $('#data-cloud-results').on('click', '.select-item', function (event) {
+        event.stopPropagation(); // Ngăn chặn sự kiện lan ra các phần tử cha
+    });
+
+
+    // xử lý nút tạo folder
+    $('#add-folder-btn').click(function () {
+        const currentPath = $('#data-link').text().replace('Đường dẫn hiện tại: ', '').trim();
+        const folderName = prompt("Nhập tên folder mới:");
+
+        if (!folderName) {
+            alert("Tên folder không được để trống.");
+            return;
+        }
+
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/create-folder',
+            type: 'POST',
+            data: { path: currentPath, folderName: folderName },
+            success: function (response) {
+                alert(response.Message);
+                // Tải lại danh sách file và folder
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                alert(`Lỗi: ${xhr.responseText}`);
+            }
+        });
+    });
+
+    // Sự kiện click cho nút "Back"
+    $('#back-btn').click(function () {
+        if (pathHistory.length > 1) {
+            pathHistory.pop(); // Xóa đường dẫn hiện tại
+            const previousPath = pathHistory[pathHistory.length - 1]; // Lấy đường dẫn trước đó
+            loadData(previousPath); // Tải lại dữ liệu của thư mục trước đó
+        } else {
+            alert("Không có thư mục trước để quay lại!");
+        }
+    });
+
+    // Khi người dùng nhấn nút Tải lên
+    $('#upload-btn').click(function () {
+        $('#file-input').click(); // Mở hộp thoại chọn file
+    });
+
+
+    // Khi file được chọn
+    $('#file-input').change(function () {
+        const file = this.files[0];
+        if (!file) {
+            alert("Vui lòng chọn một file để tải lên!");
+            return;
+        }
+
+        const currentPath = $('#data-link').text().replace('Đường dẫn hiện tại: ', '').trim();
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', currentPath);
+
+        // Gửi file lên server
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/upload-file', // API endpoint xử lý upload
+            type: 'POST',
+            data: formData,
+            processData: false, // Không xử lý dữ liệu
+            contentType: false, // Không gắn Content-Type
+            success: function (response) {
+                alert(response.Message || "Tải lên file thành công!");
+                // Sau khi tải lên thành công, tải lại danh sách file/folder
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                alert(`Lỗi khi tải lên file: ${xhr.responseText}`);
+            }
+        });
+    });
+
+    //xử lý nút tải xuống
+
+    $('#download-btn').click(function () {
+        const selectedItems = [];
+        $('.select-item:checked').each(function () {
+            selectedItems.push({
+                path: $(this).attr('custom-path'),
+                type: $(this).attr('custom-type')
+            });
+        });
+
+        if (selectedItems.length === 0) {
+            alert('Vui lòng chọn ít nhất một file để tải xuống!');
+            return;
+        }
+
+        // Gửi yêu cầu tải xuống
+        selectedItems.forEach(item => {
+            if (item.type === 'File') {
+                // Tải xuống file
+                window.location.href = `/api/download-file?path=${encodeURIComponent(item.path)}`;
+            } else {
+                alert(`Thư mục "${item.path}" không thể tải xuống trực tiếp.`);
+            }
+        });
+    });
+
+    //xử lý nút xóa
+    $('#delete-btn').click(function () {
+        const selectedItems = [];
+        $('.select-item:checked').each(function () {
+            selectedItems.push({
+                path: $(this).attr('custom-path'),
+                type: $(this).attr('custom-type')
+            });
+        });
+
+        if (selectedItems.length === 0) {
+            alert('Vui lòng chọn ít nhất một file hoặc folder để xóa!');
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn xóa các mục đã chọn không?')) {
+            return;
+        }
+
+        // Gửi yêu cầu xóa
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/delete-items',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(selectedItems),
+            success: function (response) {
+                alert(response.Message || 'Xóa thành công!');
+                // Tải lại danh sách sau khi xóa
+                const currentPath = $('#data-link').text().replace('Đường dẫn hiện tại: ', '').trim();
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                alert(`Lỗi khi xóa: ${xhr.responseText}`);
+            }
+        });
+    });
+
+
+
+
+
+    // Gọi loadData() khi trang được tải
+    loadData('D:\\DataCloud'); // Đường dẫn mặc định
+});

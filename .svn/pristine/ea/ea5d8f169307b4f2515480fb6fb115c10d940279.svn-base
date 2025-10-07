@@ -1,0 +1,13 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.Scrap.Controllers
+{
+    public class ProgressController : Controller
+    {
+        [Area("Scrap")]
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}

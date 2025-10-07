@@ -1,0 +1,194 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.IO.Compression;
+
+namespace PESystem.Areas.DataCloud.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DataController : ControllerBase
+    {
+        // Lấy dữ liệu
+        [HttpGet("get-data")]
+        public IActionResult GetData(string path)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(path)) path = @"D:\DataCloud";
+
+                var folders = Directory.GetDirectories(path).Select(dir => new
+                {
+                    Name = Path.GetFileName(dir),
+                    Path = dir,
+                    Type = "Folder"
+                });
+
+                var files = Directory.GetFiles(path).Select(file => new
+                {
+                    Name = Path.GetFileName(file),
+                    Path = file,
+                    Type = "File"
+                });
+
+                var items = folders.Concat(files).ToList();
+
+                return Ok(new { CurrentPath = path, Items = items });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Tạo thư mục
+        [HttpPost("create-folder")]
+        public IActionResult CreateFolder([FromForm] string path, [FromForm] string folderName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(folderName)) return BadRequest("Tên thư mục không được để trống.");
+                string newFolderPath = Path.Combine(path, folderName);
+
+                if (Directory.Exists(newFolderPath)) return Conflict("Thư mục đã tồn tại.");
+                Directory.CreateDirectory(newFolderPath);
+
+                return Ok(new { Message = "Thư mục được tạo thành công.", FolderPath = newFolderPath });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Tải lên tệp
+        [HttpPost("upload-file")]
+        public IActionResult UploadFile([FromForm] List<IFormFile> files, [FromForm] string path)
+        {
+            try
+            {
+                if (files == null || !files.Any() || string.IsNullOrEmpty(path))
+                    return BadRequest("Tệp hoặc đường dẫn không hợp lệ!");
+
+                foreach (var file in files)
+                {
+                    var fullPath = Path.Combine(path, file.FileName);
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        file.CopyTo(stream);
+                    }
+                }
+
+                return Ok(new { Message = "Tệp đã được tải lên thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Tải lên thư mục
+        [HttpPost("upload-folder")]
+        public IActionResult UploadFolder([FromForm] List<IFormFile> files, [FromForm] string path)
+        {
+            try
+            {
+                if (files == null || !files.Any() || string.IsNullOrEmpty(path))
+                    return BadRequest("Thư mục hoặc đường dẫn không hợp lệ!");
+
+                foreach (var file in files)
+                {
+                    var relativePath = file.FileName; // webkitRelativePath từ client
+                    var fullPath = Path.Combine(path, relativePath);
+                    var directory = Path.GetDirectoryName(fullPath);
+
+                    if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        file.CopyTo(stream);
+                    }
+                }
+
+                return Ok(new { Message = "Thư mục đã được tải lên thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Tải xuống tệp
+        [HttpGet("download-file")]
+        public IActionResult DownloadFile(string path)
+        {
+            try
+            {
+                if (!System.IO.File.Exists(path)) return NotFound("Tệp không tồn tại!");
+
+                var fileName = Path.GetFileName(path);
+                var fileBytes = System.IO.File.ReadAllBytes(path);
+                return File(fileBytes, "application/octet-stream", fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Tải xuống thư mục
+        [HttpGet("download-folder")]
+        public IActionResult DownloadFolder(string path)
+        {
+            try
+            {
+                if (!Directory.Exists(path)) return NotFound("Thư mục không tồn tại!");
+
+                var folderName = Path.GetFileName(path);
+                var tempZipPath = Path.Combine(Path.GetTempPath(), $"{folderName}.zip");
+
+                if (System.IO.File.Exists(tempZipPath)) System.IO.File.Delete(tempZipPath);
+                ZipFile.CreateFromDirectory(path, tempZipPath);
+
+                var fileBytes = System.IO.File.ReadAllBytes(tempZipPath);
+                System.IO.File.Delete(tempZipPath);
+
+                return File(fileBytes, "application/zip", $"{folderName}.zip");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+
+        // Xóa tệp/thư mục
+        public class ItemModel
+        {
+            public string Path { get; set; }
+            public string Type { get; set; }
+        }
+
+        [HttpPost("delete-items")]
+        public IActionResult DeleteItems([FromBody] List<ItemModel> items)
+        {
+            try
+            {
+                foreach (var item in items)
+                {
+                    if (item.Type == "File" && System.IO.File.Exists(item.Path))
+                    {
+                        System.IO.File.Delete(item.Path);
+                    }
+                    else if (item.Type == "Folder" && Directory.Exists(item.Path))
+                    {
+                        Directory.Delete(item.Path, true);
+                    }
+                }
+                return Ok(new { Message = "Đã xóa thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi: {ex.Message}");
+            }
+        }
+    }
+}

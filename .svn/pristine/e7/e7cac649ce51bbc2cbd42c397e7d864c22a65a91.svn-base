@@ -1,0 +1,15 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.MaterialSystem.Controllers
+{
+    public class HomeController : Controller
+    {
+        [Area("MaterialSystem")]
+        [Authorize(Policy = "MaterialSystemAccess")]
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}

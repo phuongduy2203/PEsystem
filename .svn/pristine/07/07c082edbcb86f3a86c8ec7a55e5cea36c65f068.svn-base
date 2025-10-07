@@ -1,0 +1,281 @@
+﻿using API_WEB.ModelsDB;
+using API_WEB.ModelsOracle;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace API_WEB.Controllers.Repositories
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ExportController : ControllerBase
+    {
+        private readonly CSDL_NE _sqlContext;
+        private readonly OracleDbContext _oracleContext;
+        private readonly HttpClient _httpClient;
+
+        public ExportController(CSDL_NE sqlContext, OracleDbContext oracleContext, HttpClient httpClient)
+        {
+            _sqlContext = sqlContext ?? throw new ArgumentNullException(nameof(sqlContext));
+            _oracleContext = oracleContext ?? throw new ArgumentNullException(nameof(oracleContext));
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        }
+
+        [HttpPost("ExportSN")]
+        public async Task<IActionResult> Export([FromBody] RequestExport request)
+        {
+            if (request?.ExportPerson == null || request.SerialNumbers?.Any() != true)
+            {
+                return BadRequest(new { success = false, message = "Yêu cầu không hợp lệ. ExportPerson và SerialNumbers là bắt buộc." });
+            }
+
+            using var transaction = await _sqlContext.Database.BeginTransactionAsync();
+            try
+            {
+                var serialNumbers = request.SerialNumbers.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var productsToExport = await _sqlContext.Products
+                    .Where(p => serialNumbers.Contains(p.SerialNumber))
+                    .ToListAsync();
+
+                var existingExports = await _sqlContext.Exports
+                    .Where(e => serialNumbers.Contains(e.SerialNumber))
+                    .ToListAsync();
+                var existingExportSerials = existingExports
+                    .Select(e => e.SerialNumber)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var newSerials = serialNumbers
+                    .Except(existingExportSerials, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var now = DateTime.Now;
+                var exportPersonValue = request.IsScrap ? "Scrap" : request.ExportPerson;
+                // Auto export from KhoOk when exporting with B36R option
+                List<KhoOk> khoOkRecords = new();
+                List<LogKhoScrap> logEntries = new();
+                if (request.IsB36R)
+                {
+                    khoOkRecords = await _sqlContext.KhoOks
+                        .Where(k => serialNumbers.Contains(k.SERIAL_NUMBER))
+                        .ToListAsync();
+
+                    if (khoOkRecords.Any())
+                    {
+                        _sqlContext.KhoOks.RemoveRange(khoOkRecords);
+                        logEntries.AddRange(khoOkRecords.Select(k => new LogKhoScrap
+                        {
+                            Action = "EXPORT_KHO_OK",
+                            SerialNumber = k.SERIAL_NUMBER,
+                            User = exportPersonValue ?? string.Empty,
+                            Timestamp = DateTime.UtcNow
+                        }));
+                    }
+                }
+                var productDict = productsToExport
+                    .ToDictionary(p => p.SerialNumber, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var group in existingExports
+                    .GroupBy(e => e.SerialNumber, StringComparer.OrdinalIgnoreCase))
+                {
+                    var export = group.OrderBy(e => e.Id).First();
+                    if (group.Count() > 1)
+                    {
+                        _sqlContext.Exports.RemoveRange(group.Skip(1));
+                    }
+
+                    export.ExportPerson = exportPersonValue;
+                    export.ExportDate = now;
+                    export.CheckingB36R = request.IsB36R;
+
+                    if (productDict.TryGetValue(export.SerialNumber, out var prod))
+                    {
+                        export.ProductLine = prod.ProductLine;
+                        export.ModelName = prod.ModelName;
+                    }
+                }
+
+                var existingProductSerials = productsToExport.Select(p => p.SerialNumber).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var nonExistingSerials = newSerials.Except(existingProductSerials, StringComparer.OrdinalIgnoreCase).ToList();
+
+                var exportEntries = new List<Export>(newSerials.Count);
+
+                exportEntries.AddRange(productsToExport.Select(p => new Export
+                {
+                    SerialNumber = p.SerialNumber,
+                    ExportDate = now,
+                    ExportPerson = exportPersonValue,
+                    ProductLine = p.ProductLine,
+                    EntryDate = p.EntryDate,
+                    EntryPerson = p.EntryPerson,
+                    ModelName = p.ModelName,
+                    CheckingB36R = request.IsB36R
+                }));
+
+                if (nonExistingSerials.Any())
+                {
+                    var snInfoTasks = nonExistingSerials.Select(async sn =>
+                    {
+                        try
+                        {
+                            var response = await _httpClient.GetAsync($"http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber={sn}");
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var data = await response.Content.ReadFromJsonAsync<GetSNInfoResponse>();
+                                return (sn, ProductLine: data?.Success == true ? data.ProductLine : null, ModelName: data?.Success == true ? data.ModelName : null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Lỗi khi lấy GetSNInfo cho SN {sn}: {ex.Message}");
+                        }
+                        return (sn, ProductLine: null, ModelName: null);
+                    });
+
+                    var snInfos = await Task.WhenAll(snInfoTasks);
+
+                    exportEntries.AddRange(snInfos.Select(info => new Export
+                    {
+                        SerialNumber = info.sn,
+                        ExportDate = now,
+                        ExportPerson = exportPersonValue,
+                        ProductLine = info.ProductLine,
+                        EntryDate = now,
+                        EntryPerson = exportPersonValue,
+                        ModelName = info.ModelName,
+                        CheckingB36R = request.IsB36R
+                    }));
+                }
+
+                if (!exportEntries.Any() && !existingExports.Any())
+                {
+                    return BadRequest(new { success = false, message = "Không có serial numbers hợp lệ để xuất kho." });
+                }
+
+                if (exportEntries.Any())
+                {
+                    await _sqlContext.Exports.AddRangeAsync(exportEntries);
+                }
+
+                if (productsToExport.Any())
+                {
+                    _sqlContext.Products.RemoveRange(productsToExport);
+                }
+
+                await _sqlContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    totalUpdated = existingExports.Count,
+                    totalInserted = exportEntries.Count,
+                    updatedSerialNumbers = existingExports.Select(e => e.SerialNumber),
+                    insertedSerialNumbers = exportEntries.Select(e => e.SerialNumber),
+                    nonExistingSerials,
+                    removedFromProducts = productsToExport.Select(p => p.SerialNumber)
+                });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Lỗi hệ thống: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Đã xảy ra lỗi hệ thống." });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string? serialNumber)
+        {
+            var query = _sqlContext.Exports.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(serialNumber))
+            {
+                query = query.Where(e => EF.Functions.Like(e.SerialNumber, $"%{serialNumber}%"));
+            }
+
+            var data = await query
+                .OrderByDescending(e => e.Id)
+                .Take(100)
+                .ToListAsync();
+
+            return Ok(new { success = true, data });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Export export)
+        {
+            if (export == null || string.IsNullOrWhiteSpace(export.SerialNumber))
+            {
+                return BadRequest(new { success = false, message = "SerialNumber is required" });
+            }
+
+            export.ExportDate ??= DateTime.Now;
+            _sqlContext.Exports.Add(export);
+            await _sqlContext.SaveChangesAsync();
+
+            return Ok(new { success = true, data = export });
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Export update)
+        {
+            var export = await _sqlContext.Exports.FindAsync(id);
+            if (export == null)
+            {
+                return NotFound(new { success = false, message = "Export not found" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(update.SerialNumber))
+            {
+                export.SerialNumber = update.SerialNumber;
+            }
+
+            export.ExportDate = update.ExportDate ?? export.ExportDate;
+            export.ExportPerson = update.ExportPerson ?? export.ExportPerson;
+            export.ProductLine = update.ProductLine ?? export.ProductLine;
+            export.EntryDate = update.EntryDate ?? export.EntryDate;
+            export.EntryPerson = update.EntryPerson ?? export.EntryPerson;
+            export.ModelName = update.ModelName ?? export.ModelName;
+            export.CheckingB36R = update.CheckingB36R ?? export.CheckingB36R;
+
+            await _sqlContext.SaveChangesAsync();
+            return Ok(new { success = true, data = export });
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var export = await _sqlContext.Exports.FindAsync(id);
+            if (export == null)
+            {
+                return NotFound(new { success = false, message = "Export not found" });
+            }
+
+            _sqlContext.Exports.Remove(export);
+            await _sqlContext.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+
+        public class RequestExport
+        {
+            public string? ExportPerson { get; set; }
+            public List<string>? SerialNumbers { get; set; }
+            public bool IsScrap { get; set; }
+            public bool IsB36R { get; set; }
+        }
+
+        public class GetSNInfoResponse
+        {
+            public bool Success { get; set; }
+            public string? ProductLine { get; set; }
+            public string? ModelName { get; set; }
+        }
+
+
+
+    }
+}

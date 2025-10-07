@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace API_WEB.Models
+{
+    public partial class Product
+    {
+        public int ProductId { get; set; }
+        public string SerialNumber { get; set; } = null!;
+        public int? ShelfId { get; set; }
+        public int? ColumnNumber { get; set; }
+        public int? LevelNumber { get; set; }
+        public int? TrayNumber { get; set; }
+        public string BorrowStatus { get; set; } = null!;
+        public DateTime? EntryDate { get; set; }
+        public DateTime? BorrowDate { get; set; }
+        public string? BorrowPerson { get; set; }
+        public string? EntryPerson { get; set; }
+        public string? ProductLine { get; set; }
+        public int? PositionInTray { get; set; }
+        public string? ModelName { get; set; }
+    }
+}

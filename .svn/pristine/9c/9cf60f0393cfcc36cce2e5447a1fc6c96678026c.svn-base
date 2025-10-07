@@ -1,0 +1,152 @@
+﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Security;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
+[ApiController]
+[Route("api/[controller]")]
+public class RepairStatusController : ControllerBase
+{
+    public RepairStatusController()
+    {
+        // Bỏ qua kiểm tra chứng chỉ SSL
+        ServicePointManager.ServerCertificateValidationCallback =
+            new RemoteCertificateValidationCallback(delegate { return true; });
+    }
+
+    private static readonly HttpClientHandler _httpClientHandler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+    };
+
+    private readonly HttpClient _httpClient = new HttpClient(_httpClientHandler);
+
+    // Gọi tới API repair-status của IT
+    [HttpPost("repair-status")]
+    public async Task<IActionResult> UpdateRepairStatus([FromBody] RepairStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/repair_Status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Gọi tới API hand_over_status của IT
+    [HttpPost("hand-over-status")]
+    public async Task<IActionResult> UpdateHandOverStatus([FromBody] HandOverStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/hand_over_status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Gọi tới API receiving_status của IT
+    [HttpPost("receiving-status")]
+    public async Task<IActionResult> UpdateReceivingStatus([FromBody] ReceivingStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/receiving_status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Hàm dùng chung để gửi POST request
+    private async Task<IActionResult> SendPostRequest(string apiUrl, object payload)
+    {
+        try
+        {
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            // Gửi yêu cầu POST
+            var response = await _httpClient.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                return Ok(new { success = true, message = responseData });
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(new { success = false, message = error });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+}
+
+// Các lớp dữ liệu cho yêu cầu API
+public class RepairStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("status")]
+    public string? Status { get; set; }
+
+    [JsonProperty("emp_id")]
+    public string? EmployeeId { get; set; }
+
+    [JsonProperty("notes")]
+    public string? Notes { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+}
+
+public class HandOverStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("hand_over_status")]
+    public string? HandOverStatus { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+}
+
+public class ReceivingStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("owner")]
+    public string? Owner { get; set; }
+
+    [JsonProperty("location")]
+    public string? Location { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+}

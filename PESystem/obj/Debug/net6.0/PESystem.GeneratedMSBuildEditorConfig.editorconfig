@@ -1,0 +1,308 @@
+is_global = true
+build_property.TargetFramework = net6.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = PESystem
+build_property.RootNamespace = PESystem
+build_property.ProjectDir = D:\1.SourceCode - he thong\PESystem\PESystem\
+build_property.RazorLangVersion = 6.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\1.SourceCode - he thong\PESystem\PESystem
+build_property._RazorSourceGeneratorDebug = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/DCLC/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xEQ0xDXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/FailATE/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xGYWlsQVRFXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/HE/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xIRVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/Shared/layout_allpart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xTaGFyZWRcbGF5b3V0X2FsbHBhcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/ULT/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xVTFRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Allpart/Views/YRDCLC/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWxscGFydFxWaWV3c1xZUkRDTENcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/Bonepile2/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcQm9uZXBpbGUyXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/BonepileAfter/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcQm9uZXBpbGVBZnRlclxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/BonepileSummary/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcQm9uZXBpbGVTdW1tYXJ5XEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/Bonepile/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcQm9uZXBpbGVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/KhoB31/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcS2hvQjMxXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQm9uZXBpbGVcVmlld3NcU2hhcmVkXF9MYXlvdXRfQm9uZXBpbGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/CheckList/views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQ2hlY2tMaXN0XHZpZXdzXEhvbWVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/CheckList/views/ListIssue/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQ2hlY2tMaXN0XHZpZXdzXExpc3RJc3N1ZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/CheckList/views/Shared/layout_CheckList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQ2hlY2tMaXN0XHZpZXdzXFNoYXJlZFxsYXlvdXRfQ2hlY2tMaXN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DataCloud/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGF0YUNsb3VkXFZpZXdzXEhvbWVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DataCloud/Views/Shared/layout_dataCloud.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGF0YUNsb3VkXFZpZXdzXFNoYXJlZFxsYXlvdXRfZGF0YUNsb3VkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DDR/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRERSXFZpZXdzXEhvbWVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DDR/Views/Search/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRERSXFZpZXdzXFNlYXJjaFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DDR/Views/Shared/Layout_DDR.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRERSXFZpZXdzXFNoYXJlZFxMYXlvdXRfRERSLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/DDR/Views/Update/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRERSXFZpZXdzXFVwZGF0ZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/HassBi/Views/Detail/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSGFzc0JpXFZpZXdzXERldGFpbFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/HassBi/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSGFzc0JpXFZpZXdzXEhvbWVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/HassBi/Views/Shared/layout_BiHass.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSGFzc0JpXFZpZXdzXFNoYXJlZFxsYXlvdXRfQmlIYXNzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/MaterialSystem/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWF0ZXJpYWxTeXN0ZW1cVmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/MaterialSystem/Views/NhapXuatMuon/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWF0ZXJpYWxTeXN0ZW1cVmlld3NcTmhhcFh1YXRNdW9uXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/MaterialSystem/Views/Shared/Layout_material.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWF0ZXJpYWxTeXN0ZW1cVmlld3NcU2hhcmVkXExheW91dF9tYXRlcmlhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/MaterialSystem/Views/Tra/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWF0ZXJpYWxTeXN0ZW1cVmlld3NcVHJhXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/PDRepositories/Views/AddProduct/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUERSZXBvc2l0b3JpZXNcVmlld3NcQWRkUHJvZHVjdFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/PDRepositories/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUERSZXBvc2l0b3JpZXNcVmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/PDRepositories/Views/OutProduct/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUERSZXBvc2l0b3JpZXNcVmlld3NcT3V0UHJvZHVjdFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/PDRepositories/Views/SearchProduct/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUERSZXBvc2l0b3JpZXNcVmlld3NcU2VhcmNoUHJvZHVjdFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/PDRepositories/Views/Shared/_Layout_PD.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUERSZXBvc2l0b3JpZXNcVmlld3NcU2hhcmVkXF9MYXlvdXRfUEQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/AddProduct/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXEFkZFByb2R1Y3RcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/Export/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXEV4cG9ydFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXEhvbWVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/KhoOk/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXEtob09rXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/KhoScrap/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXEtob1NjcmFwXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/SearchProduct/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXFNlYXJjaFByb2R1Y3RcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUmVwb3NpdG9yaWVzXFZpZXdzXFNoYXJlZFxfTGF5b3V0X1JlcG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Function0/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcRnVuY3Rpb24wXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Function1/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcRnVuY3Rpb24xXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Function/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcRnVuY3Rpb25cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/MRB/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcTVJCXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Progress/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcUHJvZ3Jlc3NcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/Scrap/Views/Shared/Layout_scrap.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2NyYXBcVmlld3NcU2hhcmVkXExheW91dF9zY3JhcC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SearchData/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2VhcmNoRGF0YVxWaWV3c1xIb21lXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SearchData/Views/Shared/_Layout_Search_Data.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2VhcmNoRGF0YVxWaWV3c1xTaGFyZWRcX0xheW91dF9TZWFyY2hfRGF0YS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Analysis/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xBbmFseXNpc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/CheckIn/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xDaGVja0luXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/DiagramRE/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xEaWFncmFtUkVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Guide/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xHdWlkZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Handover/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xIYW5kb3ZlclxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xIb21lXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/RepairOwner/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xSZXBhaXJPd25lclxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Report/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xSZXBvcnRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/ReTestReport/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xSZVRlc3RSZXBvcnRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Search/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xTZWFyY2hcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xTaGFyZWRcX0xheW91dF9TbWFydEZBLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Areas/SmartFA/Views/StatisticsBGA/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU21hcnRGQVxWaWV3c1xTdGF0aXN0aWNzQkdBXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/AdminView/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5WaWV3XEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Auth/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxBY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Auth/ChangePassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxDaGFuZ2VQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Auth/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxSZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Auth/Reset.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxSZXNldC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Home/Home.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxIb21lLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Shared/_Layout_Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRfTG9naW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/1.SourceCode - he thong/PESystem/PESystem/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-4t98oz9gyh

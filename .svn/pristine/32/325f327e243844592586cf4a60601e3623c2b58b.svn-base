@@ -1,0 +1,219 @@
+﻿// Helper function to call API and handle errors
+async function fetchData(url, payload) {
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(response.statusText);
+        return await response.json();
+    } catch (error) {
+        console.error(`API Error: ${url}`, error);
+        return { success: false, data: [], totals: {} };
+    }
+}
+
+const TABLE_CONFIG = {
+    xoaR: {
+        headers: ["Owner", "Serial Number", "Model Name", "Test Group", "Test Code", "DATA1", "Repairer", "Repair Time", "Reason Code", "Error Item Code"],
+        fields: ["owner", "seriaL_NUMBER", "modeL_NAME", "tesT_GROUP", "tesT_CODE", "datA1", "repairer", "repaiR_TIME", "reasoN_CODE", "erroR_ITEM_CODE"]
+    },
+    XacNhanPhanTich: {
+        headers: ["Owner", "Serial Number", "Model Name", "Test Group", "Test Code", "DATA1", "Type", "Time Save", "Current Status", "Next Status", "Remark"],
+        fields: ["owner", "seriaL_NUMBER", "modeL_NAME", "tesT_GROUP", "tesT_CODE", "datA1", "type", "timE_SAVE", "currenT_STATUS", "nexT_STATUS", "remark"]
+    }
+};
+
+function renderTable(containerId, data, config, ownerFullNames) {
+    const container = document.getElementById(containerId);
+    if (!container || !data.length) return;
+
+    const tableHTML = `
+        <table border="1" style="width:100%;border-collapse:collapse;text-align:center;">
+            <thead><tr>${config.headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+            <tbody>${data.map(item => `
+                <tr>${config.fields.map(field => {
+        let value = item[field] || "";
+        if (field === "owner") value = ownerFullNames[value] || value;
+        return `<td title="${value}">${value.length > 50 ? `${value.substring(0, 50)}...` : value}</td>`;
+    }).join("")}</tr>`
+    ).join("")}</tbody>
+        </table>`;
+
+    container.innerHTML = tableHTML;
+}
+
+document.getElementById("searchBtn").addEventListener("click", async () => {
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+    if (!startDate || !endDate) return showWarning("Vui lòng chọn thời gian!");
+
+    try {
+        const [repair, confirm, summary] = await Promise.all([
+            fetchData("http://10.220.130.119:9090/api/SearchFA/get-repair-owner-data", { startDate, endDate }),
+            fetchData("http://10.220.130.119:9090/api/SearchFA/get-confirm-save-data", { startDate, endDate }),
+            fetchData("http://10.220.130.119:9090/api/SearchFA/get-summary-owner", { startDate, endDate })
+        ]);
+
+        const allOwners = new Set([...repair.data, ...confirm.data, ...summary.data].map(i => i.owner));
+        const ownerFullNames = await fetchOwnerFullNamesBatch([...allOwners]);
+
+        if (repair.success) renderTable("xoaR", repair.data, TABLE_CONFIG.xoaR, ownerFullNames);
+        if (confirm.success) renderTable("XacNhanPhanTich", confirm.data, TABLE_CONFIG.XacNhanPhanTich, ownerFullNames);
+        if (summary.success) renderSummaryTable(summary.data, summary.totals, ownerFullNames);
+    } catch (error) {
+        console.error("Lỗi xử lý:", error);
+        showError("Error!");
+    }
+});
+
+function renderSummaryTable(data, totals, ownerFullNames) {
+    const container = document.getElementById("summary_table");
+    if (!container || !data.length) return;
+
+    const tableHTML = `
+        <table border="1" style="width:100%;border-collapse:collapse;text-align:center;">
+            <thead>
+                <tr><th>Owner</th><th>Đã nhận</th><th>Xác nhận</th><th>Lưu phân tích</th><th>Xóa R</th></tr>
+            </thead>
+            <tbody>${data.map(item => `
+                <tr>
+                    <td>${ownerFullNames[item.owner] || item.owner}</td>
+                    <td>${item.nhan || 0}</td>
+                    <td>${item.confirm || 0}</td>
+                    <td>${item.save || 0}</td>
+                    <td>${item.repair || 0}</td>
+                </tr>`
+    ).join("")}</tbody>
+        </table>`;
+
+    container.innerHTML = tableHTML;
+    renderSummaryChart(totals);
+}
+
+function renderSummaryChart(totals) {
+    const container = document.getElementById("summaryChart");
+    if (!container || !totals) return;
+
+    const labels = ["Chuyển trạng thái", "Lưu phân tích", "Xóa R", "Nhận"];
+    const values = [
+        totals.total_CONFIRM || 0,
+        totals.total_SAVE || 0,
+        totals.total_REPAIR || 0,
+        totals.total_NHAN || 0
+    ];
+
+    Highcharts.chart('summaryChart', {
+        chart: {
+            type: 'column',
+            height: 400, // Tăng chiều cao
+            backgroundColor: '#ffffff',
+            animation: true
+        },
+        title: {
+            text: 'SẢN LƯỢNG',
+            align: 'center',
+            style: { color: '#2c3e50', fontSize: '20px', fontWeight: 'bold' }
+        },
+        xAxis: {
+            categories: labels,
+            labels: {
+                style: { color: '#333', fontSize: '14px', fontWeight: '500' },
+                formatter: function () {
+                    return this.value.length > 15 ? this.value.substring(0, 15) + '...' : this.value;
+                }
+            }
+        },
+        yAxis: {
+            title: { text: 'Số lượng', style: { color: '#333', fontSize: '14px' } },
+            labels: { style: { color: '#333' } },
+            tickInterval: 50
+        },
+        tooltip: {
+            shared: true,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            style: { color: '#fff', fontSize: '12px' }
+        },
+        legend: { enabled: false },
+        plotOptions: {
+            column: {
+                borderRadius: 8,
+                pointWidth: 60, // Cột rộng hơn
+                dataLabels: {
+                    enabled: true,
+                    style: { color: '#2c3e50', fontWeight: 'bold', textOutline: 'none' }
+                },
+                pointPadding: 0.1,
+                groupPadding: 0.1,
+                animation: {
+                    duration: 1000
+                }
+            }
+        },
+        series: [{
+            name: "Số lượng",
+            type: 'column',
+            data: values,
+            color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                    [0, '#FF9800'],
+                    [1, '#F57C00']
+                ]
+            }
+        }]
+    });
+}
+
+document.getElementById("PdStock-ExportExcel-btn").addEventListener("click", () => {
+    try {
+        // Khởi tạo workbook mới
+        const workbook = XLSX.utils.book_new();
+
+        // Tạo sheet cho summary_table
+        const summaryTable = document.getElementById("summary_table");
+        if (summaryTable) {
+            const summarySheet = XLSX.utils.table_to_sheet(summaryTable.querySelector("table"));
+            XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+        }
+
+        // Tạo sheet cho xoaR
+        const xoaRTable = document.getElementById("xoaR");
+        if (xoaRTable) {
+            const xoaRSheet = XLSX.utils.table_to_sheet(xoaRTable.querySelector("table"));
+            XLSX.utils.book_append_sheet(workbook, xoaRSheet, "Xóa R");
+        }
+
+        // Tạo sheet cho XacNhanPhanTich
+        const xacNhanPhanTichTable = document.getElementById("XacNhanPhanTich");
+        if (xacNhanPhanTichTable) {
+            const xacNhanPhanTichSheet = XLSX.utils.table_to_sheet(xacNhanPhanTichTable.querySelector("table"));
+            XLSX.utils.book_append_sheet(workbook, xacNhanPhanTichSheet, "Xác Nhận Phân Tích");
+        }
+
+        // Xuất file Excel
+        XLSX.writeFile(workbook, "ExportedData.xlsx");
+        showSuccess("Success!");
+    } catch (error) {
+        console.error("Lỗi khi xuất file Excel:", error);
+        showError("Error!");
+    }
+});
+
+
+
+async function fetchOwnerFullNamesBatch(ownerCodes) {
+    if (!ownerCodes.length) return {};
+    try {
+        const response = await fetch("http://10.220.130.119:9090/api/SearchFA/get-fullname-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(ownerCodes)
+        });
+        return response.ok ? (await response.json()).data : {};
+    } catch (error) {
+        console.error("Lỗi lấy tên:", error);
+        return {};
+    }
+}

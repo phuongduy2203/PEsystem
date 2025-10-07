@@ -1,0 +1,135 @@
+﻿using API_WEB.ModelsDB;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using static API_WEB.Controllers.MaterialSystem.MaterialSystemController;
+
+namespace API_WEB.Controllers.App
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ScanController : ControllerBase
+    {
+        private readonly CSDL_NE _sqlContext;
+
+        public ScanController(CSDL_NE sqlContext)
+        {
+            _sqlContext = sqlContext;
+        }
+        [HttpPost("scanSN")]
+        public async Task<IActionResult> SaveSerialNumber([FromBody] SerialNumberScanRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.SerialNumber))
+            {
+                return BadRequest(new { message = "SerialNumber is required." });
+            }
+
+            string sn = request.SerialNumber.Trim().ToUpper();
+
+            // Tìm SN trong DB
+            var existingLog = await _sqlContext.ScanLogs.FindAsync(sn);
+
+            if (existingLog != null)
+            {
+                // Nếu đã có thì update thời gian
+                existingLog.CreatedAt = DateTime.Now;
+                _sqlContext.ScanLogs.Update(existingLog);
+                await _sqlContext.SaveChangesAsync();
+                return Ok(new { message = "Serial number updated successfully." });
+            }
+            else
+            {
+                // Nếu chưa có thì insert mới
+                var log = new ScanLog
+                {
+                    SerialNumber = sn,
+                    CreatedAt = DateTime.Now
+                };
+                _sqlContext.ScanLogs.Add(log);
+                await _sqlContext.SaveChangesAsync();
+                return Ok(new { message = "Serial number saved successfully." });
+            }
+        }
+
+        [HttpPost("SearchBySN")]
+        public async Task<IActionResult> SearchBySN([FromBody] SerialNumberListScanRequest request)
+        {
+            try
+            {
+                // Kiểm tra request và danh sách serial number
+                if (request?.SerialNumber == null || !request.SerialNumber.Any())
+                {
+                    return BadRequest(new { message = "SerialNumber list is required and cannot be empty." });
+                }
+
+                // Tìm các bản ghi có SerialNumber nằm trong danh sách request.SerialNumber
+                var sumMaterials = await _sqlContext.ScanLogs
+                    .Where(sm => request.SerialNumber.Contains(sm.SerialNumber))
+                    .ToListAsync();
+
+                if (!sumMaterials.Any())
+                {
+                    return NotFound(new { message = "No records found for the given SerialNumbers." });
+                }
+
+                return Ok(sumMaterials);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while searching for materials.", error = ex.Message });
+            }
+        }
+
+        [HttpGet("count")]
+        public async Task<IActionResult> CountByCreatedAt([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            if (from.HasValue && to.HasValue && from > to)
+                return BadRequest(new { message = "`from` phải ≤ `to`" });
+
+            var query = _sqlContext.ScanLogs.AsNoTracking().AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(x => x.CreatedAt >= from.Value);
+
+            // dùng khoảng nửa mở [from, to) để tránh double count theo mili giây
+            if (to.HasValue)
+                query = query.Where(x => x.CreatedAt < to.Value);
+
+            var count = await query.CountAsync();
+            return Ok(new { count });
+        }
+
+        [HttpGet("found-count")]
+        public async Task<IActionResult> CountFoundItems([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            if (from.HasValue && to.HasValue && from > to)
+                return BadRequest(new { message = "`from` phải ≤ `to`" });
+
+            var query = _sqlContext.SearchListItems.AsNoTracking()
+                .Where(i => i.IsFound)
+                .Join(_sqlContext.ScanLogs.AsNoTracking(),
+                    item => item.SerialNumber,
+                    log => log.SerialNumber,
+                    (item, log) => log);
+
+            if (from.HasValue)
+                query = query.Where(x => x.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(x => x.CreatedAt < to.Value);
+
+            var count = await query.CountAsync();
+            return Ok(new { count });
+        }
+
+
+
+        public class SerialNumberScanRequest
+        {
+            public string SerialNumber { get; set; } = string.Empty;
+        }
+        public class SerialNumberListScanRequest
+        {
+            public List<string> SerialNumber { get; set; }
+        }
+    }
+}

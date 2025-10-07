@@ -1,0 +1,45 @@
+﻿using System;
+using System.Net.Mail;
+using System.Net;
+using System.Threading.Tasks;
+
+public class MailHelper
+{
+    private static string smtpServer = "10.134.28.95"; // SMTP Server bạn cung cấp
+    private static int smtpPort = 25; // Cổng mặc định (nếu khác thì sửa)
+    private static string fromEmail = "mbd-vn-pe-nvidia@mail.foxconn.com"; // Email gửi đi
+
+    public static async Task SendEmailAsync(string toEmails, string subject, string body)
+    {
+        try
+        {
+            using (var client = new SmtpClient(smtpServer, smtpPort))
+            {
+                client.UseDefaultCredentials = true; // Nếu SMTP không yêu cầu username/password
+                client.EnableSsl = false; // Đặt thành true nếu server cần SSL
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(fromEmail),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+
+                // Thêm danh sách người nhận (các email cách nhau bởi dấu phẩy)
+                foreach (var email in toEmails.Split(','))
+                {
+                    mailMessage.To.Add(email.Trim());
+                }
+
+                await client.SendMailAsync(mailMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error sending email: " + ex.Message);
+            Console.WriteLine($"Lỗi khi gửi email đến {toEmails}: {ex.Message}");
+            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        }
+    }
+}
