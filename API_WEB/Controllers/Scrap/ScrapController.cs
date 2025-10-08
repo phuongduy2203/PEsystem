@@ -37,6 +37,44 @@ namespace API_WEB.Controllers.Scrap
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        private void AddScrapHistory(IEnumerable<ScrapList> records)
+        {
+            if (records == null)
+            {
+                return;
+            }
+
+            var historyEntries = records
+                .Where(record => record != null)
+                .Select(record => new HistoryScrapList
+                {
+                    SN = record.SN,
+                    KanBanStatus = record.KanBanStatus,
+                    Sloc = record.Sloc,
+                    TaskNumber = record.TaskNumber,
+                    PO = record.PO,
+                    CreatedBy = record.CreatedBy,
+                    Cost = record.Cost,
+                    InternalTask = record.InternalTask,
+                    Desc = record.Desc,
+                    CreateTime = record.CreateTime,
+                    ApproveScrapperson = record.ApproveScrapperson,
+                    ApplyTaskStatus = record.ApplyTaskStatus,
+                    FindBoardStatus = record.FindBoardStatus,
+                    Remark = record.Remark,
+                    Purpose = record.Purpose,
+                    Category = record.Category,
+                    ApplyTime = record.ApplyTime,
+                    SpeApproveTime = record.SpeApproveTime
+                })
+                .ToList();
+
+            if (historyEntries.Count > 0)
+            {
+                _sqlContext.HistoryScrapLists.AddRange(historyEntries);
+            }
+        }
+
         // API INPUT-SN
         [HttpPost("input-sn")]
         public async Task<IActionResult> InputSN([FromBody] InputSNRequest request)
@@ -314,7 +352,8 @@ namespace API_WEB.Controllers.Scrap
                     message += $" Tuy nhiên, không tìm thấy dữ liệu từ API bên thứ ba cho các SN: {string.Join(", ", unmatchedSNs)}";
                 }
 
-                // Lưu thay đổi vào bảng ScrapList
+                // Ghi nhận lịch sử và lưu thay đổi vào bảng ScrapList
+                AddScrapHistory(validSNs);
                 await _sqlContext.SaveChangesAsync();
 
                 return Ok(new { message, internalTask = newInternalTask });
@@ -557,8 +596,9 @@ namespace API_WEB.Controllers.Scrap
                 if (request.SaveApplyStatus == "1")
                 {
                     var currentTime = DateTime.Now; // Lấy thời gian hiện tại
-                    var recordsToUpdate = _sqlContext.ScrapLists
-                        .Where(s => request.InternalTasks.Contains(s.InternalTask) && s.ApplyTaskStatus == 0);
+                    var recordsToUpdate = await _sqlContext.ScrapLists
+                        .Where(s => request.InternalTasks.Contains(s.InternalTask) && s.ApplyTaskStatus == 0)
+                        .ToListAsync();
 
                     foreach (var record in recordsToUpdate)
                     {
@@ -566,6 +606,7 @@ namespace API_WEB.Controllers.Scrap
                         record.ApplyTime = currentTime; // Cập nhật ApplyTime
                     }
 
+                    AddScrapHistory(recordsToUpdate);
                     await _sqlContext.SaveChangesAsync();
                 }
 
@@ -746,8 +787,9 @@ namespace API_WEB.Controllers.Scrap
                 if (request.SaveApplyStatus == "1")
                 {
                     var currentTime = DateTime.Now; // Lấy thời gian hiện tại
-                    var recordsToUpdate = _sqlContext.ScrapLists
-                        .Where(s => request.SNs.Contains(s.SN) && s.ApplyTaskStatus == 0);
+                    var recordsToUpdate = await _sqlContext.ScrapLists
+                        .Where(s => request.SNs.Contains(s.SN) && s.ApplyTaskStatus == 0)
+                        .ToListAsync();
 
                     foreach (var record in recordsToUpdate)
                     {
@@ -755,6 +797,7 @@ namespace API_WEB.Controllers.Scrap
                         record.ApplyTime = currentTime; // Cập nhật ApplyTime
                     }
 
+                    AddScrapHistory(recordsToUpdate);
                     await _sqlContext.SaveChangesAsync();
                 }
 
@@ -841,6 +884,7 @@ namespace API_WEB.Controllers.Scrap
                     record.ApplyTime = DateTime.Now;
                 }
 
+                AddScrapHistory(recordsToUpdate);
                 await _sqlContext.SaveChangesAsync();
 
                 return Ok(new { message = "Cập nhật TaskNumber và PO thành công cho các SN." });
@@ -931,6 +975,7 @@ namespace API_WEB.Controllers.Scrap
                     }
                 }
 
+                AddScrapHistory(recordsToUpdate);
                 await _sqlContext.SaveChangesAsync();
 
                 return Ok(new { message = "Cập nhật Cost thành công cho các Board SN." });
@@ -1170,6 +1215,7 @@ namespace API_WEB.Controllers.Scrap
                     record.FindBoardStatus = findBoardStatus;
                 }
 
+                AddScrapHistory(scrapRecords);
                 // Lưu thay đổi vào cơ sở dữ liệu
                 await _sqlContext.SaveChangesAsync();
 
@@ -1452,6 +1498,8 @@ namespace API_WEB.Controllers.Scrap
                 {
                     _sqlContext.ScrapLists.UpdateRange(updateSNs);
                 }
+
+                AddScrapHistory(scrapListEntries.Concat(updateSNs));
                 await _sqlContext.SaveChangesAsync();
 
                 string message = "Lưu danh sách SN thành công.";
@@ -1609,6 +1657,7 @@ namespace API_WEB.Controllers.Scrap
                     return Ok(new { message = "Không có bản ghi nào được cập nhật do trạng thái không hợp lệ." });
                 }
 
+                AddScrapHistory(updatedRecords);
                 // Lưu thay đổi vào cơ sở dữ liệu
                 await _sqlContext.SaveChangesAsync();
 
@@ -1713,6 +1762,7 @@ namespace API_WEB.Controllers.Scrap
                     record.ApplyTime = DateTime.Now; // Cập nhật thời gian áp dụng
                 }
 
+                AddScrapHistory(existingSNs);
                 await _sqlContext.SaveChangesAsync();
 
                 return Ok(new { message = "Cập nhật ApplyTaskStatus thành công cho danh sách SN." });
@@ -1906,6 +1956,7 @@ namespace API_WEB.Controllers.Scrap
 
                 // Lưu vào bảng ScrapList
                 _sqlContext.ScrapLists.AddRange(scrapListEntries);
+                AddScrapHistory(scrapListEntries);
                 await _sqlContext.SaveChangesAsync();
 
                 return Ok(new { message = $"Đã insert thành công {scrapListEntries.Count} SN vào bảng ScrapList." });
