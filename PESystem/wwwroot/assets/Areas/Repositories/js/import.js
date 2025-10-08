@@ -242,12 +242,9 @@
             const receiveResult = await receiveResponse.json();
             showInfo("Trạng thái nhận bản:" + receiveResult.message);
 
-<<<<<<< HEAD
-=======
             if (receiveResult.message.replace(/"/g, '') === "OK") {
                 location.reload();
             }
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
         } catch (error) {
             console.error("Lỗi khi xử lý yêu cầu:", error);
             showError("Error!");

@@ -3,13 +3,8 @@ let selectedSNs = new Set(); // Lưu các SN đã chọn (cho SEARCH_STATUS)
 
 // Hàm để ẩn tất cả các form và khu vực kết quả
 function hideAllElements() {
-<<<<<<< HEAD
-    const forms = ["task-stock-status-form", "search-status-form"]; // bo  "update-status-form",
-    const results = ["task-stock-status-result", "search-status-result"]; // "update-status-result",
-=======
     const forms = ["task-stock-status-form", "search-status-form", "search-history-form"]; // bo  "update-status-form",
     const results = ["task-stock-status-result", "search-status-result", "history-search-result"]; // "update-status-result",
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 
     forms.forEach(formId => {
         const form = document.getElementById(formId);
@@ -34,19 +29,13 @@ function hideAllElements() {
     const statusOptions = document.getElementById("status-options");
     const searchStatusUpdate = document.getElementById("search-status-update");
     const searchStatusOptions = document.getElementById("search-status-options");
-<<<<<<< HEAD
-=======
     const historySearchUpdate = document.getElementById("history-search-update");
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 
     if (snStatusUpdate) snStatusUpdate.value = "";
     if (statusOptions) statusOptions.selectedIndex = 0;
     if (searchStatusUpdate) searchStatusUpdate.value = "";
     if (searchStatusOptions) searchStatusOptions.selectedIndex = 0;
-<<<<<<< HEAD
-=======
     if (historySearchUpdate) historySearchUpdate.value = "";
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 }
 
 // Hàm tạo và tải xuống file Excel
@@ -74,8 +63,6 @@ function exportToExcel(noInternalTaskData, hasInternalTaskNoTaskNumberData, hasT
     XLSX.writeFile(workbook, filename);
 }
 
-<<<<<<< HEAD
-=======
 function exportHistoryToExcel(historyData, filename) {
     if (!Array.isArray(historyData) || !historyData.length) {
         throw new Error("No history data to export");
@@ -110,8 +97,6 @@ function exportHistoryToExcel(historyData, filename) {
 
     XLSX.writeFile(workbook, filename);
 }
-
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 // Hàm hiển thị bảng với phân trang
 function renderTableWithPagination(data, resultDiv, tableHeaders, rowTemplate, extraHtml = "", tableIdPrefix = "") {
     const rowsPerPage = 10; // Số dòng mỗi trang
@@ -473,8 +458,6 @@ async function searchStatus(searchType, searchValues) {
     }
 }
 
-<<<<<<< HEAD
-=======
 // Hàm gọi API và hiển thị bảng lịch sử cho HistoryScrapList theo danh sách SN
 async function searchHistoryBySN(snValues) {
     const resultDiv = document.getElementById("history-search-result");
@@ -604,8 +587,6 @@ async function searchHistoryBySN(snValues) {
         window.historySearchData = null;
     }
 }
-
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 // Ẩn tất cả các form và khu vực kết quả ngay lập tức khi trang tải
 hideAllElements();
 
@@ -637,12 +618,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }*/ else if (selectedValue === "SEARCH_STATUS") {
             document.getElementById("search-status-form").classList.remove("hidden");
             document.getElementById("search-status-result").classList.remove("hidden");
-<<<<<<< HEAD
-=======
         } else if (selectedValue === "SEARCH_HISTORY") {
             document.getElementById("search-history-form").classList.remove("hidden");
             document.getElementById("history-search-result").classList.remove("hidden");
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
         }
     });
 
@@ -875,9 +853,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error:", error);
         }
     });
-<<<<<<< HEAD
-});
-=======
 
     // Xử lý sự kiện khi nhấn nút "Search history" trong form SEARCH_HISTORY
     document.getElementById("history-search-btn").addEventListener("click", async function () {
@@ -947,4 +922,3 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
