@@ -1,6 +1,0 @@
-﻿@{
-    ViewData["Title"] = "Allpart DC-LC";
-}
-@{
-    Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
-}
