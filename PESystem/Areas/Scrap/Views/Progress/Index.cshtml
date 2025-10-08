@@ -17,6 +17,7 @@
                 <option value="TASK_STOCK_STATUS">Checking scrap quaterly</option>
                 <!--<option value="UPDATE_STATUS">UPDATE STATUS</option>-->
                 <option value="SEARCH_STATUS">Tìm kiếm</option>
+                <option value="SEARCH_HISTORY">Tra lịch sử SN</option>
             </select>
         </form>
     </div>
@@ -106,6 +107,22 @@
                 </div>
             </div>
         </form>
+
+        <!-- Form SEARCH HISTORY -->
+        <form id="search-history-form" method="post" class="hidden" data-search-type="SEARCH_HISTORY">
+            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
+                <div class="col-md-3">
+                    <textarea name="SN" id="history-search-update" class="form-control" rows="8" placeholder="Nhập SN cần tra lịch sử (mỗi dòng 1 SN)"></textarea>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-2">
+                        <label class="form-label">Tra cứu lịch sử SN</label>
+                        <p class="form-text">Nhập danh sách SN để xem lịch sử thay đổi từ HistoryScrapList.</p>
+                    </div>
+                    <button id="history-search-btn" class="md-2 btn btn-ne" type="button">Search history</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -117,6 +134,8 @@
     <div id="update-status-result" class="hidden"></div>-->
     <!--hiển thị của chức năng search data-->
     <div id="search-status-result" class="hidden"></div>
+    <!--hiển thị của chức năng history search-->
+    <div id="history-search-result" class="hidden"></div>
 </div>
 
 @section Scripts {
