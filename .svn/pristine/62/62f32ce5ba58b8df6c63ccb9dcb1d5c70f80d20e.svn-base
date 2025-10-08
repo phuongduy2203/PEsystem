@@ -1,0 +1,264 @@
+﻿@* File: Areas/Allpart/Views/ScanATestB/Index.cshtml *@
+@{
+    ViewData["Title"] = "Check ULT data";
+    Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
+}
+
+<link href="~/assets/css/YRDCLC.css" rel="stylesheet" />
+
+<div class="card shadow-sm">
+    <div class="card-header bg-nvidia-green text-white">
+        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin ULT</h1>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4 align-items-center">
+            <!-- Ô nhập danh sách SN/ULT -->
+            <div class="col-md-4">
+                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber/ULT"></textarea>
+            </div>
+
+            <!-- Chọn kiểu tra cứu -->
+            <div class="col-md-2">
+                <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
+                <select id="type-options" class="form-select">
+                    <option selected disabled>SELECT TYPE</option>
+                    <option value="SN">Tra cứu theo SN</option>
+                    <option value="ULT">Tra cứu theo ULT</option>
+                </select>
+            </div>
+
+            <!-- Chế độ hiển thị: ALL vs NEWEST -->
+            <div class="col-md-2">
+                <label for="view-mode" class="form-label">Chế độ hiển thị</label>
+                <select id="view-mode" class="form-select" title="Chọn dữ liệu cho bảng và xuất Excel">
+                    <option value="all" selected>Tất cả dữ liệu</option>
+                    <option value="latest">Kết quả mới nhất (mỗi SN)</option>
+                </select>
+            </div>
+
+            <!-- Nút hành động -->
+            <div class="col-md-2 d-flex flex-column gap-2">
+                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="table-responsive align-items-center">
+                <table id="ULTDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>MODEL_NAME</th>
+                            <th>GROUP_NAME</th>
+                            <th>TEST_TIME</th>
+                            <th>ULT</th>
+                            <th>STATION_NAME</th>
+                            <th>TEST_RESULT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ULTDataTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // === State ===
+        let rawResults = [];   // Dữ liệu gốc từ API
+        let tableData = [];   // Dữ liệu đang hiển thị / export
+        let dataTable;         // Tham chiếu DataTable
+
+        // === Tooltip helpers ===
+        function createTooltipCell(data) {
+            const v = data ?? '';
+            return `<span class="tooltip-trigger" data-tooltip="${escapeHtml(String(v))}">${escapeHtml(String(v))}</span>`;
+        }
+        function attachTooltipEvents() {
+            document.querySelectorAll('.tooltip-trigger').forEach(el => {
+                if (el.dataset.tooltipBound) return;
+                el.addEventListener('mouseover', (e) => {
+                    let tip = document.querySelector('.custom-tooltip');
+                    if (!tip) {
+                        tip = document.createElement('div');
+                        tip.className = 'custom-tooltip';
+                        document.body.appendChild(tip);
+                    }
+                    tip.textContent = el.getAttribute('data-tooltip') || '';
+                    tip.style.display = 'block';
+                    tip.style.left = (e.pageX + 10) + 'px';
+                    tip.style.top = (e.pageY - 20) + 'px';
+                });
+                el.addEventListener('mousemove', (e) => {
+                    const tip = document.querySelector('.custom-tooltip');
+                    if (tip) {
+                        tip.style.left = (e.pageX + 10) + 'px';
+                        tip.style.top = (e.pageY - 20) + 'px';
+                    }
+                });
+                el.addEventListener('mouseout', () => {
+                    const tip = document.querySelector('.custom-tooltip');
+                    if (tip) tip.style.display = 'none';
+                });
+                el.dataset.tooltipBound = '1';
+            });
+        }
+
+        // Tránh XSS trong tooltip/cell
+        function escapeHtml(s) {
+            return s
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        // === Date helpers ===
+        function formatDateTime(dateTime) {
+            if (!dateTime) return '';
+            const d = new Date(dateTime);
+            if (isNaN(d.getTime())) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}/${m}/${day}`;
+        }
+        function toTime(row) {
+            const t = Date.parse(row?.TEST_TIME);
+            return !Number.isNaN(t) ? t : -Infinity;
+        }
+
+        function getLatestPerSN(items) {
+            const bySn = new Map();
+            for (const it of items) {
+                const sn = (it?.SERIAL_NUMBER ?? '').trim();
+                const key = sn || `__NO_SN__${Math.random().toString(36).slice(2)}`;
+                const cur = bySn.get(key);
+                if (!cur) {
+                    bySn.set(key, it);
+                } else {
+                    if (toTime(it) > toTime(cur)) bySn.set(key, it);
+                }
+            }
+            return Array.from(bySn.values());
+        }
+
+        // === Render ===
+        function renderTable(rows) {
+            if (!dataTable) return;
+            dataTable.clear();
+            rows.forEach(r => {
+                dataTable.row.add([
+                    createTooltipCell(r.SERIAL_NUMBER ?? ''),
+                    createTooltipCell(r.MODEL_NAME ?? ''),
+                    createTooltipCell(r.GROUP_NAME ?? ''),
+                    createTooltipCell(r.TEST_TIME ?? ''),
+                    createTooltipCell(r.ULT ?? ''),
+                    createTooltipCell(r.STATION_NAME ?? ''),
+                    createTooltipCell(r.TEST_RESULT ?? '')
+                ]);
+            });
+            dataTable.draw();
+            attachTooltipEvents();
+        }
+        function applyViewAndRender() {
+            const mode = document.getElementById('view-mode').value;
+            if (mode === 'latest') {
+                tableData = getLatestPerSN(rawResults);
+            } else {
+                tableData = [...rawResults];
+            }
+            renderTable(tableData);
+        }
+
+        // === Search ===
+        async function search() {
+            const inputRaw = document.getElementById('serialNumber').value.trim();
+            const typeOption = document.getElementById('type-options').value;
+
+            if (!inputRaw) { alert('Vui lòng nhập ít nhất một giá trị.'); return; }
+            if (!typeOption || typeOption === 'SELECT TYPE') { alert('Vui lòng chọn kiểu tra cứu.'); return; }
+
+            const inputList = inputRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            if (inputList.length === 0) { alert('Danh sách trống.'); return; }
+
+            // Loading overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `<div class="spinner"></div><div>Đang tải dữ liệu, vui lòng chờ...</div>`;
+            document.body.appendChild(overlay);
+
+            try {
+                let allResults = [];
+                const batchSize = 100;
+                const url = 'http://localhost:5025/api/SFC/search-ult-data';
+
+                for (let i = 0; i < inputList.length; i += batchSize) {
+                    const batch = inputList.slice(i, i + batchSize);
+                    const body = {
+                        type: typeOption,
+                        data: batch
+                    };
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) throw new Error(`Lỗi API: ${res.status} - ${await res.text()}`);
+                    const json = await res.json();
+                    if (!Array.isArray(json)) throw new Error('Dữ liệu trả về không hợp lệ.');
+                    allResults = allResults.concat(json);
+                }
+
+                rawResults = allResults;
+                if (rawResults.length === 0) {
+                    alert('Không tìm thấy dữ liệu cho các thông tin đã nhập.');
+                }
+                applyViewAndRender();
+            } catch (err) {
+                alert(`Đã xảy ra lỗi: ${err.message}`);
+            } finally {
+                overlay.remove();
+            }
+        }
+
+        // === Export ===
+        function downloadExcel() {
+            if (!tableData || tableData.length === 0) {
+                alert('Không có dữ liệu để xuất Excel.');
+                return;
+            }
+            const ws = XLSX.utils.json_to_sheet(tableData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ULTData');
+
+            // Widths (tham khảo theo thứ tự cột)
+            ws['!cols'] = [
+                { wch: 22 }, // SERIAL_NUMBER
+                { wch: 15 }, // MODEL_NAME
+                { wch: 12 }, // GROUP_NAME
+                { wch: 20 }, // TEST_TIME
+                { wch: 20 }, // ULT
+                { wch: 30 }, // STATION_NAME
+                { wch: 18 }  // TEST_RESULT
+            ];
+            XLSX.writeFile(wb, 'ULTData.xlsx');
+        }
+
+        // === Init ===
+        $(document).ready(function () {
+            dataTable = $('#ULTDataTable').DataTable({
+                pageLength: 10,
+                scrollX: true,
+                responsive: true,
+                fixedHeader: true
+            });
+
+            // Thay đổi chế độ hiển thị -> render lại từ rawResults
+            $('#view-mode').on('change', applyViewAndRender);
+        });
+    </script>
+}

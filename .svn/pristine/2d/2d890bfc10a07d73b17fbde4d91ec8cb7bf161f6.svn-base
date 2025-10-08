@@ -1,0 +1,12 @@
+﻿@* File: Index.cshtml *@
+@{
+    ViewData["Title"] = "Material Area";
+    Layout = "~/Areas/MaterialSystem/views/Shared/Layout_material.cshtml";
+}
+
+
+
+@section Scripts {
+    
+}
+

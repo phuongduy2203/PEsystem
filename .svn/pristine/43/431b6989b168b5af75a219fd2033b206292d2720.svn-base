@@ -1,0 +1,264 @@
+﻿@{
+    ViewData["Title"] = "KHO RE";
+}
+@{
+    Layout = "~/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml";
+}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <!-- Cột chọn loại tìm kiếm -->
+        <div class="col-md-2">
+            <form id="search-form" class="form-inline">
+                <select id="search-options" class="form-select">
+                    <option selected disabled>TÌM KIẾM</option>
+                    <option value="SEARCH_SN">SERIAL NUMBER</option>
+                    <option value="SEARCH_CUSTOM">TÙY CHỌN</option>
+                    <option value="HISTORY_BORROW">LỊCH SỬ MƯỢN</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Cột form nhập liệu -->
+        <div class="col-md-10">
+            <!-- Form tìm kiếm SN -->
+            <form id="input-sn-form" method="post" class="hidden" data-search-type="SEARCH_SN">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <textarea name="serialNumbers" id="sn-input" class="form-control" rows="3" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="submit-sn-btn" class="btn btn-ne" type="button">Tìm kiếm</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Form tìm kiếm nâng cao -->
+            <form id="custom-form" method="post" class="hidden" data-search-type="SEARCH_CUSTOM">
+                <div class="row align-items-end">
+                    <div class="col-md-2">
+                        <select id="wipGroup-select" class="form-select" multiple>
+                            <option value="">ALL</option>
+                            <!-- Tùy chọn động từ JS -->
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input name="testCode" id="testCode" class="form-control" placeholder="Test Code">
+                    </div>
+                    <div class="col-md-2">
+                        <input name="data1" id="data1" class="form-control" placeholder="Error Description">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="modelName-select" class="form-select" multiple>
+                            <option value="">ALL</option>
+                            <!-- Tùy chọn động từ JS -->
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="borrowStatus" id="borrowStatus" class="form-control">
+                            <option value="">Trạng thái mượn</option>
+                            <option value="Borrowed">Đang mượn</option>
+                            <option value="Available">Có sẵn</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="advanced-search-btn" class="btn btn-ne" type="button">Tìm kiếm</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Form lịch sử mượn -->
+            <form id="history-borrow-form" method="post" class="hidden" data-search-type="HISTORY_BORROW">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <textarea name="serialNumbers" id="history-borrow-sn-input" class="form-control" rows="3" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="history-search-btn" class="btn btn-ne" type="button">Tìm kiếm</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nút hành động -->
+    <div id="button-action" class="row mb-3 hidden">
+        <div class="col-md-4 d-flex justify-content-between align-items-center">
+            <button id="update-note-btn" class="btn btn-ne" disabled>Ghi chú</button>
+            <button id="borrow-btn" class="btn btn-ne" disabled>Cho mượn</button>
+            <span id="total-results" class="alert btn-ne">Kết quả: 0</span>
+        </div>
+    </div>
+
+    <!-- Bảng kết quả -->
+    <div id="search-results" class="mt-2" style="display: none;">
+        <div class="datatable-wrapper">
+            <div class="d-flex mb-2">
+                <img class="hidden" id="export-excel-btn" src="~/assets/img/excel.png" alt="Excel Icon" style="width: 40px;" title="Xuất Excel (Tìm kiếm nâng cao)">
+                <img class="hidden" id="export-sn-excel-btn" src="~/assets/img/excel.png" alt="Excel Icon" style="width: 40px;" title="Xuất Excel (Tìm kiếm SN)">
+            </div>
+            <table class="datatable-table table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="checkbox-sn"><input type="checkbox" id="select-all-checkbox" /></th>
+                        <th>Serial Number</th>
+                        <th>Product Line</th>
+                        <th>Model Name</th>
+                        <th>Mo Number</th>
+                        <th>WIP Group</th>
+                        <th>Test Group</th>
+                        <th>Reason Code</th>
+                        <th>Data1</th>
+                        <th>Test Code</th>
+                        <th>KANBAN WIP</th>
+                        <th>Kệ</th>
+                        <th>Cột</th>
+                        <th>Tầng</th>
+                        <th>Khay</th>
+                        <th>Ô</th>
+                        <th>Ngày nhập</th>
+                        <th>Người nhập</th>
+                        <th>Mượn</th>
+                        <th>Ngày mượn</th>
+                        <th>Người mượn</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+        <div id="pagination" class="mt-2 text-center">
+            <button id="prev-page-btn" class="btn btn-ne" style="display: none;">Trang trước</button>
+            <span id="pagination-info" class="mx-3">Trang 1/1</span>
+            <button id="next-page-btn" class="btn btn-ne" style="display: none;">Trang tiếp</button>
+        </div>
+    </div>
+
+    <!-- Bảng lịch sử mượn -->
+    <div id="result-history" class="mt-2" style="display: none;">
+        <table id="history-borrow-table" class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Serial Number</th>
+                    <th>Product Line</th>
+                    <th>Model Name</th>
+                    <th>Borrow Date</th>
+                    <th>Borrow Person</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal Ghi chú -->
+    <div id="update-note-modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cập nhật ghi chú</h5>
+                    <button type="button" class="btn-ne" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="note-input" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="confirm-update-note-btn" class="btn btn-ne">Xác nhận</button>
+                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cho mượn -->
+    <div id="borrow-modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập thông tin người mượn</h5>
+                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="borrower-name" class="form-label">Tên người mượn</label>
+                        <input type="text" id="borrower-name" class="form-control" placeholder="Nhập tên người mượn">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="confirm-borrow" class="btn btn-ne">Xác nhận</button>
+                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById("search-options").addEventListener("change", function () {
+    const forms = ["input-sn-form", "custom-form", "history-borrow-form"];
+    forms.forEach(formId => document.getElementById(formId).classList.add("hidden"));
+    const selectedForm = this.value === "SEARCH_SN" ? "input-sn-form" :
+                        this.value === "SEARCH_CUSTOM" ? "custom-form" :
+                        "history-borrow-form";
+    document.getElementById(selectedForm).classList.remove("hidden");
+    document.getElementById("search-results").style.display = "none";
+    document.getElementById("result-history").style.display = "none";
+    document.getElementById("button-action").classList.add("hidden");
+});
+</script>
+
+<style>
+    .hidden {
+        display: none;
+    }
+        .datatable-wrapper {
+        max-width: 100%;
+        overflow-x: auto; /* Kích hoạt cuộn ngang */
+    }
+    /* Đảm bảo hàng tiêu đề cố định khi cuộn */
+    .datatable-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #343a40; /* Màu nền của header (table-dark) */
+        z-index: 1; /* Đảm bảo header nằm trên nội dung */
+    }
+
+    /* Cố định cột checkbox (cột 1) và cột SN (cột 2) */
+    .datatable-table th:nth-child(1),
+    .datatable-table td:nth-child(1),
+    .datatable-table th:nth-child(2),
+    .datatable-table td:nth-child(2) {
+        position: sticky;
+        left: 0;
+        background-color: #343a40; /* Màu nền giống header cho th */
+        z-index: 2; /* Đảm bảo cột cố định nằm trên các cột khác */
+    }
+
+    /* Đảm bảo nội dung của cột checkbox và SN có màu tương phản */
+    .datatable-table td:nth-child(1),
+    .datatable-table td:nth-child(2) {
+        background-color: #fff; /* Màu nền trắng cho td */
+        z-index: 2;
+    }
+
+    /* Xử lý viền khi các cột cố định */
+    .datatable-table th:nth-child(1),
+    .datatable-table td:nth-child(1),
+    .datatable-table th:nth-child(2),
+    .datatable-table td:nth-child(2) {
+        border-right: 2px solid #dee2e6; /* Viền phải để phân tách cột cố định */
+    }
+
+    /* Điều chỉnh vị trí để cột checkbox và SN không chồng lấn */
+    .datatable-table th:nth-child(1),
+    .datatable-table td:nth-child(1) {
+        left: 0; /* Cột checkbox giữ vị trí đầu tiên */
+    }
+
+    .datatable-table th:nth-child(2),
+    .datatable-table td:nth-child(2) {
+        left: 50px; /* Điều chỉnh vị trí để cột SN nằm sau cột checkbox (50px là chiều rộng ước lượng của cột checkbox) */
+    }
+</style>
+
+@section Scripts {
+    <script src="~/assets/areas/repositories/js/search.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/areas/repositories/js/searchhistoryborrow.js?v=@DateTime.Now.Ticks"></script>
+}

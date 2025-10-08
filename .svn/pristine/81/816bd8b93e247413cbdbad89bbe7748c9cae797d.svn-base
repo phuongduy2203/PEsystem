@@ -1,0 +1,379 @@
+﻿$(document).ready(function () {
+    let pathHistory = ['D:\\DataCloud']; // Khởi tạo với đường dẫn mặc định
+    let selectedItem = null; // Lưu thông tin item được click chuột phải
+
+    // Hàm chuẩn hóa đường dẫn
+    function normalizePath(path) {
+        return path
+            .replace(/\\+/g, '\\') // Loại bỏ dấu \\ thừa
+            .replace(/\\$/, '') // Loại bỏ \\ ở cuối
+            .replace(/^D:\\DataCloud\\DataCloud/, 'D:\\DataCloud'); // Loại bỏ lặp DataCloud
+    }
+
+    // Tải dữ liệu từ server (bình thường)
+    function loadData(path) {
+        path = normalizePath(path); // Chuẩn hóa trước khi gửi
+        console.log("Gửi yêu cầu với đường dẫn:", path);
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/data/get-data', // Sử dụng localhost:5050 từ hình ảnh
+            type: 'GET',
+            data: { path: path },
+            success: function (response) {
+                console.log("Phản hồi từ server:", response);
+                if (response && response.items && Array.isArray(response.items)) { // Sửa từ response.items thành response.Items
+                    updateBreadcrumb(response.currentPath); // Sửa từ response.currentPath thành response.CurrentPath
+                    $('#data-cloud-items').empty(); // Sử dụng #data-cloud-items để hiển thị file/folder
+                    response.items.forEach(item => {
+                        const icon = item.type === "Folder" ? "fas fa-folder" : "fas fa-file"; // Sửa item.type thành item.Type
+                        const colElement = $('<div>').addClass('col');
+                        const itemElement = $('<div>')
+                            .addClass('data-item')
+                            .attr('custom-path', normalizePath(item.path)) // Sửa item.path thành item.Path
+                            .attr('custom-type', item.type) // Sửa item.type thành item.Type
+                            .html(`
+                                <i class="${icon}"></i>
+                                <span>${item.name}</span> <!-- Sử dụng item.Name thay vì item.name -->
+                            `);
+                        colElement.append(itemElement);
+                        $('#data-cloud-items').append(colElement);
+                    });
+                } else {
+                    $('#data-cloud-items').html('<p class="text-muted">Không có dữ liệu để hiển thị.</p>');
+                }
+            },
+            error: function (xhr) {
+                console.error("Lỗi AJAX:", xhr.status, xhr.responseText);
+                alert(`Không tìm thấy thư mục: ${path}. Vui lòng kiểm tra lại đường dẫn. (Lỗi: ${xhr.status} - ${xhr.responseText})`);
+            }
+        });
+    }
+
+    // Tìm kiếm dữ liệu
+    function searchData(keyword) {
+        const currentPath = normalizePath(pathHistory[pathHistory.length - 1]);
+        if (!keyword || keyword.trim() === '') {
+            loadData(currentPath); // Nếu không có từ khóa, tải dữ liệu bình thường
+            return;
+        }
+
+        console.log("Gửi yêu cầu tìm kiếm với từ khóa:", keyword);
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/data/search',
+            type: 'GET',
+            data: {
+                keyword: keyword,
+                path: currentPath // Giới hạn tìm kiếm trong thư mục hiện tại
+            },
+            success: function (response) {
+                console.log("Phản hồi từ server khi tìm kiếm:", response);
+                if (response && response.items && Array.isArray(response.items)) { // Sửa từ response.items thành response.Items
+                    updateBreadcrumb('Search Results'); // Cập nhật breadcrumb khi tìm kiếm
+                    $('#data-cloud-items').empty();
+                    if (response.items.length === 0) {
+                        $('#data-cloud-items').html('<p class="text-muted">Không tìm thấy kết quả.</p>');
+                    } else {
+                        response.items.forEach(item => {
+                            const icon = item.type === "Folder" ? "fas fa-folder" : "fas fa-file"; // Sửa item.type thành item.Type
+                            const colElement = $('<div>').addClass('col');
+                            const itemElement = $('<div>')
+                                .addClass('data-item')
+                                .attr('custom-path', normalizePath(item.path)) // Sửa item.path thành item.Path
+                                .attr('custom-type', item.type) // Sửa item.type thành item.Type
+                                .html(`
+                                    <i class="${icon}"></i>
+                                    <span>${item.name}</span> <!-- Sử dụng item.Name thay vì item.name -->
+                                `);
+                            colElement.append(itemElement);
+                            $('#data-cloud-items').append(colElement);
+                        });
+                    }
+                } else {
+                    $('#data-cloud-items').html('<p class="text-muted">Không có dữ liệu để hiển thị.</p>');
+                }
+            },
+            error: function (xhr) {
+                console.error("Lỗi tìm kiếm:", xhr.status, xhr.responseText);
+                alert(`Lỗi khi tìm kiếm: ${xhr.status} - ${xhr.responseText}`);
+            }
+        });
+    }
+
+    // Cập nhật breadcrumb
+    function updateBreadcrumb(path) {
+        path = normalizePath(path);
+        const parts = path.split('\\').filter(p => p); // Tách các phần của đường dẫn
+        let breadcrumbHtml = '<a href="#" data-path="D:\\DataCloud">Home</a>';
+        let currentPath = 'D:\\DataCloud';
+
+        if (path !== 'Search Results') {
+            for (let i = 1; i < parts.length; i++) {
+                if (parts[i] === 'D:') continue;
+                currentPath = `${currentPath}\\${parts[i]}`;
+                breadcrumbHtml += ` > <a href="#" data-path="${currentPath}">${parts[i]}</a>`;
+            }
+        } else {
+            breadcrumbHtml += ` > <span>Search Results</span>`;
+        }
+        $('#breadcrumb').html(breadcrumbHtml);
+    }
+
+    // Hiển thị menu ngữ cảnh
+    function showContextMenu(event, item) {
+        event.preventDefault(); // Ngăn hành vi mặc định của click chuột phải
+        selectedItem = item; // Lưu item được chọn
+
+        const contextMenu = $('#context-menu');
+        const menuWidth = contextMenu.outerWidth();
+        const menuHeight = contextMenu.outerHeight();
+        const windowWidth = $(window).width();
+        const windowHeight = $(window).height();
+
+        // Lấy vị trí click chuột dựa trên viewport
+        let posX = event.clientX;
+        let posY = event.clientY;
+
+        // Điều chỉnh vị trí nếu menu vượt ra ngoài màn hình
+        if (posX + menuWidth > windowWidth) {
+            posX -= menuWidth; // Hiển thị menu bên trái điểm click
+        }
+        if (posY + menuHeight > windowHeight) {
+            posY -= menuHeight; // Hiển thị menu phía trên điểm click
+        }
+
+        // Đảm bảo menu không bị lệch ra ngoài mép trái hoặc trên
+        if (posX < 0) posX = 0;
+        if (posY < 0) posY = 0;
+
+        // Đặt vị trí cho menu và hiển thị với hiệu ứng
+        contextMenu.css({
+            top: posY + 'px',
+            left: posX + 'px'
+        }).show().addClass('show');
+    }
+
+    // Ẩn menu khi click bên ngoài
+    $(document).click(function (e) {
+        if (!$(e.target).closest('.context-menu').length && !$(e.target).closest('.data-item').length) {
+            $('#context-menu').hide();
+        }
+    });
+
+    // Xử lý hành động từ menu ngữ cảnh
+    $('#context-menu').on('click', '.context-menu-item', function () {
+        const action = $(this).data('action');
+        if (selectedItem) {
+            const path = selectedItem.attr('custom-path');
+            const type = selectedItem.attr('custom-type');
+
+            if (action === 'download') {
+                if (type === 'File') {
+                    window.location.href = `http://10.220.130.119:8000/api/data/download-file?path=${encodeURIComponent(path)}`;
+                } else if (type === 'Folder') {
+                    window.location.href = `http://10.220.130.119:8000/api/data/download-folder?path=${encodeURIComponent(path)}`;
+                }
+            } else if (action === 'delete') {
+                if (confirm('Bạn có chắc chắn muốn xóa mục này không?')) {
+                    $.ajax({
+                        url: 'http://10.220.130.119:8000/api/data/delete-items',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify([{ path: path, type: type }]),
+                        success: function (response) {
+                            alert(response.Message);
+                            loadData(normalizePath(pathHistory[pathHistory.length - 1]));
+                        },
+                        error: function (xhr) {
+                            console.error("Lỗi xóa:", xhr.status, xhr.responseText);
+                            alert(`Lỗi: ${xhr.status} - ${xhr.responseText}`);
+                        }
+                    });
+                }
+            }
+            $('#context-menu').hide(); // Ẩn menu sau khi thực hiện hành động
+        }
+    });
+
+    // Sự kiện click chuột phải vào data-item
+    $('#data-cloud-items').on('contextmenu', '.data-item', function (e) {
+        showContextMenu(e, $(this));
+    });
+
+    // Sự kiện click vào breadcrumb
+    $('#breadcrumb').on('click', 'a', function (e) {
+        e.preventDefault();
+        const path = normalizePath($(this).data('path'));
+        const index = pathHistory.indexOf(path);
+        if (index !== -1) {
+            pathHistory = pathHistory.slice(0, index + 1);
+        } else if (path !== pathHistory[0]) {
+            pathHistory.push(path);
+        }
+        console.log("pathHistory sau khi click breadcrumb:", pathHistory);
+        loadData(path);
+    });
+
+    // Sự kiện click vào data-item
+    $('#data-cloud-items').on('click', '.data-item', function (e) {
+        const path = normalizePath($(this).attr('custom-path'));
+        const type = $(this).attr('custom-type');
+        if (type === "Folder") {
+            if (!pathHistory.includes(path) && path !== pathHistory[0]) {
+                pathHistory.push(path);
+            }
+            console.log("pathHistory sau khi click data-item:", pathHistory);
+            loadData(path);
+        }
+    });
+
+    // Nút "Back"
+    $('#back-btn').click(function () {
+        if (pathHistory.length > 1) {
+            pathHistory.pop();
+            const previousPath = normalizePath(pathHistory[pathHistory.length - 1]);
+            console.log("pathHistory sau khi back:", pathHistory);
+            loadData(previousPath);
+        } else {
+            alert("Không có thư mục trước để quay lại!");
+        }
+    });
+
+    // Tạo thư mục mới
+    $('#new-folder-btn').click(function () {
+        const currentPath = normalizePath(pathHistory[pathHistory.length - 1]);
+        const folderName = prompt("Nhập tên thư mục mới:");
+        if (!folderName) return;
+
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/data/create-folder',
+            type: 'POST',
+            data: { path: currentPath, folderName: folderName },
+            success: function (response) {
+                alert(response.Message);
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                console.error("Lỗi tạo thư mục:", xhr.status, xhr.responseText);
+                alert(`Lỗi: ${xhr.status} - ${xhr.responseText}`);
+            }
+        });
+    });
+
+    // Tải lên tệp
+    $('#upload-file-btn').click(function () {
+        $('#file-input').click();
+    });
+
+    $('#file-input').change(function () {
+        const files = this.files;
+        if (!files.length) return;
+
+        const currentPath = normalizePath(pathHistory[pathHistory.length - 1]);
+        const formData = new FormData();
+        for (let file of files) {
+            formData.append('files', file);
+        }
+        formData.append('path', currentPath);
+
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/data/upload-file',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                alert(response.Message);
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                console.error("Lỗi tải lên tệp:", xhr.status, xhr.responseText);
+                alert(`Lỗi: ${xhr.status} - ${xhr.responseText}`);
+            }
+        });
+    });
+
+    // Tải lên thư mục
+    $('#upload-folder-btn').click(function () {
+        $('#folder-input').click();
+    });
+
+    $('#folder-input').change(function () {
+        const files = this.files;
+        if (!files.length) return;
+
+        const currentPath = normalizePath(pathHistory[pathHistory.length - 1]);
+        const formData = new FormData();
+        for (let file of files) {
+            formData.append('files', file, file.webkitRelativePath || file.name);
+        }
+        formData.append('path', currentPath);
+
+        $.ajax({
+            url: 'http://10.220.130.119:8000/api/data/upload-folder',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                alert(response.Message);
+                loadData(currentPath);
+            },
+            error: function (xhr) {
+                console.error("Lỗi tải lên thư mục:", xhr.status, xhr.responseText);
+                alert(`Lỗi: ${xhr.status} - ${xhr.responseText}`);
+            }
+        });
+    });
+
+    // Hỗ trợ kéo-thả (vẫn áp dụng cho #data-cloud-results)
+    $('#data-cloud-results')
+        .on('dragover', function (e) {
+            e.preventDefault();
+            $(this).addClass('dragover');
+        })
+        .on('dragleave', function (e) {
+            e.preventDefault();
+            $(this).removeClass('dragover');
+        })
+        .on('drop', function (e) {
+            e.preventDefault();
+            $(this).removeClass('dragover');
+
+            const files = e.originalEvent.dataTransfer.files;
+            const currentPath = normalizePath(pathHistory[pathHistory.length - 1]);
+            const formData = new FormData();
+
+            for (let file of files) {
+                formData.append('files', file, file.webkitRelativePath || file.name);
+            }
+            formData.append('path', currentPath);
+
+            $.ajax({
+                url: 'http://10.220.130.119:8000/api/data/upload-folder',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    alert(response.Message);
+                    loadData(currentPath);
+                },
+                error: function (xhr) {
+                    console.error("Lỗi kéo-thả:", xhr.status, xhr.responseText);
+                    alert(`Lỗi: ${xhr.status} - ${xhr.responseText}`);
+                }
+            });
+        });
+
+    // Sự kiện tìm kiếm
+    let debounceTimer;
+    $('#search-input').on('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const keyword = $(this).val().trim();
+            searchData(keyword);
+        }, 300); // Chờ 300ms sau khi ngừng nhập
+    });
+
+    // Tải dữ liệu ban đầu
+    loadData('D:\\DataCloud');
+});

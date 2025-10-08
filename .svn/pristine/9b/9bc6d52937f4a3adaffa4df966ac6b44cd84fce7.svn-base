@@ -1,0 +1,12 @@
+﻿@{
+    ViewData["Title"] = "Scrap Area";
+}
+@{
+    Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
+}
+
+
+
+@section Scripts {
+
+}

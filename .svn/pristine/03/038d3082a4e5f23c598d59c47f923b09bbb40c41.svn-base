@@ -1,0 +1,9 @@
+﻿@{
+    ViewData["Title"] = "SmartFA Area";
+}
+@{
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+<section class="section">
+
+</section>

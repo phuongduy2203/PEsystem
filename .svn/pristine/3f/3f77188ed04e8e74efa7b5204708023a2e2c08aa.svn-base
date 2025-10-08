@@ -1,0 +1,12 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace API_WEB.Models
+{
+    public partial class Shelf
+    {
+        public int ShelfId { get; set; }
+        public string ShelfCode { get; set; } = null!;
+        public int? MaxColumns { get; set; }
+    }
+}

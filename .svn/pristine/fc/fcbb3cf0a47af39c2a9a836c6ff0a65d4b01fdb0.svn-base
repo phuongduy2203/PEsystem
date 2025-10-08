@@ -1,0 +1,91 @@
+﻿using API_WEB.ModelsDB;
+using API_WEB.ModelsOracle;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace API_WEB.Controllers.Repositories
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ExportController : ControllerBase
+    {
+        private readonly CSDL_NE _sqlContext;
+        private readonly OracleDbContext _oracleContext;
+
+        public ExportController(CSDL_NE sqlContext, OracleDbContext oracleContext)
+        {
+            _sqlContext = sqlContext;
+            _oracleContext = oracleContext;
+        }
+
+        [HttpPost("ExportSN")]
+        public async Task<IActionResult> Export([FromBody] RequestExport request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.ExportPerson) || request.SerialNumbers == null || !request.SerialNumbers.Any())
+            {
+                return BadRequest(new { success = false, message = "Invalid request. Please provide ExportPerson and SerialNumbers." });
+            }
+
+            using var transaction = await _sqlContext.Database.BeginTransactionAsync();
+            try
+            {
+                // Fetch all products matching the provided serial numbers
+                var productsToExport = await _sqlContext.Products
+                    .Where(p => request.SerialNumbers.Contains(p.SerialNumber))
+                    .ToListAsync();
+
+                if (!productsToExport.Any())
+                {
+                    return Ok(new { success = false, message = "No matching products found for the provided serial numbers." });
+                }
+
+                // Create export entries
+                var exportEntries = productsToExport.Select(product => new Export
+                {
+                    SerialNumber = product.SerialNumber,
+                    ExportDate = DateTime.Now,
+                    ExportPerson = request.ExportPerson,
+                    ProductLine = product.ProductLine,
+                    EntryDate = product.EntryDate,
+                    EntryPerson = product.EntryPerson,
+                    ModelName = product.ModelName
+                }).ToList();
+
+                // Save export entries to the Export table
+                await _sqlContext.Exports.AddRangeAsync(exportEntries);
+
+                // Remove the exported products from the Products table
+                _sqlContext.Products.RemoveRange(productsToExport);
+
+                // Commit changes
+                await _sqlContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // Return successful response
+                return Ok(new
+                {
+                    success = true,
+                    totalExported = exportEntries.Count,
+                    exportedSerialNumbers = exportEntries.Select(e => e.SerialNumber).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                // Rollback transaction in case of an error
+                await transaction.RollbackAsync();
+                Console.WriteLine($"System Error: {ex.Message}");
+                return StatusCode(500, new { success = false, message = $"System error: {ex.Message}" });
+            }
+        }
+
+        public class RequestExport
+        {
+            public string ExportPerson { get; set; }
+            public List<string> SerialNumbers { get; set; }
+        }
+    }
+}

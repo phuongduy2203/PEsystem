@@ -1,0 +1,14 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.SmartFA.Controllers
+{
+    
+    public class ReportREController : Controller
+    {
+        [Area("SmartFA")]
+        public IActionResult Index()
+        {
+            return PartialView();
+        }
+    }
+}

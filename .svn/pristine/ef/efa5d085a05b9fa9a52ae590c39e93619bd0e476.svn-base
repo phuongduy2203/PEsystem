@@ -1,0 +1,14 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace PESystem.Areas.DDR.Controllers
+{
+    public class SearchController : Controller
+    {
+        [Area("DDR")]
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}

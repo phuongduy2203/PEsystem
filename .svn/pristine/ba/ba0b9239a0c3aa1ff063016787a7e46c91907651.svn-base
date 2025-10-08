@@ -1,0 +1,49 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+
+namespace PESystem.Areas.Bonepile.Controllers
+{
+    public class Bonepile2Controller : Controller
+    {
+        [Area("Bonepile")]
+        public async Task<IActionResult> Index()
+        {
+            int linked = 0;
+            int kanban = 0;
+
+            try
+            {
+                using var client = new HttpClient();
+                var summary = await client.GetFromJsonAsync<WaitingSummaryResponse>("http://10.220.130.119:9090/api/Bonepile2/waiting-summary");
+                if (summary?.totals != null)
+                {
+                    linked = summary.totals.linked;
+                    kanban = summary.totals.linkedKanban;
+                }
+            }
+            catch
+            {
+                // Ignore errors and keep defaults
+            }
+
+            ViewBag.LinkedCount = linked;
+            ViewBag.KanbanCount = kanban;
+
+            return View();
+        }
+
+        private class WaitingSummaryResponse
+        {
+            public WaitingTotals? totals { get; set; }
+        }
+
+        private class WaitingTotals
+        {
+            public int linked { get; set; }
+            public int linkedKanban { get; set; }
+        }
+    }
+}

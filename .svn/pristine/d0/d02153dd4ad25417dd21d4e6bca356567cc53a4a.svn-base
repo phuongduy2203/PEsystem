@@ -1,0 +1,151 @@
+﻿#nullable disable
+using API_WEB.ModelsDB;
+using API_WEB.ModelsOracle;
+using API_WEB.Services.Repositories;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Net.Http.Headers;
+using System.Text;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using API_WEB.Controllers.Scrap;
+using API_WEB.Controllers.SmartFA;
+using Microsoft.OpenApi.Models; // Thêm namespace này
+using Swashbuckle.AspNetCore.SwaggerGen; // Thêm namespace này
+using Microsoft.AspNetCore.Mvc;
+
+var builder = WebApplication.CreateBuilder(args);
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("api_appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
+    {
+        policy.WithOrigins("http://localhost:5050", "http://10.220.130.119:8000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+    // Thêm OperationFilter để hỗ trợ multipart/form-data và IFormFile
+    c.OperationFilter<MultipartFormDataOperationFilter>();
+});
+
+builder.Services.AddDbContext<CSDL_NE>(opt =>
+    opt.UseSqlServer(configuration.GetConnectionString("SQLServerConnection"))
+);
+
+builder.Services.AddHostedService<DailyTaskService>();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("RepairStatusClient", client =>
+{
+    client.BaseAddress = new Uri("https://10.220.130.215:443/SfcSmartRepair/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    return new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+});
+
+IConfigurationRoot cf = new ConfigurationBuilder()
+    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+    .AddJsonFile("api_appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+builder.Services.AddDbContext<CSDL_NE>(opt => opt.UseSqlServer(cf.GetConnectionString("SQLServerConnection"), sqlOptions =>
+{
+    sqlOptions.CommandTimeout(300);
+}));
+
+builder.Services.AddDbContext<OracleDbContext>(options =>
+    options.UseOracle(configuration.GetConnectionString("OracleConnection"))
+           .EnableSensitiveDataLogging()
+           .LogTo(Console.WriteLine)
+);
+
+builder.Services.AddHostedService<AutoExportBackgroundService>();
+builder.Services.AddSingleton<IWebHostEnvironment>(builder.Environment);
+builder.Services.AddHostedService<ScrapTaskNumberAlertService>();
+builder.Services.AddHostedService<TaskWaitMoveScrapStock>();
+builder.Services.AddHostedService<Alert>();
+builder.Services.AddHostedService<ScrapToProduct>();
+
+var app = builder.Build();
+
+app.UseRouting();
+app.UseCors(MyAllowSpecificOrigins);
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(@"D:\ChecklistPicture"),
+//    RequestPath = "/ChecklistPicture"
+//});
+
+app.Run();
+
+// Operation Filter để hỗ trợ multipart/form-data và hiển thị mục upload file
+public class MultipartFormDataOperationFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        var parameters = context.MethodInfo.GetParameters();
+        if (parameters.Any(p => p.ParameterType == typeof(IFormFile) || p.ParameterType.CustomAttributes.Any(a => a.AttributeType == typeof(FromFormAttribute))))
+        {
+            operation.RequestBody = new OpenApiRequestBody
+            {
+                Content = new Dictionary<string, OpenApiMediaType>
+                {
+                    ["multipart/form-data"] = new OpenApiMediaType
+                    {
+                        Schema = new OpenApiSchema
+                        {
+                            Type = "object",
+                            Properties = new Dictionary<string, OpenApiSchema>
+                            {
+                                ["serialNumber"] = new OpenApiSchema { Type = "string", Description = "Serial number" },
+                                ["status"] = new OpenApiSchema { Type = "string", Description = "Status (Pass/Fail)" },
+                                ["employeeId"] = new OpenApiSchema { Type = "string", Description = "Employee ID" },
+                                ["notes"] = new OpenApiSchema { Type = "string", Description = "Notes (optional)", Nullable = true },
+                                ["handOverStatus"] = new OpenApiSchema { Type = "string", Description = "Handover status" },
+                                ["image"] = new OpenApiSchema { Type = "string", Format = "binary", Description = "Image file (optional)" }
+                            },
+                            Required = new HashSet<string> { "serialNumber", "status", "employeeId", "handOverStatus" }
+                        }
+                    }
+                }
+            };
+        }
+    }
+}

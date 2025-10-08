@@ -1,0 +1,310 @@
+﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Security;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+[ApiController]
+[Route("api/[controller]")]
+public class RepairStatusController : ControllerBase
+{
+    public RepairStatusController()
+    {
+        // Bỏ qua kiểm tra chứng chỉ SSL
+        ServicePointManager.ServerCertificateValidationCallback =
+            new RemoteCertificateValidationCallback(delegate { return true; });
+    }
+
+    private static readonly HttpClientHandler _httpClientHandler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+    };
+
+    private readonly HttpClient _httpClient = new HttpClient(_httpClientHandler);
+
+    // Gọi tới API repair-status của IT
+    [HttpPost("repair-status")]
+    public async Task<IActionResult> UpdateRepairStatus([FromBody] RepairStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/repair_Status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Gọi tới API hand_over_status của IT
+    [HttpPost("hand-over-status")]
+    public async Task<IActionResult> UpdateHandOverStatus([FromBody] HandOverStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/hand_over_status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Gọi tới API receiving_status của IT
+    [HttpPost("receiving-status")]
+    public async Task<IActionResult> UpdateReceivingStatus([FromBody] ReceivingStatusRequest request)
+    {
+        try
+        {
+            var apiUrl = "https://10.220.130.217:443/SfcSmartRepair/api/receiving_status";
+            return await SendPostRequest(apiUrl, request);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Gọi tới API info-allpart để lấy thông tin TEM ALLPARTS
+    [HttpPost("info-allpart")]
+    public async Task<IActionResult> GetInfoAllpart([FromBody] InfoAllPartRequest request)
+    {
+        try
+        {
+            // Kiểm tra dữ liệu đầu vào
+            if (request == null || string.IsNullOrEmpty(request.var_1) || string.IsNullOrEmpty(request.type))
+            {
+                return BadRequest(new { success = false, message = "Yêu cầu không hợp lệ: type và var_1 là bắt buộc." });
+            }
+
+            var apiUrl = "https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table";
+            var payload = new
+            {
+                type = request.type,
+                item = request.item ?? "",
+                var_1 = request.var_1
+            };
+
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            // Gửi yêu cầu POST tới API gốc
+            var response = await _httpClient.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                // Phân tích JSON và ánh xạ dữ liệu
+                var jsonResponse = JObject.Parse(responseData);
+                var resultArray = jsonResponse["result"] as JArray;
+
+                if (resultArray != null && resultArray.Count > 0)
+                {
+                    var firstResult = resultArray[0];
+                    var mappedResponse = new
+                    {
+                        part_number = firstResult["CUST_KP_NO"]?.ToString(),
+                        vendor_code = firstResult["MFR_KP_NO"]?.ToString(),
+                        vendor_name = firstResult["MFR_NAME"]?.ToString(),
+                        date_code = firstResult["DATE_CODE"]?.ToString(),
+                        lot_code = firstResult["LOT_CODE"]?.ToString(),
+                        quantity = firstResult["EXT_QTY"]?.ToString()
+                    };
+
+                    return Ok(mappedResponse);
+                }
+                else
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy dữ liệu cho var_1 đã cung cấp." });
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(new { success = false, message = error });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Phiên bản nạp chồng của API info-allpart (sử dụng cả var_1 và var_2)
+    [HttpPost("info-allpart/with-refdes")]
+    public async Task<IActionResult> GetInfoAllpartWithRefDes([FromBody] InfoAllPartRequest request)
+    {
+        try
+        {
+            // Kiểm tra dữ liệu đầu vào
+            if (request == null || string.IsNullOrEmpty(request.type) || string.IsNullOrEmpty(request.var_1) || string.IsNullOrEmpty(request.var_2))
+            {
+                return BadRequest(new { success = false, message = "Yêu cầu không hợp lệ: type, var_1 và var_2 là bắt buộc." });
+            }
+
+            var apiUrl = "https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table";
+            var payload = new
+            {
+                type = request.type,
+                item = request.item ?? "BY-RE-SN",
+                var_1 = request.var_1,
+                var_2 = request.var_2
+            };
+
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            // Gửi yêu cầu POST tới API gốc
+            var response = await _httpClient.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                // Phân tích JSON và ánh xạ dữ liệu
+                var jsonResponse = JObject.Parse(responseData);
+                var resultArray = jsonResponse["result"] as JArray;
+
+                if (resultArray != null && resultArray.Count > 0)
+                {
+                    var firstResult = resultArray[0];
+                    var mappedResponse = new
+                    {
+                        p_sn = firstResult["P_SN"]?.ToString(),
+                        wo = firstResult["WO"]?.ToString(),
+                        p_no = firstResult["P_NO"]?.ToString(),
+                        tr_sn = firstResult["TR_SN"]?.ToString(),
+                        kp_no = firstResult["KP_NO"]?.ToString(),//mA LIEU
+                        mfr_kp_no = firstResult["MFR_KP_NO"]?.ToString(),
+                        date_code = firstResult["DATE_CODE"]?.ToString(),
+                        lot_code = firstResult["LOT_CODE"]?.ToString(),
+                        mfr_name = firstResult["MFR_NAME"]?.ToString(),
+                        process_flag = firstResult["PROCESS_FLAG"]?.ToString(),
+                        station = firstResult["STATION"]?.ToString(),
+                        group_name = firstResult["GROUP_NAME"]?.ToString(),
+                        work_time = firstResult["WORK_TIME"]?.ToString(),
+                        ref_des = firstResult["REF_DES"]?.ToString()
+                    };
+
+                    return Ok(mappedResponse);
+                }
+                else
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy dữ liệu cho var_1 và var_2 đã cung cấp." });
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(new { success = false, message = error });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // Hàm dùng chung để gửi POST request
+    private async Task<IActionResult> SendPostRequest(string apiUrl, object payload)
+    {
+        try
+        {
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            // Gửi yêu cầu POST
+            var response = await _httpClient.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                return Ok(new { success = true, message = responseData });
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(new { success = false, message = error });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+}
+
+// Các lớp dữ liệu cho yêu cầu API
+public class RepairStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("status")]
+    public string? Status { get; set; }
+
+    [JsonProperty("emp_id")]
+    public string? EmployeeId { get; set; }
+
+    [JsonProperty("notes")]
+    public string? Notes { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+
+    [JsonProperty("hand_over_status")]
+    public string? HandOverStatus { get; set; }
+}
+
+public class HandOverStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("hand_over_status")]
+    public string? HandOverStatus { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+}
+
+public class ReceivingStatusRequest
+{
+    [JsonProperty("serialnumbers")]
+    public string? SerialNumbers { get; set; }
+
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("owner")]
+    public string? Owner { get; set; }
+
+    [JsonProperty("location")]
+    public string? Location { get; set; }
+
+    [JsonProperty("tag")]
+    public string? Tag { get; set; }
+}
+
+public class InfoAllPartRequest
+{
+    [JsonProperty("type")]
+    public string? type { get; set; }
+
+    [JsonProperty("item")]
+    public string? item { get; set; }
+
+    [JsonProperty("var_1")]
+    public string? var_1 { get; set; }
+
+    [JsonProperty("var_2")]
+    public string? var_2 { get; set; }
+}

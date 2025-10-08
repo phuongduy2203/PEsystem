@@ -1,0 +1,6 @@
+﻿@{
+    ViewData["Title"] = "Check ULT data";
+}
+@{
+    Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
+}

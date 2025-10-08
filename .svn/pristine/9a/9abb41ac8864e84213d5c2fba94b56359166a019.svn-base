@@ -1,0 +1,780 @@
+﻿document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        // Kiểm tra và vẽ biểu đồ "Handover"
+        const handoverCanvas = document.getElementById("statusChart");
+        if (handoverCanvas) {
+            const handoverCtx = handoverCanvas.getContext("2d");
+            const handoverResponse = await fetch("http://10.220.130.119:9090/api/SearchFA/get-status-counts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify("HANDOVER")
+            });
+
+            const handoverResult = await handoverResponse.json();
+            if (handoverResult.success) {
+                const handoverData = handoverResult.data;
+                const handoverLabels = handoverData.map(item => item.status);
+                const handoverCounts = handoverData.map(item => item.count);
+
+                new Chart(handoverCtx, {
+                    type: "bar",
+                    data: {
+                        labels: handoverLabels,
+                        datasets: [{
+                            label: "Số lượng trạng thái",
+                            data: handoverCounts,
+                            backgroundColor: "rgba(75, 192, 192, 0.8)",
+                            borderColor: "rgba(75, 192, 192, 1)",
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true, position: "top" },
+                            title: { display: true, text: "Thống Kê Số Lượng bản đang được giao, chờ nhận" },
+                            //hiển thị số liệu trên cột
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'end',
+                                color: 'black',
+                                font: {
+                                    weight: 'bold',
+                                    size: 12
+                                },
+                                formatter: function (value) {
+                                    return value;  // Hiển thị số trên cột
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        onClick: async (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const selectedStatus = handoverLabels[index];
+                                await handleChartClick(selectedStatus, "WAITING_HAND_OVER", "handover");
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]  // Kích hoạt plugin datalabels
+                });
+            }
+        } else {
+            console.error("Không tìm thấy phần tử canvas với ID 'statusChart'");
+        }
+
+        // Kiểm tra và vẽ biểu đồ "Online"
+        const onlineCanvas = document.getElementById("onlineChart");
+        if (onlineCanvas) {
+            const onlineCtx = onlineCanvas.getContext("2d");
+            const onlineResponse = await fetch("http://10.220.130.119:9090/api/SearchFA/get-status-counts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify("ONLINE")
+            });
+
+            const onlineResult = await onlineResponse.json();
+            if (onlineResult.success) {
+                const onlineData = onlineResult.data;
+                const onlineLabels = onlineData.map(item => item.status);
+                const onlineCounts = onlineData.map(item => item.count);
+
+                new Chart(onlineCtx, {
+                    type: "bar",
+                    data: {
+                        labels: onlineLabels,
+                        datasets: [{
+                            label: "Số lượng trạng thái",
+                            data: onlineCounts,
+                            backgroundColor: "rgba(54, 162, 235, 0.8)",
+                            borderColor: "rgba(54, 162, 235, 1)",
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true, position: "top" },
+                            title: { display: true, text: "Thống Kê Số Lượng Online" },
+                            //hiển thị số liệu trên cột
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'end',
+                                color: 'black',
+                                font: {
+                                    weight: 'bold',
+                                    size: 12
+                                },
+                                formatter: function (value) {
+                                    return value;  //Hiển thị số trên cột
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        },
+                        onClick: async (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const selectedStatus = onlineLabels[index];
+                                await handleChartClick(selectedStatus, "", "online");
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+        } else {
+            console.error("Không tìm thấy phần tử canvas với ID 'onlineChart'");
+        }
+        // Gọi hàm vẽ bảng khi DOMContentLoaded
+
+        // Vẽ bảng
+        drawOwnerTable();
+    } catch (error) {
+        console.error("Lỗi khi gọi API hoặc vẽ biểu đồ:", error);
+    }
+
+    //Lay Fullname
+    async function fetchOwnerFullNamesBatch(ownerCodes) {
+        if (!ownerCodes.length) return {};
+        try {
+            const response = await fetch("http://10.220.130.119:9090/api/SearchFA/get-fullname-batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(ownerCodes)
+            });
+            return response.ok ? (await response.json()).data : {};
+        } catch (error) {
+            console.error("Lỗi lấy tên:", error);
+            return {};
+        }
+    }
+
+    // hàm vẽ bảng owner của những bản online
+    async function drawOwnerTable() {
+        try {
+            // Gọi API lấy dữ liệu
+            const response = await fetch("http://10.220.130.119:9090/api/SearchFA/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    serialNumbers: [],
+                    modelName: "",
+                    testCode: "",
+                    status: "",
+                    data1: "",
+                    handoverStatus: "",
+                    location: ""
+                })
+            });
+
+            const searchResult = await response.json();
+
+            if (!searchResult.success) {
+                showError("Không thể lấy dữ liệu từ API: " + searchResult.message);
+                return;
+            }
+
+            // Lọc dữ liệu theo điều kiện
+            const filteredData = searchResult.data.filter(item =>
+                item.datA18 !== null &&
+                item.datA18 !== "TRONG_KHO" &&
+                item.datA13 !== "WAITING_HAND_OVER"
+            );
+
+            if (filteredData.length === 0) {
+                showError("No data!");
+                return;
+            }
+
+            //Lấy danh sách tất cả Owner
+            const ownerCodes = [...new Set(filteredData.map(item => item.tester).filter(Boolean))];
+            const ownerFullNames = await fetchOwnerFullNamesBatch(ownerCodes); //Gọi API lấy full name
+
+
+            // Tổng hợp dữ liệu theo Owner và DATA11
+            const ownerSummary = {};
+            filteredData.forEach(item => {
+                const ownerCode = item.tester || "Unknown";
+                const fullName = ownerFullNames[ownerCode] || ownerCode; // Nếu không có FullName, dùng OwnerCode
+                const status = item.datA11 || "Unknown"; // Lấy DATA11 hoặc gán "Unknown"
+
+                if (!ownerSummary[fullName]) {
+                    ownerSummary[fullName] = {};
+                }
+
+                if (!ownerSummary[fullName][status]) {
+                    ownerSummary[fullName][status] = 0;
+                }
+
+                ownerSummary[fullName][status]++;
+            });
+
+            const tableHtml = `
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Owner (FullName)</th>
+                        <th>Trạng thái (Online)</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.entries(ownerSummary).map(([fullName, statuses]) => {
+                return Object.entries(statuses).map(([status, count]) => `
+                            <tr>
+                                <td class="clickable-owner">${fullName}</td>
+                                <td>${status}</td>
+                                <td>${count}</td>
+                            </tr>
+                        `).join('');
+            }).join('')}
+                </tbody>
+            </table>
+        `;
+
+            //**Hiển thị bảng**
+            document.getElementById("OwnerTableContainer").innerHTML = tableHtml;
+
+            //**Thêm sự kiện click vào cột Owner**
+            document.querySelectorAll(".clickable-owner").forEach(cell => {
+                cell.addEventListener("click", () => {
+                    const fullName = cell.textContent.trim();
+                    const ownerCode = Object.keys(ownerFullNames).find(code => ownerFullNames[code] === fullName) || fullName;
+                    const ownerData = filteredData.filter(item => item.tester === ownerCode);
+
+                    if (ownerData.length > 0) {
+                        updateModalSNTable(ownerData);
+                        new bootstrap.Modal(document.getElementById("statusModal")).show();
+                    } else {
+                        showError("No data!");
+                    }
+                });
+            });
+
+        } catch (error) {
+            console.error("Lỗi khi gọi API hoặc hiển thị bảng Owner:", error);
+        }
+    }
+
+
+    // Hàm xử lý sự kiện onClick cho cả hai biểu đồ
+    async function handleChartClick(selectedStatus, handoverStatus, chartType) {
+        const payload = {
+            serialNumbers: [],
+            modelName: "",
+            testCode: "",
+            status: selectedStatus,
+            data1: "",
+            handoverStatus: handoverStatus,
+            location: ""
+        };
+
+        try {
+            const searchResponse = await fetch("http://10.220.130.119:9090/api/SearchFA/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const searchResult = await searchResponse.json();
+
+            if (searchResult.success) {
+                let filteredData;
+
+                // Kiểm tra loại biểu đồ
+                if (chartType === "online") {
+                    // Lọc dữ liệu cho biểu đồ "Thống Kê Số Lượng Online"
+                    filteredData = searchResult.data.filter(item =>
+                        item.datA18 !== null &&
+                        item.datA18 !== "TRONG_KHO" &&
+                        item.datA13 !== "WAITING_HAND_OVER"
+                    );
+
+                } else {
+                    // Giữ nguyên dữ liệu cho biểu đồ "Thống Kê Số Lượng bản đang được giao, chờ nhận"
+                    filteredData = searchResult.data;
+                }
+                updateModalSNTable(filteredData); // Hiển thị kết quả trong bảng bên trong modal
+                const statusModal = new bootstrap.Modal(document.getElementById("statusModal"));    // Hiển thị modal
+                statusModal.show();
+            } else {
+                showError("Không thể tìm thấy dữ liệu cho trạng thái: " + selectedStatus);
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API search:", error);
+            showError("Lỗi khi gọi API!")
+        }
+    }
+
+    // model hiển thị
+    function updateModalSNTable(data) {
+        const table = document.querySelector("#modal-sn-table");
+
+        // Kiểm tra nếu table không tồn tại
+        if (!table) {
+            console.error("Không tìm thấy bảng với ID 'modal-sn-table'");
+            return;
+        }
+
+        // Kiểm tra nếu DataTable đã được khởi tạo
+        if ($.fn.DataTable.isDataTable('#modal-sn-table')) {
+            $('#modal-sn-table').DataTable().destroy();
+        }
+
+        const tableBody = table.querySelector("tbody");
+        if (tableBody) tableBody.innerHTML = "";
+
+
+        // Duyệt qua dữ liệu và thêm hàng mới vào bảng
+        data.forEach(item => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td title="${item.seriaL_NUMBER || ''}">${truncateText(item.seriaL_NUMBER, 20)}</td>
+            <td title="${item.modeL_NAME || ''}">${truncateText(item.modeL_NAME, 20)}</td>
+            <td title="${item.tesT_GROUP || ''}">${truncateText(item.tesT_GROUP, 20)}</td>
+            <td title="${item.tesT_CODE || ''}">${truncateText(item.tesT_CODE, 20)}</td>
+            <td title="${item.datA1 || ''}">${truncateText(item.datA1, 20)}</td>
+            <td>${item.datA12 || ""}</td>
+            <td title="${item.datA11 || ''}">${truncateText(item.datA11, 20)}</td>
+            <td>${item.tester || ""}</td>
+            <td title="${item.datE3 || ''}">${truncateText(item.datE3, 20)}</td>
+            <td>${item.datA13 || ""}</td>
+            <td>${item.datA18 || ""}</td>
+        `;
+            tableBody.appendChild(row);
+        });
+
+        // Khởi tạo lại DataTables
+        $('#modal-sn-table').DataTable({
+            destroy: true, // Hủy DataTables cũ trước khi tạo mới
+            paging: true, // Bật phân trang
+            searching: true, // Bật tìm kiếm
+            ordering: true, // Bật sắp xếp
+            language: {
+                search: "Tìm kiếm:",
+                lengthMenu: "Hiển thị _MENU_ dòng",
+                info: "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
+                paginate: {
+                    first: "Đầu",
+                    last: "Cuối",
+                    next: "Tiếp",
+                    previous: "Trước"
+                }
+            }
+        });
+    }
+
+    // Hàm cắt bớt chuỗi và thêm dấu "..." nếu chuỗi dài hơn giới hạn
+
+    function truncateText(text, maxLength) {
+        if (text && text.length > maxLength) {
+            return text.substring(0, maxLength) + "...";
+        }
+        return text || "";
+    }
+
+    document.getElementById("exportExcelBtn").addEventListener("click", async () => {
+        try {
+            // Hiển thị spinner
+            showSpinner();
+
+            // Lấy DataTables instance và dữ liệu hiển thị
+            const table = $('#modal-sn-table').DataTable();
+            const allData = table.rows().data().toArray();
+
+            if (allData.length === 0) {
+                showError("No data!");
+                return;
+            }
+
+            // Tạo headers và lọc dữ liệu cột cần thiết
+            const headers = ["Serial Number", "ModelName", "TestGroup", "TestCode", "Data1", "Status", "Date", "ID_Owner", "TimeConfirm", "HandoverStatus", "Locaton"];
+            const rows = allData.map(row => headers.map((_, i) => row[i])); // Lấy dữ liệu từng cột theo chỉ số
+
+            // Tạo workbook và worksheet
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+            // Thêm worksheet vào workbook
+            XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachSN");
+
+            // Xuất file Excel
+            XLSX.writeFile(workbook, "Danh_Sach_Serial_Numbers.xlsx");
+        } catch (error) {
+            console.error("Có lỗi xảy ra khi xuất file Excel:", error);
+        } finally {
+            // Ẩn spinner
+            hideSpinner();
+        }
+    });
+
+    function showSpinner() {
+        document.getElementById("spinner-overlay").style.display = "flex";
+    }
+
+    // Ẩn spinner
+    function hideSpinner() {
+        document.getElementById("spinner-overlay").style.display = "none";
+    }
+});
+
+
+$(document).ready(function () {
+    // Khởi tạo DataTable
+    let table = $('#sn-table').DataTable({
+        dom: 't', // Chỉ hiển thị bảng
+        paging: false, // Tắt phân trang
+        info: false, // Tắt thông tin tổng số dòng
+        scrollX: true, // Bật cuộn ngang
+        destroy: true // Cho phép hủy và khởi tạo lại
+    });
+
+    let counter = 1; // Biến đếm số thứ tự
+    let existingSNs = new Set(); // Tập hợp lưu SN đã thêm
+
+    // Xử lý sự kiện khi form được submit
+    $('#sn-form').on('submit', function (e) {
+        e.preventDefault(); // Ngăn chặn reload trang
+
+        const serialNumber = $('#serialNumber').val().trim();
+
+        // Kiểm tra nếu SN không được nhập
+        if (!serialNumber) {
+            showWarning('Vui lòng nhập SN!');
+            return;
+        }
+
+        // Kiểm tra trùng lặp
+        if (existingSNs.has(serialNumber)) {
+            showWarning(`"${serialNumber}" đã tồn tại!`);
+            return;
+        } 
+
+
+        // Gọi API để lấy dữ liệu theo SN
+        fetch('http://10.220.130.119:9090/api/SearchFA/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                serialNumbers: [serialNumber],
+                modelName: "",
+                testCode: "",
+                status: "",
+                data1: ""
+            })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Lỗi khi gọi API');
+            }
+            return response.json();
+        })
+            .then(data => {
+                if (data.success && Array.isArray(data.data)) {
+                    data.data.forEach(item => {
+                        const sn = item.seriaL_NUMBER?.trim() || '';
+                        if (sn === '') return;
+                        existingSNs.add(sn);
+                        table.row.add([
+                            sn,
+                            item.modeL_NAME || '',
+                            `<span title="${item.tesT_CODE || ''}">${item.tesT_CODE || ''}</span>`,
+                            `<span title="${item.datA1 || ''}">${item.datA1 || ''}</span>`,
+                            item.wiP_GROUP || '',
+                            item.datA11 || '',
+                            //`<span title="${item.datE3 || ''}">${item.datE3 || ''}</span>`,
+                            item.tester || '',
+                            item.datA13 || '',
+                            item.datA18 || '',
+                            `<button class="btn btn-success btn-delete">Xóa</button>`,
+                        ]).draw(false);
+                    });
+                }
+                $('#sn-form')[0].reset(); // Reset form
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                showError("Lỗi khi gọi API!");
+            });
+    });
+
+    // Xử lý sự kiện xóa hàng
+    $('#sn-table tbody').on('click', '.btn-delete', function () {
+        const row = table.row($(this).parents('tr'));
+        const rowData = row.data();
+        const snToRemove = rowData[0]?.trim();
+
+        if (existingSNs.has(snToRemove)) {
+            existingSNs.delete(snToRemove); // Xóa SN khỏi Set
+        }
+
+        row.remove().draw(); // Xóa dòng khỏi DataTable
+    });
+
+    // Hàm xử lý khi nhấn nút "GiaoBan"
+    document.getElementById("GiaoBan").addEventListener("click", async () => {
+        const table = $('#sn-table').DataTable(); // Lấy DataTable instance
+        const allData = table.rows().data().toArray(); // Lấy tất cả dữ liệu trong bảng
+
+        // Kiểm tra nếu có bản ghi nào với cột "HandoverStatus" là "WAITING_HAND_OVER"
+        const invalidRecords = allData.filter(row => row[8]?.trim() === "WAITING_HAND_OVER");
+
+        if (invalidRecords.length > 0) {
+            showWarning("Có SN ở trạng thái 'WAITING_HAND_OVER'!");
+            return;
+        }
+
+        /*const currentUser = document.querySelector('h6').textContent;*/
+        const currentUser = $('#analysisPerson').val();
+
+        // Kiểm tra nếu tất cả Owner khớp với user hiện tại
+        const unauthorizedRecords = allData.filter(row => row[6]?.trim() !== currentUser);
+
+        if (unauthorizedRecords.length > 0) {
+            showWarning("Bạn không có quyền!");
+            return;
+        }
+
+        // Nếu tất cả các bản ghi hợp lệ, chuẩn bị dữ liệu để gửi tới API
+        const serialNumbers = allData.map(row => row[0]?.trim()).filter(sn => sn); // Lấy danh sách Serial Numbers
+
+        if (serialNumbers.length === 0) {
+            showWarning("Không có dữ liệu hợp lệ để gửi!");
+            return;
+        }
+
+        const payload = {
+            serialnumbers: serialNumbers.join(","), // Chuỗi Serial Numbers
+            handOverStatus: "WAITING_HAND_OVER", // Trạng thái bàn giao
+            tag: "giao"
+        };
+
+        try {
+            // Gửi dữ liệu tới API
+            const response = await fetch("http://10.220.130.119:9090/api/RepairStatus/hand-over-status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            showInfo("Cập nhật trạng thái bàn giao:" + result.message);
+
+            if (result.message.replace(/"/g, '') === "OK") {
+                location.reload(); // Reload lại trang nếu thành công
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API:", error);
+            showError("Lỗi khi gọi API!");
+        }
+    });
+
+    // Hàm xử lý khi nhấn nút "NhanBan"
+    document.getElementById("NhanBan").addEventListener("click", async () => {
+        const table = $('#sn-table').DataTable(); // Lấy DataTable instance
+        const allData = table.rows().data().toArray(); // Lấy tất cả dữ liệu trong bảng
+        const currentUser = $('#analysisPerson').val();
+
+        const allowedForThayLieu = ["FA", "ARC", "VI_RE", "CHECK_LIST", "RETEST", "BGA", "VI"];
+
+        // 1. Gọi API để lấy quyền của người dùng hiện tại
+        let allowedAreas = "";
+        try {
+            const permissionResponse = await fetch("http://10.220.130.119:9090/api/SearchFA/get-allowed-areas", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cardCode: currentUser })
+            });
+
+            const permissionResult = await permissionResponse.json();
+
+            if (permissionResult.success) {
+                allowedAreas = permissionResult.allowedAreas.split(",").map(area => area.trim());
+            } else {
+                showError("Không thể lấy quyền truy cập của người dùng.");
+                return;
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API quyền hạn:", error);
+            showError("Lỗi khi kiểm tra quyền hạn!");
+            return;
+        }
+        // 2. Kiểm tra trạng thái DATA11 có nằm trong allowedAreas không
+        const unauthorizedRecords = allData.filter(row => {
+            const status = row[5]?.trim();  // DATA11
+            
+            // Nếu người nhận có quyền "THAYLIEU" và trạng thái thuộc danh sách trên → Cho phép nhận
+            if (allowedAreas.includes("THAY LIỆU") && allowedForThayLieu.includes(status)) {
+                return false;  // Cho phép nhận
+            }
+
+            // Cho phép nếu DATA11 là "PROCESS" và người dùng có quyền "FA"
+            if (status === "PROCESS" && allowedAreas.includes("FA")) {
+                return false;  // Cho phép nhận
+            }
+            // Kiểm tra bình thường
+            return !allowedAreas.includes(status);
+        });
+
+        if (unauthorizedRecords.length > 0) {
+            showWarning("Bạn không có quyền nhận bản ở trạng thái hiện tại!");
+            return;
+        }
+
+        // Kiểm tra nếu có bản ghi nào với cột "HandoverStatus" không phải "WAITING_HAND_OVER"
+        const invalidRecords = allData.filter(row => row[7]?.trim() !== "WAITING_HAND_OVER");
+
+        if (invalidRecords.length > 0) {
+            showWarning("Có SN không ở trạng thái 'WAITING_HAND_OVER'!");
+            return;
+        }
+
+        // Hiển thị hộp thoại để người dùng nhập location
+        const locationInput = prompt("Vui lòng nhập vị trí (Location):");
+
+        if (!locationInput) {
+            showWarning("Vui lòng nhập vị trí (Location)!");
+            return;
+        }
+
+        // Nếu tất cả các bản ghi hợp lệ, chuẩn bị dữ liệu để gửi tới API
+        const serialNumbers = allData.map(row => row[0]?.trim()).filter(sn => sn); // Lấy danh sách Serial Numbers
+
+        if (serialNumbers.length === 0) {
+            showError("Không có dữ liệu hợp lệ để gửi!");
+            return;
+        }
+
+        const payload = {
+            serialnumbers: serialNumbers.join(","), // Chuỗi Serial Numbers
+            type: "TRONG_RE", // Loại
+            owner: currentUser, // Người thực hiện
+            location: locationInput, // Vị trí bàn giao
+            tag: "nhan"
+        };
+
+        try {
+            // Gửi dữ liệu tới API
+            const response = await fetch("http://10.220.130.119:9090/api/RepairStatus/receiving-status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            console.log("result nhận được:", result.message.replace(/\"/g, '').trim());
+            showInfo("Trạng thái nhận bàn giao: " + result.message);
+
+            if (result.message.replace(/\"/g, '') === 'OK') {
+                // Nếu người nhận là "THAY LIỆU" và trạng thái hợp lệ → Cập nhật trạng thái thành "THAY LIỆU"
+                if (allowedAreas.includes("THAY LIỆU")) {
+                    const serialsToUpdate = allData
+                        .filter(row => allowedForThayLieu.includes(row[5]?.trim()))
+                        .map(row => ({ serial: row[0]?.trim(), status: row[5]?.trim() }));
+
+                    if (serialsToUpdate.length > 0) {
+                        await updateRepairStatusToThayLieu(
+                            serialsToUpdate.map(item => item.serial),
+                            serialsToUpdate[0].status  // Truyền trạng thái của bản ghi đầu tiên (có thể cập nhật để xử lý riêng lẻ)
+                        );
+                    }
+                }
+
+                // Nếu FA và trạng thái là PROCESS → Gọi API cập nhật thành FA
+                if (allowedAreas.includes("FA") && allData.some(row => row[5]?.trim() === "PROCESS")) {
+                    await updateRepairStatusToFA(serialNumbers);
+                }
+
+                location.reload(); // Reload lại trang nếu thành công
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API:", error);
+            showError("Lỗi khi gọi API!");
+        }
+
+        // Hàm cập nhật trạng thái thành "THAY LIỆU"
+        async function updateRepairStatusToThayLieu(serialNumbers,Status) {
+            const payload = {
+                serialNumbers: serialNumbers.join(','),
+                type: Status,
+                status: "THAY LIỆU",
+                tag: "confirm",
+                notes: "",
+                employeeId: currentUser
+            };
+
+            try {
+                const response = await fetch("http://10.220.130.119:9090/api/RepairStatus/repair-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success && result.message.replace(/"/g, '').trim() === "OK") {
+                    showInfo("✅ Cập nhật trạng thái thành THAY LIỆU thành công!");
+                } else {
+                    showError("❌ Lỗi cập nhật trạng thái THAY LIỆU!");
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi cập nhật trạng thái THAY LIỆU:", error);
+                showError("❌ Lỗi khi cập nhật trạng thái THAY LIỆU.");
+            }
+        }
+
+        // 7. Gọi API cập nhật trạng thái thành FA
+        async function updateRepairStatusToFA(serialNumbers) {
+            const payload = {
+                serialNumbers: serialNumbers.join(','), // Serial Numbers dạng chuỗi
+                type: "PROCESS",                         // Loại cập nhật
+                status: "FA",                           // Chuyển trạng thái thành FA
+                tag: "confirm",
+                notes: "",
+                employeeId: currentUser
+            };
+
+            try {
+                const response = await fetch("http://10.220.130.119:9090/api/RepairStatus/repair-status", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const cleanMessage = result.message.replace(/"/g, '').trim();
+
+                if (response.ok && result.success && cleanMessage === "OK") {
+                    showInfo("✅ Đã cập nhật trạng thái thành FA thành công!");
+                } else {
+                    showError(`❌ Lỗi cập nhật trạng thái FA: ${cleanMessage}`);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi cập nhật trạng thái FA:", error);
+                showError("❌ Đã xảy ra lỗi khi cập nhật trạng thái FA!");
+            }
+        }
+    });
+});

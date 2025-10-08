@@ -476,7 +476,7 @@ async function searchHistoryBySN(snValues) {
     window.historySearchData = null;
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/history-by-sn", {
+        const response = await fetch("http://localhost:5025/api/Scrap/history-by-sn", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

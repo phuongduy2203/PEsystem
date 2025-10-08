@@ -1,0 +1,120 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE System</title>
+    <link rel="icon" href="~/assets/img/logo.jpg" type="image/jpg">
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <script src="~/lib/gsap-particles/particles.min.js"></script>
+    <script src="~/lib/gsap-particles/gsap.min.js"></script>
+
+</head>
+<body>
+    <!-- Hiệu ứng particles (làm nền) -->
+    <div id="particles-js"></div>
+
+    <!-- Áp dụng trạng thái ban đầu từ localStorage -->
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+
+    <div class="layout">
+        <header class="header d-flex justify-content-between align-items-center" id="header">
+            <div class="d-flex align-items-center">
+                <span class="input-group-text bg-transparent border-0" onclick="toggleSearch()">
+                    <i class="fas fa-search" style="cursor: pointer;"></i>
+                </span>
+                <div class="search-container" id="searchContainer" style="display: none;">
+                    <input type="text" class="form-control" placeholder="Search...">
+                </div>
+            </div>
+            <ul class="d-flex align-items-center list-unstyled m-0">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link d-flex align-items-center avatar-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="~/assets/img/avatar.png" class="user-avatar" alt="User" style="width: 40px; height: 40px;">
+                            <span class="d-none d-md-block ps-2">@User.Identity.Name</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li class="dropdown-header text-center"><h6>@User.Identity.Name</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="nav-item text-center">
+                                <a class="nav-link avatar-link" href="#">
+                                    <img src="~/assets/img/avatar.png" class="user-avatar mb-2" alt="User" style="width: 50px; height: 50px;">
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="nav-item text-center">
+                                <form asp-action="Logout" asp-controller="Account" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-ne">Đăng xuất</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                }
+            </ul>
+        </header>
+        <div id="sidebar" class="sidebar">
+            <div class="dashboard-container">
+                <a href="@Url.Action("Home", "Home")" class="text-decoration-none">
+                    <img src="~/assets/img/logo.jpg" class="logo" alt="Logo" />
+                </a>
+                <span class="spanTitle">PE SYSTEM</span>
+                <span><input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" /></span>
+            </div>
+            <nav class="nav flex-column">
+                <a href="@Url.Action("Home", "Home")" class="nav-link @ViewContext.IsActive("Home", "Home")">
+                    <i class="fas fa-home"></i> <span>Trang chủ</span>
+                </a>
+                <a href="@Url.Action("Index", "Admin")" class="nav-link @ViewContext.IsActive("Admin", "Index")">
+                    <i class="fas fa-cog"></i> <span>Cài đặt</span>
+                </a>
+            </nav>
+        </div>
+        <main id="mainContent">
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
+        </main>
+    </div>
+
+
+    <script src="~/js/site.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/all-fa-icon/js/all.min.js"></script>
+    <script>
+        // Particles.js setup
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 100, density: { enable: true, value_area: 800 } },
+                color: { value: "#76b900" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true, anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } },
+                size: { value: 3, random: true, anim: { enable: false } },
+                line_linked: { enable: true, distance: 150, color: "#76b900", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: { onhover: { enable: true, mode: "repulse" }, onclick: { enable: true, mode: "push" } },
+                modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "Search Data";
+    Layout = "~/Areas/SearchData/Views/Shared/_Layout_Search_Data.cshtml";
+}
+
+<!-- Time Filter -->
+<div class="row g-3 mb-3 align-items-end">
+    <div class="col-md-3">
+        <label for="fromTime" class="form-label">Từ</label>
+        <input type="datetime-local" id="fromTime" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label for="toTime" class="form-label">Đến</label>
+        <input type="datetime-local" id="toTime" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button id="applyTime" class="btn btn-ne w-100">Áp dụng</button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-cards row">
+    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
+        <div class="card text-white bg-total smaller-card">
+            <div class="card-body">
+                <h5 class="card-title">Tổng Scan</h5>
+                <p class="card-text" id="scan-log">N/A</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
+        <div class="card text-white bg-repair smaller-card">
+            <div class="card-body">
+                <h5 class="card-title">Tìm Thấy</h5>
+                <p class="card-text" id="repairCount">N/A</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Area and Results -->
+<div class="row my-4">
+    <div class="col-12">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-4">
+                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
+            </div>
+            <div class="col-md-2">
+                <button id="search-btn" class="btn btn-ne w-100">Tìm kiếm</button>
+            </div>
+            <div class="col-md-2">
+                <a href="http://10.220.130.119:9090/api/scan/export-excel"  title="Xuất Excel">
+                    <img id="export-kho-ok-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                </a>
+            </div>
+        </div>
+        <table id="searchResultsTable" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>TIME_SEARCH</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .excel-icon {
+            width: 35px; /* Thu nhỏ icon */
+            height: 35px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .smaller-card {
+            transform: scale(0.85); /* Reduce card size by 25% */
+            margin: 0 -5px; /* Minimize spacing between cards */
+        }
+        s
+        .smaller-text .card-title {
+            font-size: 1.5rem; /* Smaller title font size */
+        }
+
+        .smaller-text .card-text {
+            font-size: 1.5rem; /* Smaller text font size */
+        }
+        .kpi-cards {
+            display: flex;
+            flex-wrap: nowrap; /* Keep cards in a single row */
+        }
+
+        .kpi-cards .col-md-2,
+        .kpi-cards .col-lg-1,
+        .kpi-cards .col-sm-3,
+        .kpi-cards .col-3 {
+            flex: 0 0 25%; /* Divide equally for 10 cards (100% / 10) */
+            max-width: 25%; /* Ensure equal width */
+            padding: 0; /* Reduce padding for tighter fit */
+        }
+    </style>
+    <script src="~/assets/areas/searchdata/js/searchData.js?v=@DateTime.Now.Ticks"></script>
+}

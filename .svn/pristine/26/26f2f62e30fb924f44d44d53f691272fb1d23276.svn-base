@@ -1,0 +1,376 @@
+﻿@{
+    ViewData["Title"] = "SmartFA Area";
+}
+@{
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+<section>
+    <div class="container">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- Ô nhập -->
+            <div id="sn-form" class="col-md-2">
+                <input type="text" id="serialNumber" class="form-control" placeholder="Nhập Serial Number" required>
+            </div>
+            <!-- Upload File -->
+            <div class="row" style="margin-left: auto;">
+                <div class="col-md-3 text-end">
+                    <button type="button" id="addGuideButton" class="btn btn-ne">Add Guide</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="action-buttons mt-3">
+            @{
+                var allowedAreas = HttpContextAccessor.HttpContext.User.Claims
+                .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
+
+                var canShowFA = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "FA");
+                var canShowARC = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "ARC");
+                var canShowRetest = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "RETEST");
+                var canShowThayLieu = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "THAY LIỆU");
+                var canShowVI = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "VI-RE");
+            }
+            @if (canShowFA)
+            {
+                <button class="btn btn-ne btn-fa-all">FA</button>
+            }
+            @if (canShowARC)
+            {
+                <button class="btn btn-ne btn-arc-all">ARC</button>
+            }
+            @if (canShowRetest)
+            {
+                <button class="btn btn-ne btn-retest-all">RETEST</button>
+            }
+            @if (canShowThayLieu)
+            {
+                <button class="btn btn-ne btn-thay-lieu">THAY LIỆU</button>
+            }
+            @if (canShowVI)
+            {
+                <button class="btn btn-ne btn-vi">VI-RE</button>
+            }
+
+        </div>
+        <!-- Bảng hiển thị danh sách SN -->
+    </div>
+    <div class="mt-2">
+        <table id="sn-table" class="table table-bordered datatable-table table-striped">
+            <thead>
+                <tr>
+                    <th>SerialNumber</th>
+                    <th>ProductLine</th>
+                    <th>ModelName</th>
+                    <th>WIP</th>
+                    <th>TestGroup</th>
+                    <th>TestCode</th>
+                    <th>Data1</th>
+                    <th>PreviousStatus</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>IDConfirm</th>
+                    <th>CheckPoint</th>
+                    <th>Hướng dẫn</th>
+                    <th>Sửa chữa</th>
+                    <th>Lịch sử</th>
+                    <th>Khác</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <!-- Các hàng sẽ được thêm ở đây -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Thêm Guide -->
+    <div class="modal fade" id="guideModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Thêm/Sửa hướng dẫn sửa chữa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label>Chọn Model:</label>
+                    <select id="productLineDropdown" class="form-select"></select>
+                    <input type="text" id="testCodeInput" class="form-control" placeholder="Nhập Test Code">
+                    <textarea name="checkPointInput"
+                              id="checkPointInput"
+                              rows="3"
+                              class="form-control w-100"
+                              style="min-width: 100%; max-width: 100%;"
+                              placeholder="Nhập Check Point"></textarea>
+
+                    <button id="saveCheckPointButton" class="btn btn-ne mt-2">SAVE</button>
+
+                    <hr>
+
+                    <label>Upload File Excel (.xlsx):</label>
+                    <input type="file" id="guideFileInput" class="form-control" accept=".xlsx">
+                    <div>
+                        <button id="uploadExcelButton" class="btn btn-ne mt-2">UPLOAD</button>
+                        <button id="templateButton" class="btn btn-ne mt-2">TEMPLATE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal nhập giá trị Type -->
+    <div id="type-modal" class="modal fade" tabindex="-1" aria-labelledby="typeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="typeModalLabel">Chọn giá trị phân tích</h5>
+                    <button type="button" class="btn-ne btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+                <div class="modal-body">
+                    <form id="type-form">
+                        <div class="form-group">
+                            <select id="type-select" class="form-control">
+                                <option value="">-- Chọn trạng thái --</option>
+                                <option value="CHECK_LIST">Check List</option>
+                                <option value="BGA">BGA</option>
+                                <option value="TEST PROGRAM ISSUE">Test Program Issue</option>
+                                <option value="RETEST">RETEST</option>
+                                <option value="THAY LIỆU">THAY LIỆU</option>
+                                <option id="fa-arc" class="hidden" value="FA">FA</option>
+                            </select>
+                        </div>
+                        <div id="additional-notes-container" style="display: none; margin-bottom: 10px;">
+                            <input type="text" id="additional-notes-input" class="form-control" placeholder="Nhập dữ liệu ghi chú">
+                        </div>
+                        <button type="submit" class="btn btn-ne">Xác nhận</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--Modal huong dan-->
+    <div class="modal fade" id="repairDetailModal" tabindex="-1" aria-labelledby="repairDetailLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="repairDetailLabel">Tất cả bản lỗi cần xác định lỗi thật --> ngoại quan kỹ càng --> đo đạc không bất thường về trở kháng thì làm theo hướng dẫn khách hàng</h5>
+                    <button type="button" class="btn-ne btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Serial Number:</strong> <span id="modal-sn"></span></p>
+                    <p><strong>Model:</strong> <span id="modal-model"></span></p>
+                    <p><strong>Product Line:</strong> <span id="modal-product-line"></span></p>
+                    <p><strong>CheckPoints:</strong></p>
+                    <ul id="modal-checkpoints"></ul>
+                    <p><strong>Hướng dẫn chi tiết:</strong></p>
+                    <p id="modal-repair-detail"></p>
+                    <div class="product-line-pdf">
+                        <iframe id="modal-product-line-pdf" src="" style="width: 100%; height: 500px; border: none;"></iframe>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal hiển thị lịch sử sửa chữa -->
+    <div id="repairHistoryModal" class="modal fade" tabindex="-1" aria-labelledby="repairHistoryLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lịch sử sửa chữa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body table-responsive">
+                    <table id="repair-history-table" class="table-bordered table-striped datatable-table dataTable no-footer">
+                        <thead>
+                            <tr>
+                                <th>Serial Number</th>
+                                <th>PreviousStatus</th>
+                                <th>Status</th>
+                                <th>Thời gian</th>
+                                <th>Người sửa</th>
+                                <th>Chi tiết</th>
+                                <th>Loại</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Modal thêm lịch sử sửa chữa-->
+    <div id="save-repair-modal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lưu lịch sử sửa chữa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Serial Number:</strong> <span id="save-serial-number"></span></p>
+                    <div class="form-group">
+                        <label for="save-notes">Chi tiết</label>
+                        <textarea id="save-notes" class="form-control" rows="3" placeholder="Nhập chi tiết..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="confirm-save-repair" class="btn btn-ne">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--Modal thay lieu-->
+    <div id="modal-thaylieu" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập ghi chú Thay Liệu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Serial Number:</strong> <span id="modal-serial-number"></span></p>
+                    <textarea id="save-notes-thaylieu" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="btn-save-thaylieu" class="btn btn-ne">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!---->
+    <!--modal VI-->
+    <div class="modal fade" id="modal-vi" tabindex="-1" role="dialog" aria-labelledby="statusSelectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusSelectModalLabel">Cập nhật trạng thái</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="status-form">
+                        <div class="form-group">
+                            <label for="status-select-vi">Chọn trạng thái</label>
+                            <select id="status-select-vi" class="form-control" required>
+                                <option value="" disabled selected>Chọn trạng thái</option>
+                                <option value="CHỜ TRẢ">Chờ trả chuyền</option>
+                                <option value="FA">FA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="status-notes-vi">Ghi chú</label>
+                            <textarea id="status-notes-vi" class="form-control" rows="3" placeholder="Nhập ghi chú"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="save-vi" class="btn btn-ne">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--modal RETEST-->
+    <div class="modal fade" id="status-select-modal" tabindex="-1" role="dialog" aria-labelledby="statusSelectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusSelectModalLabel">Cập nhật trạng thái</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="status-form">
+                        <div class="form-group">
+                            <label for="test-result">Kết quả test</label>
+                            <select id="test-result" class="form-control" required>
+                                <option value="" disabled selected>Chọn trạng thái</option>
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="status-notes">Ghi chú</label>
+                            <textarea id="status-notes" class="form-control" rows="3" placeholder="Nhập ghi chú"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="status-select">Chọn trạng thái tiếp theo</label>
+                            <select id="status-select" class="form-control" required>
+                                <option value="" disabled selected>Chọn trạng thái</option>
+                                <option value="ARC">ARC</option>
+                                <option value="FA">FA</option>
+                            </select>
+                        </div>
+                        
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="save-status-update" class="btn btn-ne">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <br>
+        <label>THÔNG TIN NGƯỜI NHẬN SAU KHI RETEST/THAY LIỆU</label>
+        <br>
+        <button id="btn-fetch-tester" class="btn btn-ne btn-infor">TÌM KIẾM</button>
+    </div>
+
+    <!--MODAL HIỂN THỊ THÔNG TIN NGƯỜI NHẬN BẢN SAU KHI RETEST-->
+    <!-- Modal hiển thị thông tin Tester -->
+    <div id="modal-tester-info" class="modal fade" tabindex="-1" aria-labelledby="modalTesterLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTesterLabel">Thông Tin Nguời Nhận Sau Retest/Thay Liệu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table id="tester-info-table" class="table-bordered table-striped datatable-table dataTable no-footer" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>SerialNumber</th>
+                                <th>Mã Thẻ</th>
+                                <th>Người nhận</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+@section Scripts {
+    <script src="~/assets/areas/smartfa/js/importfa.js?v=@DateTime.Now.Ticks"></script>
+}

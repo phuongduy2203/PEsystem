@@ -1,0 +1,97 @@
+﻿document.addEventListener("DOMContentLoaded", function () {
+    const apiBaseUrl = "http://10.220.130.119:9090/api/Product"; // Thay bằng URL API của bạn
+    const serialNumbersInput = document.getElementById("sn-input");
+    const modelNameField = document.querySelector(".model-name-field");
+    const productLineField = document.querySelector(".product-line-field");
+    const saveButton = document.getElementById("export-btn");
+
+    // Hàm lấy thông tin sản phẩm theo Serial Numbers
+    async function updateSerialDetails(serialNumbers) {
+        const modelNames = [];
+        const productLines = [];
+
+        for (const serial of serialNumbers) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/GetSNInfo?serialNumber=${serial.trim()}`);
+                const data = await response.json();
+                if (data.success) {
+                    modelNames.push(data.modelName || "");
+                    productLines.push(data.productLine || "");
+                } else {
+                    modelNames.push("");
+                    productLines.push("");
+                }
+            } catch (error) {
+                console.error(`Lỗi khi lấy thông tin cho SN ${serial}:`, error);
+                modelNames.push("");
+                productLines.push("");
+            }
+        }
+        modelNameField.value = modelNames.join("\n");
+        productLineField.value = productLines.join("\n");
+
+    }
+
+    // Hàm lưu thông tin xuất kho
+    async function saveExportData(serialNumbers) {
+        const exportPerson = document.getElementById("exportPerson").value;
+        const payload = {
+            exportPerson: exportPerson,
+            serialNumbers: serialNumbers
+        };
+
+        try {
+            const response = await fetch(`http://10.220.130.119:9090/api/Export/ExportSN`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showSuccess("Success!");
+                serialNumbersInput.value = "";
+                modelNameField.value = "";
+                productLineField.value = "";
+            } else {
+                showError("Error!!");
+            }
+        } catch (error) {
+            console.error("Lỗi khi lưu dữ liệu xuất:", error);
+            showError("Error!");
+        }
+    }
+
+    // Theo dõi thay đổi trong textarea
+    serialNumbersInput.addEventListener("input", function () {
+        const serialNumbers = serialNumbersInput.value
+            .trim()
+            .split("\n")
+            .map(sn => sn.trim())
+            .filter(sn => sn);
+
+
+    // Cập nhật thông tin modelName và productLine
+        updateSerialDetails(serialNumbers);
+    });
+
+
+
+    // Sự kiện khi nhấn nút "Lưu"
+    saveButton.addEventListener("click", function () {
+        const serialNumbers = serialNumbersInput.value
+            .trim()
+            .split("\n")  //Tách từng dòng SN
+            .map(sn => sn.trim())
+            .filter(sn => sn !== ""); //Lọc SN rỗng
+
+        if (serialNumbers.length === 0) {
+            showWarning("Vui lòng nhập ít nhất 1 SN!");
+            return;
+        }
+
+        saveExportData(serialNumbers); //Gửi danh sách SN đúng format
+    });
+});

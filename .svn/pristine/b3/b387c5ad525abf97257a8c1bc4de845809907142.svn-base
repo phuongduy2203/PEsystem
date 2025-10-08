@@ -1,0 +1,91 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const scanEl = document.getElementById('scan-log');
+    const foundEl = document.getElementById('repairCount');
+    const textarea = document.getElementById('serialNumber');
+    const fromInput = document.getElementById('fromTime');
+    const toInput = document.getElementById('toTime');
+    const applyBtn = document.getElementById('applyTime');
+    const searchBtn = document.getElementById('search-btn');
+    let table;
+
+    function setDefaultRange() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        fromInput.value = start.toISOString().slice(0, 16);
+        toInput.value = now.toISOString().slice(0, 16);
+    }
+
+    async function updateCounts() {
+        const params = new URLSearchParams();
+        if (fromInput.value) params.append('from', new Date(fromInput.value).toISOString());
+        if (toInput.value) params.append('to', new Date(toInput.value).toISOString());
+
+        try {
+            const scanResp = await fetch(`http://10.220.130.119:9090/api/scan/count?${params.toString()}`);
+            const scanData = await scanResp.json();
+            scanEl.textContent = scanData.count ?? 0;
+        } catch {
+            scanEl.textContent = 'N/A';
+        }
+        try {
+            const foundResp = await fetch(`http://10.220.130.119:9090/api/scan/found-count?${params.toString()}`);
+            const foundData = await foundResp.json();
+            foundEl.textContent = foundData.count ?? 0;
+        } catch {
+            foundEl.textContent = 'N/A';
+        }
+    }
+
+    function renderTable(data) {
+        if (table) {
+            table.clear().rows.add(data).draw();
+        } else {
+            table = $('#searchResultsTable').DataTable({
+                data,
+                columns: [
+                    { data: 'serialNumber', title: 'Serial Number' },
+                    {
+                        data: 'createdAt',
+                        title: 'Created At',
+                        render: d => new Date(d).toLocaleString()
+                    }
+                ]
+            });
+        }
+    }
+
+    async function searchSerials() {
+        const lines = textarea.value
+            .split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(Boolean);
+        try {
+            const resp = await fetch('http://10.220.130.119:9090/api/scan/SearchBySN', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serialNumber: lines })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                renderTable(Array.isArray(data) ? data : []);
+            } else {
+                renderTable([]);
+            }
+        } catch {
+            renderTable([]);
+        }
+    }
+
+    applyBtn.addEventListener('click', e => {
+        e.preventDefault();
+        updateCounts();
+    });
+
+    searchBtn.addEventListener('click', e => {
+        e.preventDefault();
+        searchSerials();
+    });
+
+    setDefaultRange();
+    updateCounts();
+});
