@@ -63,6 +63,41 @@ function exportToExcel(noInternalTaskData, hasInternalTaskNoTaskNumberData, hasT
     XLSX.writeFile(workbook, filename);
 }
 
+function exportHistoryToExcel(historyData, filename) {
+    if (!Array.isArray(historyData) || !historyData.length) {
+        throw new Error("No history data to export");
+    }
+
+    const workbook = XLSX.utils.book_new();
+    const sheetData = historyData.map(item => ({
+        "#": item.rowNumber ?? "",
+        "History ID": item.id ?? "",
+        "SN": item.sn ?? "",
+        "Internal Task": item.internalTask ?? "",
+        "Description": item.description ?? "",
+        "KanBan Status": item.kanBanStatus ?? "",
+        "Sloc": item.sloc ?? "",
+        "Task Number": item.taskNumber ?? "",
+        "PO": item.po ?? "",
+        "Cost": item.cost ?? "",
+        "Created By": item.createdBy ?? "",
+        "Create Time": item.createTime ?? "",
+        "Approve Scrap Person": item.approveScrapPerson ?? "",
+        "Apply Task Status": item.applyTaskStatus ?? "",
+        "Find Board Status": item.findBoardStatus ?? "",
+        "Remark": item.remark ?? "",
+        "Purpose": item.purpose ?? "",
+        "Category": item.category ?? "",
+        "Apply Time": item.applyTime ?? "",
+        "Spe Approve Time": item.speApproveTime ?? ""
+    }));
+
+    const historySheet = XLSX.utils.json_to_sheet(sheetData);
+    XLSX.utils.book_append_sheet(workbook, historySheet, "History");
+
+    XLSX.writeFile(workbook, filename);
+}
+
 // Hàm hiển thị bảng với phân trang
 function renderTableWithPagination(data, resultDiv, tableHeaders, rowTemplate, extraHtml = "", tableIdPrefix = "") {
     const rowsPerPage = 10; // Số dòng mỗi trang
@@ -438,6 +473,8 @@ async function searchHistoryBySN(snValues) {
         sNs: snValues
     };
 
+    window.historySearchData = null;
+
     try {
         const response = await fetch("http://10.220.130.119:9090/api/Scrap/history-by-sn", {
             method: "POST",
@@ -522,8 +559,15 @@ async function searchHistoryBySN(snValues) {
                     </div>
                     ${extraHtml}
                 `;
+                window.historySearchData = null;
                 return;
             }
+
+            window.historySearchData = {
+                history: normalizedHistory,
+                missingSNs,
+                requestSNs: snValues
+            };
 
             renderTableWithPagination(normalizedHistory, resultDiv, tableHeaders, rowTemplate, extraHtml, "history-search");
         } else {
@@ -532,6 +576,7 @@ async function searchHistoryBySN(snValues) {
                     <strong>Lỗi:</strong> ${result.message ?? "Không thể lấy dữ liệu lịch sử."}
                 </div>
             `;
+            window.historySearchData = null;
         }
     } catch (error) {
         resultDiv.innerHTML = `
@@ -540,6 +585,7 @@ async function searchHistoryBySN(snValues) {
             </div>
         `;
         console.error("Error:", error);
+        window.historySearchData = null;
     }
 }
 
@@ -827,5 +873,54 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         await searchHistoryBySN(searchValues);
+    });
+
+    document.getElementById("history-download-btn").addEventListener("click", function () {
+        const resultDiv = document.getElementById("history-search-result");
+
+        if (!window.historySearchData || !Array.isArray(window.historySearchData.history) || !window.historySearchData.history.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng tra cứu lịch sử SN trước khi tải Excel.
+                </div>
+            `;
+            return;
+        }
+
+        const existingMessage = document.getElementById("history-export-message");
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        try {
+            const now = new Date();
+            const filename = `HistorySearch_${now.toISOString().replace(/[:.]/g, '-')}.xlsx`;
+            exportHistoryToExcel(window.historySearchData.history, filename);
+
+            const successMessage = document.createElement("div");
+            successMessage.className = "alert alert-success mt-3";
+            successMessage.id = "history-export-message";
+
+            const missingInfo = window.historySearchData.missingSNs && window.historySearchData.missingSNs.length
+                ? ` (Không tìm thấy lịch sử cho ${window.historySearchData.missingSNs.length} SN.)`
+                : "";
+
+            successMessage.innerHTML = `
+                <strong>Thành công:</strong> File Excel đã được tải xuống.${missingInfo}
+            `;
+
+            resultDiv.prepend(successMessage);
+        } catch (error) {
+            console.error("Error exporting history:", error);
+
+            const errorMessage = document.createElement("div");
+            errorMessage.className = "alert alert-danger mt-3";
+            errorMessage.id = "history-export-message";
+            errorMessage.innerHTML = `
+                <strong>Lỗi:</strong> Không thể tạo file Excel. Vui lòng thử lại.
+            `;
+
+            resultDiv.prepend(errorMessage);
+        }
     });
 });
