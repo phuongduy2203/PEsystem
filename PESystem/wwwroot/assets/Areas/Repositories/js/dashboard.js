@@ -714,7 +714,7 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             { data: 'erroR_CODE' },
             { data: 'erroR_DESC' },
-            { data: 'aging'}
+            { data: 'aginG_HOURS'}
         ],
         buttons: [
             {
@@ -733,25 +733,86 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Gọi API lấy dữ liệu
-    function loadLackLocation() {
-        fetch('http://10.220.130.119:9090/api/CheckInOut/getCheckInRepair')
-            .then(r => r.json())
-            .then(data => {
-                if (data && data.data) {
-                    table.clear();
-                    table.rows.add(data.data).draw();
+    async function loadLackLocation() {
+        const countEl = document.getElementById("checkin-3days-count");
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/CheckInOut/getCheckInRepair`);
+            if (!response.ok) {
+                throw new Error(`getCheckInRepair failed with status ${response.status}`);
+            }
 
-                    // Hiển thị số lượng count vào thẻ checkin-3days-count
-                    document.getElementById("checkin-3days-count").textContent = data.count;
-                } else {
-                    console.error("API không trả dữ liệu hợp lệ", data);
-                    document.getElementById("checkin-3days-count").textContent = "NULL";
+            const payload = await response.json();
+            if (!payload || !Array.isArray(payload.data)) {
+                throw new Error("API không trả dữ liệu hợp lệ");
+            }
+
+            const serialNumbers = payload.data
+                .map(item => (item?.SERIAL_NUMBER || item?.seriaL_NUMBER || "").toString().trim().toUpperCase())
+                .filter(sn => sn);
+
+            let filteredData = payload.data;
+
+            if (serialNumbers.length) {
+                try {
+                    const locationResponse = await fetch(`${API_BASE_URL}/api/Search/FindLocations`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(serialNumbers)
+                    });
+
+                    if (!locationResponse.ok) {
+                        throw new Error(`FindLocations failed with status ${locationResponse.status}`);
+                    }
+
+                    const locationPayload = await locationResponse.json();
+                    if (!locationPayload || locationPayload.success === false) {
+                        throw new Error('FindLocations response is invalid');
+                    }
+
+                    const missingSet = new Set(serialNumbers);
+
+                    if (Array.isArray(locationPayload.data)) {
+                        locationPayload.data.forEach(item => {
+                            const sn = (item?.serialNumber || item?.SerialNumber || "").toString().trim().toUpperCase();
+                            if (!sn) return;
+                            const location = (item?.location || "").toString().trim();
+                            if (location && location.toLowerCase() !== 'borrowed') {
+                                missingSet.delete(sn);
+                            } else {
+                                missingSet.add(sn);
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(locationPayload.notFoundSerialNumbers)) {
+                        locationPayload.notFoundSerialNumbers.forEach(sn => {
+                            if (!sn) return;
+                            missingSet.add(sn.toString().trim().toUpperCase());
+                        });
+                    }
+
+                    filteredData = payload.data.filter(item => {
+                        const sn = (item?.SERIAL_NUMBER || item?.seriaL_NUMBER || "").toString().trim().toUpperCase();
+                        return sn && missingSet.has(sn);
+                    });
+                } catch (locationErr) {
+                    console.error('FindLocations error', locationErr);
+                    filteredData = payload.data;
                 }
-            })
-            .catch(err => {
-                console.error("Fetch Error:", err);
-                document.getElementById("checkin-3days-count").textContent = "NULL";
-            });
+            }
+
+            table.clear();
+            table.rows.add(filteredData).draw();
+            if (countEl) {
+                countEl.textContent = filteredData.length.toString();
+            }
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            table.clear().draw();
+            if (countEl) {
+                countEl.textContent = "NULL";
+            }
+        }
     }
     // Load ngay khi mở trang
     loadLackLocation();

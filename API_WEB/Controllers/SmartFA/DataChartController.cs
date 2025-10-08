@@ -51,14 +51,6 @@ namespace API_WEB.Controllers.SmartFA
                 join r107 in _oracleDbContext.OracleDataR107
                 on task.SERIAL_NUMBER equals r107.SERIAL_NUMBER
                 where !string.IsNullOrEmpty(task.DATA18) && 
-                      task.DATA18 != "TRONG_KHO" &&
-                      task.DATA17 != "Nhận(Nhập Kho Phế)" &&
-                      task.DATA17 != "Nhận(Nhập Kho Ok)" &&
-                      task.DATA17 != "Nhập(Kho Phế)" &&
-                      task.DATA17 != "Nhận(Nhập Kho)" &&
-                      task.DATA18 != "KHO PHẾ" &&
-                      task.DATA17 != "Nhận(Nhập kho)" &&
-                      task.DATA17 != "Giao(Cho mượn từ Kho)" &&
                     !(r107.WIP_GROUP.Contains("BR2C") || r107.WIP_GROUP.Contains("BCFA"))
                 join err in _oracleDbContext.ErrorCodes
                     on task.TEST_CODE equals err.ERROR_CODE into errJoin

@@ -9,7 +9,7 @@
 
 <div class="room">
     <!-- Cột A -->
-    <div class="desk-column group-a mt-3">
+    <div class="desk-column group-a">
         <div class="cell" data-cell="A1" role="button">
             <span class="cell-name">A1</span>
             <span class="cell-count">0</span>
@@ -32,6 +32,14 @@
         </div>
         <div class="cell" data-cell="A6" role="button">
             <span class="cell-name">A6</span>
+            <span class="cell-count">0</span>
+        </div>
+        <div class="cell" data-cell="A7" role="button">
+            <span class="cell-name">A7</span>
+            <span class="cell-count">0</span>
+        </div>
+        <div class="cell" data-cell="A8" role="button">
+            <span class="cell-name">A8</span>
             <span class="cell-count">0</span>
         </div>
     </div>
@@ -117,10 +125,10 @@
 
 <!-- Modal hiển thị chi tiết cell -->
 <div class="modal fade" id="cellDetailModal" tabindex="-1" aria-labelledby="cellDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-lg-custom">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="cellDetailModalLabel">Thông tin Cell <span id="modalCellName"></span></h5>
+                <h5 class="modal-title" id="cellDetailModalLabel">Thông tin vị trí <span id="modalCellName"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -148,13 +156,12 @@
                     <input type="hidden" id="cellNameInput" />
                     <div class="mb-3">
                         <label for="serialListInput" class="form-label">Danh sách Serial Number</label>
-                        <textarea id="serialListInput" class="form-control" rows="5" placeholder="Nhập mỗi Serial Number trên một dòng"></textarea>
-                        <div class="form-text">Danh sách sẽ được dùng để cập nhật vị trí mới cho cell.</div>
+                        <textarea id="serialListInput" class="form-control" rows="5" placeholder="Nhập Serial Number để update lại vị trí!"></textarea>
                     </div>
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <span class="text-muted" id="lastUpdatedInfo"></span>
-                        <button type="submit" class="btn btn-primary" id="submitUpdateButton">
-                            Cập nhật vị trí
+                        <button type="submit" class="btn btn-ne" id="submitUpdateButton">
+                            UPDATE
                         </button>
                     </div>
                 </form>

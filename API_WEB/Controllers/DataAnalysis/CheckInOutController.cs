@@ -8,6 +8,8 @@ using Oracle.ManagedDataAccess.Client;
 using Microsoft.EntityFrameworkCore;
 using API_WEB.ModelsOracle;
 using API_WEB.ModelsDB;
+using API_WEB.Controllers.Repositories;
+using Newtonsoft.Json;
 
 namespace API_WEB.Controllers.SmartFA
 {
@@ -51,6 +53,26 @@ namespace API_WEB.Controllers.SmartFA
             public string WORK_FLAG { get; set; } = string.Empty;
             public string TYPE { get; set; } = string.Empty;
             public string AGING_HOURS { get; set; } = string.Empty;
+        }
+
+        private class FindLocationsResponse
+        {
+            public bool Success { get; set; }
+
+            [JsonProperty("data")]
+            public List<LocationItem> Data { get; set; } = new();
+
+            [JsonProperty("notFoundSerialNumbers")]
+            public List<string> NotFoundSerialNumbers { get; set; } = new();
+        }
+
+        private class LocationItem
+        {
+            [JsonProperty("serialNumber")]
+            public string SerialNumber { get; set; } = string.Empty;
+
+            [JsonProperty("location")]
+            public string Location { get; set; } = string.Empty;
         }
 
         public class CheckOutRecord
@@ -464,7 +486,7 @@ namespace API_WEB.Controllers.SmartFA
                         C.WIP_GROUP,
                         C.ERROR_FLAG,
                         C.WORK_FLAG,
-                        TRUNC(SYSDATE - A.TEST_TIME)
+                        TRUNC(SYSDATE - A.TEST_TIME) as AGING_HOURS
                     FROM SFISM4.R_REPAIR_TASK_T A
                     INNER JOIN SFIS1.C_MODEL_DESC_T B
                         ON A.MODEL_NAME = B.MODEL_NAME
@@ -526,10 +548,11 @@ namespace API_WEB.Controllers.SmartFA
                         });
                     }
                 }
+                var filteredList = await FilterMissingLocationsAsync(checkInList);
                 var response = new
                 {
-                    count = checkInList.Count,
-                    data = checkInList
+                    count = filteredList.Count,
+                    data = filteredList
                 };
                 return Ok(response);
             }
@@ -783,6 +806,93 @@ namespace API_WEB.Controllers.SmartFA
                 {
                     await connection.CloseAsync();
                 }
+            }
+        }
+
+        private async Task<List<CheckInRecord>> FilterMissingLocationsAsync(List<CheckInRecord> source)
+        {
+            if (source == null || source.Count == 0)
+            {
+                return source ?? new List<CheckInRecord>();
+            }
+
+            try
+            {
+                var serialNumbers = source
+                    .Select(r => (r.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant())
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!serialNumbers.Any())
+                {
+                    return source;
+                }
+
+                var searchController = new SearchController(_sqlContext, _oracleContext);
+                var findLocationResult = await searchController.FindLocations(serialNumbers);
+
+                if (findLocationResult is not OkObjectResult okResult || okResult.Value == null)
+                {
+                    return source;
+                }
+
+                var serialized = JsonConvert.SerializeObject(okResult.Value);
+                var locationData = JsonConvert.DeserializeObject<FindLocationsResponse>(serialized);
+
+                if (locationData == null)
+                {
+                    return source;
+                }
+
+                var missingSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                if (locationData.NotFoundSerialNumbers != null)
+                {
+                    foreach (var sn in locationData.NotFoundSerialNumbers)
+                    {
+                        if (!string.IsNullOrWhiteSpace(sn))
+                        {
+                            missingSet.Add(sn.Trim().ToUpperInvariant());
+                        }
+                    }
+                }
+
+                if (locationData.Data != null)
+                {
+                    foreach (var item in locationData.Data)
+                    {
+                        var serialNumber = (item?.SerialNumber ?? string.Empty).Trim().ToUpperInvariant();
+                        if (string.IsNullOrWhiteSpace(serialNumber))
+                        {
+                            continue;
+                        }
+
+                        var location = item?.Location?.Trim();
+                        if (string.IsNullOrWhiteSpace(location) ||
+                            string.Equals(location, "Borrowed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            missingSet.Add(serialNumber);
+                        }
+                        else
+                        {
+                            missingSet.Remove(serialNumber);
+                        }
+                    }
+                }
+
+                if (!missingSet.Any())
+                {
+                    return new List<CheckInRecord>();
+                }
+
+                return source
+                    .Where(record => missingSet.Contains((record.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant()))
+                    .ToList();
+            }
+            catch
+            {
+                return source;
             }
         }
 
