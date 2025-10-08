@@ -10,3 +10,5 @@ publish/
 .idea/
 .vs
 .svn
+.vs/
+.vsixd
