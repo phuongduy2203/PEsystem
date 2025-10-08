@@ -591,6 +591,10 @@ namespace API_WEB.Controllers.Repositories
 
             try
             {
+<<<<<<< HEAD
+=======
+                int maxSlots = 160;
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
                 request.SerialNumbers = request.SerialNumbers.Distinct().ToList();
 
                 //Kiem tra SerialNumber trong ScrapList
@@ -598,18 +602,31 @@ namespace API_WEB.Controllers.Repositories
                     .Where(sl => request.SerialNumbers.Contains(sl.SN))
                     .Select(sl => sl.SN)
                     .ToListAsync();
+<<<<<<< HEAD
 
                 if (validSerials.Any())
+=======
+                var invalidSerials = request.SerialNumbers.Except(validSerials).ToList();
+                if (!invalidSerials.Any())
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
                 {
                     return BadRequest(new
                     {
                         success = false,
+<<<<<<< HEAD
                         message = "Một số Serial Number đã tồn tại trong ScrapList — không thể nhập Kho OK.",
                         invalidSerials = validSerials
                     });
                 }
 
 
+=======
+                        message = "Serial Number tồn tại trong ScrapList",
+                        invalidSerials
+                    });
+                }
+
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
                 var existingProducts = await _sqlContext.KhoOks
                     .Where(p => request.SerialNumbers.Contains(p.SERIAL_NUMBER))
                     .ToDictionaryAsync(p => p.SERIAL_NUMBER);

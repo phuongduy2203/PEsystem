@@ -3,8 +3,13 @@ let selectedSNs = new Set(); // Lưu các SN đã chọn (cho SEARCH_STATUS)
 
 // Hàm để ẩn tất cả các form và khu vực kết quả
 function hideAllElements() {
+<<<<<<< HEAD
     const forms = ["task-stock-status-form", "search-status-form"]; // bo  "update-status-form",
     const results = ["task-stock-status-result", "search-status-result"]; // "update-status-result",
+=======
+    const forms = ["task-stock-status-form", "search-status-form", "search-history-form"]; // bo  "update-status-form",
+    const results = ["task-stock-status-result", "search-status-result", "history-search-result"]; // "update-status-result",
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 
     forms.forEach(formId => {
         const form = document.getElementById(formId);
@@ -29,11 +34,19 @@ function hideAllElements() {
     const statusOptions = document.getElementById("status-options");
     const searchStatusUpdate = document.getElementById("search-status-update");
     const searchStatusOptions = document.getElementById("search-status-options");
+<<<<<<< HEAD
+=======
+    const historySearchUpdate = document.getElementById("history-search-update");
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 
     if (snStatusUpdate) snStatusUpdate.value = "";
     if (statusOptions) statusOptions.selectedIndex = 0;
     if (searchStatusUpdate) searchStatusUpdate.value = "";
     if (searchStatusOptions) searchStatusOptions.selectedIndex = 0;
+<<<<<<< HEAD
+=======
+    if (historySearchUpdate) historySearchUpdate.value = "";
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 }
 
 // Hàm tạo và tải xuống file Excel
@@ -61,6 +74,44 @@ function exportToExcel(noInternalTaskData, hasInternalTaskNoTaskNumberData, hasT
     XLSX.writeFile(workbook, filename);
 }
 
+<<<<<<< HEAD
+=======
+function exportHistoryToExcel(historyData, filename) {
+    if (!Array.isArray(historyData) || !historyData.length) {
+        throw new Error("No history data to export");
+    }
+
+    const workbook = XLSX.utils.book_new();
+    const sheetData = historyData.map(item => ({
+        "#": item.rowNumber ?? "",
+        "History ID": item.id ?? "",
+        "SN": item.sn ?? "",
+        "Internal Task": item.internalTask ?? "",
+        "Description": item.description ?? "",
+        "KanBan Status": item.kanBanStatus ?? "",
+        "Sloc": item.sloc ?? "",
+        "Task Number": item.taskNumber ?? "",
+        "PO": item.po ?? "",
+        "Cost": item.cost ?? "",
+        "Created By": item.createdBy ?? "",
+        "Create Time": item.createTime ?? "",
+        "Approve Scrap Person": item.approveScrapPerson ?? "",
+        "Apply Task Status": item.applyTaskStatus ?? "",
+        "Find Board Status": item.findBoardStatus ?? "",
+        "Remark": item.remark ?? "",
+        "Purpose": item.purpose ?? "",
+        "Category": item.category ?? "",
+        "Apply Time": item.applyTime ?? "",
+        "Spe Approve Time": item.speApproveTime ?? ""
+    }));
+
+    const historySheet = XLSX.utils.json_to_sheet(sheetData);
+    XLSX.utils.book_append_sheet(workbook, historySheet, "History");
+
+    XLSX.writeFile(workbook, filename);
+}
+
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 // Hàm hiển thị bảng với phân trang
 function renderTableWithPagination(data, resultDiv, tableHeaders, rowTemplate, extraHtml = "", tableIdPrefix = "") {
     const rowsPerPage = 10; // Số dòng mỗi trang
@@ -422,6 +473,139 @@ async function searchStatus(searchType, searchValues) {
     }
 }
 
+<<<<<<< HEAD
+=======
+// Hàm gọi API và hiển thị bảng lịch sử cho HistoryScrapList theo danh sách SN
+async function searchHistoryBySN(snValues) {
+    const resultDiv = document.getElementById("history-search-result");
+
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <strong>Thông báo:</strong> Đang tải dữ liệu lịch sử...
+        </div>
+    `;
+
+    const requestData = {
+        sNs: snValues
+    };
+
+    window.historySearchData = null;
+
+    try {
+        const response = await fetch("http://10.220.130.119:9090/api/Scrap/history-by-sn", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            const historyData = Array.isArray(result.data) ? result.data : [];
+            const missingSNs = Array.isArray(result.missingSNs) ? result.missingSNs : [];
+
+            const normalizedHistory = historyData.map((item, index) => ({
+                ...item,
+                rowNumber: index + 1
+            }));
+
+            const tableHeaders = `
+                <th>#</th>
+                <th>History ID</th>
+                <th>SN</th>
+                <th>Internal Task</th>
+                <th>Description</th>
+                <th>KanBan Status</th>
+                <th>Sloc</th>
+                <th>Task Number</th>
+                <th>PO</th>
+                <th>Cost</th>
+                <th>Created By</th>
+                <th>Create Time</th>
+                <th>Approve Scrap Person</th>
+                <th>Apply Task Status</th>
+                <th>Find Board Status</th>
+                <th>Remark</th>
+                <th>Purpose</th>
+                <th>Category</th>
+                <th>Apply Time</th>
+                <th>Spe Approve Time</th>
+            `;
+
+            const rowTemplate = (item) => `
+                <tr>
+                    <td>${item.rowNumber}</td>
+                    <td>${item.id ?? "N/A"}</td>
+                    <td>${item.sn ?? "N/A"}</td>
+                    <td>${item.internalTask ?? "N/A"}</td>
+                    <td>${item.description ?? "N/A"}</td>
+                    <td>${item.kanBanStatus ?? "N/A"}</td>
+                    <td>${item.sloc ?? "N/A"}</td>
+                    <td>${item.taskNumber ?? "N/A"}</td>
+                    <td>${item.po ?? "N/A"}</td>
+                    <td>${item.cost ?? "N/A"}</td>
+                    <td>${item.createdBy ?? "N/A"}</td>
+                    <td>${item.createTime ?? "N/A"}</td>
+                    <td>${item.approveScrapPerson ?? "N/A"}</td>
+                    <td>${item.applyTaskStatus ?? "N/A"}</td>
+                    <td>${item.findBoardStatus ?? "N/A"}</td>
+                    <td>${item.remark ?? "N/A"}</td>
+                    <td>${item.purpose ?? "N/A"}</td>
+                    <td>${item.category ?? "N/A"}</td>
+                    <td>${item.applyTime ?? "N/A"}</td>
+                    <td>${item.speApproveTime ?? "N/A"}</td>
+                </tr>
+            `;
+
+            let extraHtml = "";
+            if (missingSNs.length > 0) {
+                extraHtml = `
+                    <div class="alert alert-warning mt-3">
+                        <strong>Cảnh báo:</strong> Không tìm thấy lịch sử cho ${missingSNs.length} SN: ${missingSNs.join(", ")}
+                    </div>
+                `;
+            }
+
+            if (normalizedHistory.length === 0) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>Thông báo:</strong> Không tìm thấy dữ liệu lịch sử cho các SN đã nhập.
+                    </div>
+                    ${extraHtml}
+                `;
+                window.historySearchData = null;
+                return;
+            }
+
+            window.historySearchData = {
+                history: normalizedHistory,
+                missingSNs,
+                requestSNs: snValues
+            };
+
+            renderTableWithPagination(normalizedHistory, resultDiv, tableHeaders, rowTemplate, extraHtml, "history-search");
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> ${result.message ?? "Không thể lấy dữ liệu lịch sử."}
+                </div>
+            `;
+            window.historySearchData = null;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+            </div>
+        `;
+        console.error("Error:", error);
+        window.historySearchData = null;
+    }
+}
+
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 // Ẩn tất cả các form và khu vực kết quả ngay lập tức khi trang tải
 hideAllElements();
 
@@ -453,6 +637,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }*/ else if (selectedValue === "SEARCH_STATUS") {
             document.getElementById("search-status-form").classList.remove("hidden");
             document.getElementById("search-status-result").classList.remove("hidden");
+<<<<<<< HEAD
+=======
+        } else if (selectedValue === "SEARCH_HISTORY") {
+            document.getElementById("search-history-form").classList.remove("hidden");
+            document.getElementById("history-search-result").classList.remove("hidden");
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
         }
     });
 
@@ -685,4 +875,76 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error:", error);
         }
     });
+<<<<<<< HEAD
 });
+=======
+
+    // Xử lý sự kiện khi nhấn nút "Search history" trong form SEARCH_HISTORY
+    document.getElementById("history-search-btn").addEventListener("click", async function () {
+        const resultDiv = document.getElementById("history-search-result");
+
+        const searchInput = document.getElementById("history-search-update").value.trim();
+        const searchValues = searchInput.split(/\r?\n/).map(value => value.trim()).filter(value => value);
+
+        if (!searchValues.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một SN hợp lệ để tra lịch sử.
+                </div>
+            `;
+            return;
+        }
+
+        await searchHistoryBySN(searchValues);
+    });
+
+    document.getElementById("history-download-btn").addEventListener("click", function () {
+        const resultDiv = document.getElementById("history-search-result");
+
+        if (!window.historySearchData || !Array.isArray(window.historySearchData.history) || !window.historySearchData.history.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng tra cứu lịch sử SN trước khi tải Excel.
+                </div>
+            `;
+            return;
+        }
+
+        const existingMessage = document.getElementById("history-export-message");
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        try {
+            const now = new Date();
+            const filename = `HistorySearch_${now.toISOString().replace(/[:.]/g, '-')}.xlsx`;
+            exportHistoryToExcel(window.historySearchData.history, filename);
+
+            const successMessage = document.createElement("div");
+            successMessage.className = "alert alert-success mt-3";
+            successMessage.id = "history-export-message";
+
+            const missingInfo = window.historySearchData.missingSNs && window.historySearchData.missingSNs.length
+                ? ` (Không tìm thấy lịch sử cho ${window.historySearchData.missingSNs.length} SN.)`
+                : "";
+
+            successMessage.innerHTML = `
+                <strong>Thành công:</strong> File Excel đã được tải xuống.${missingInfo}
+            `;
+
+            resultDiv.prepend(successMessage);
+        } catch (error) {
+            console.error("Error exporting history:", error);
+
+            const errorMessage = document.createElement("div");
+            errorMessage.className = "alert alert-danger mt-3";
+            errorMessage.id = "history-export-message";
+            errorMessage.innerHTML = `
+                <strong>Lỗi:</strong> Không thể tạo file Excel. Vui lòng thử lại.
+            `;
+
+            resultDiv.prepend(errorMessage);
+        }
+    });
+});
+>>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
