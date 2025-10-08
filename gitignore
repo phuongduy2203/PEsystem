@@ -8,7 +8,6 @@ obj/
 publish/
 .vscode/
 .idea/
-.vs
-.svn
+.svn/
 .vs/
-.vsixd
+.vsixd/
