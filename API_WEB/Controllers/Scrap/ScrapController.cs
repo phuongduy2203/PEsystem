@@ -1027,8 +1027,6 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-<<<<<<< HEAD
-=======
         // API: Tìm kiếm lịch sử ScrapList theo danh sách SN
         [HttpPost("history-by-sn")]
         public async Task<IActionResult> GetHistoryBySn([FromBody] HistoryBySnRequest request)
@@ -1091,8 +1089,6 @@ namespace API_WEB.Controllers.Scrap
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi tìm kiếm lịch sử SN.", error = ex.Message });
             }
         }
-
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
         // API: Lấy dữ liệu FindBoardStatus từ ScrapList
         [HttpGet("get-find-board-status")]
         public async Task<IActionResult> GetFindBoardStatus()
@@ -1235,14 +1231,10 @@ namespace API_WEB.Controllers.Scrap
             public List<string> TaskNumber { get; set; } = new List<string>();
         }
 
-<<<<<<< HEAD
-=======
         public class HistoryBySnRequest
         {
             public List<string> SNs { get; set; } = new List<string>();
         }
-
->>>>>>> ee026503a5b0a67515bc63ae57925ef803d917c2
 
         // API: Cập nhật trạng thái FindBoardStatus trong bảng ScrapList
         [HttpPost("update-status-find-board")]
