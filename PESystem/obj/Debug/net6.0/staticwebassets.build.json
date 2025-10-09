@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "rkFeZN7itxXcHAxP+d1Z5yfI9bQxyV2D/7R0u8jkyHU=",
+  "Hash": "DV6363V2qAJATR1MJao01srxkowuI6YIXzVqnb7HFAc=",
   "Source": "PESystem",
   "BasePath": "_content/PESystem",
   "Mode": "Default",
@@ -1120,6 +1120,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\obj\\Debug\\net6.0\\scopedcss\\projectbundle\\PESystem.bundle.scp.css"
+    },
+    {
+      "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\assets\\Areas\\BGA\\js\\replace-bga.js",
+      "SourceId": "PESystem",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\",
+      "BasePath": "_content/PESystem",
+      "RelativePath": "assets/Areas/BGA/js/replace-bga.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\assets\\Areas\\BGA\\js\\replace-bga.js"
     },
     {
       "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\assets\\Areas\\Bonepile\\css\\bonepile.css",
@@ -11898,6 +11915,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\lib\\jszip.min.js"
+    },
+    {
+      "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\lib\\npm-chart.js",
+      "SourceId": "PESystem",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\",
+      "BasePath": "_content/PESystem",
+      "RelativePath": "lib/npm-chart.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\npm-chart.js"
     },
     {
       "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\lib\\pdfjs\\build\\pdf.mjs",
