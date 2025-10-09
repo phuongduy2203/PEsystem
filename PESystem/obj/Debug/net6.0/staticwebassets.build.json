@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "DV6363V2qAJATR1MJao01srxkowuI6YIXzVqnb7HFAc=",
+  "Hash": "lDS3dBablbBObMYBQMgI10KiCFQ4mvF8Qz9vfeLSHSs=",
   "Source": "PESystem",
   "BasePath": "_content/PESystem",
   "Mode": "Default",
@@ -19922,6 +19922,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\pdfs\\product-lines\\MOONRAKERBF3.pdf"
+    },
+    {
+      "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\pdfs\\product-lines\\replace-BGA-process.pdf",
+      "SourceId": "PESystem",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\",
+      "BasePath": "_content/PESystem",
+      "RelativePath": "pdfs/product-lines/replace-BGA-process.pdf",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\pdfs\\product-lines\\replace-BGA-process.pdf"
     },
     {
       "Identity": "D:\\1.SourceCode - he thong\\PESystem\\PESystem\\wwwroot\\video\\backgroud_login.mp4",
