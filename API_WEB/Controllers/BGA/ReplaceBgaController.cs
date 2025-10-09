@@ -205,6 +205,14 @@ namespace API_WEB.Controllers.BGA
                         return new
                         {
                             sn,
+                            TaskNumber = (string?)null,
+                            InternalTask = (string?)null,
+                            Desc = (string?)null,
+                            ApplyTaskStatus = (int?)null,
+                            statusName = (string?)null,
+                            FindBoardStatus = (string?)null,
+                            ApproveScrapperson = (string?)null,
+                            ApplyTime = (DateTime?)null,
                             isValid = false,
                             message = "Không tìm thấy SN trong Replace BGA."
                         };
@@ -225,7 +233,8 @@ namespace API_WEB.Controllers.BGA
                         record.FindBoardStatus,
                         record.ApproveScrapperson,
                         record.ApplyTime,
-                        isValid = true
+                        isValid = true,
+                        message = (string?)null
                     };
                 })
                 .ToList();
