@@ -1473,6 +1473,7 @@ namespace API_WEB.Controllers.Scrap
                 await bonepileConnection.OpenAsync();
 
                 var foundSNsInBonepile = new List<string>();
+                var foundSNsInKanban = new List<string>();
                 if (request.Remark == "BP-10" || request.Remark == "BP-20")
                 {
                     // Query bảng bonepile 2.0: SFISM4.NVIDIA_BONEPILE_SN_LOG
@@ -1487,6 +1488,24 @@ namespace API_WEB.Controllers.Scrap
                     {
                         foundSNsInBonepile.Add(bonepileReader.GetString(0));
                     }
+
+                    // Các SN BP-10/BP-20 không được tồn tại trong Z_KANBAN_TRACKING_T
+                    var kanbanParams = string.Join(",", request.SNs.Select((_, i) => $":k{i}"));
+                    using var kanbanCheckCommand = new OracleCommand($"SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T WHERE SERIAL_NUMBER IN ({kanbanParams})", bonepileConnection);
+                    for (int i = 0; i < request.SNs.Count; i++)
+                    {
+                        kanbanCheckCommand.Parameters.Add(new OracleParameter($"k{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
+                    }
+                    using var kanbanReader = await kanbanCheckCommand.ExecuteReaderAsync();
+                    while (await kanbanReader.ReadAsync())
+                    {
+                        foundSNsInKanban.Add(kanbanReader.GetString(0));
+                    }
+                }
+
+                if (foundSNsInKanban.Any())
+                {
+                    return BadRequest(new { message = $"Các SN sau tồn tại trong SFISM4.Z_KANBAN_TRACKING_T và không thể xử lý với Remark {request.Remark}: {string.Join(", ", foundSNsInKanban)}" });
                 }
 
                 // Xử lý theo Remark

@@ -84,19 +84,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     <tr class="table-danger">
                         <td>${index + 1}</td>
                         <td>${item.sn ?? ""}</td>
-                        <td colspan="6">${item.message || "Không tìm thấy dữ liệu."}</td>
+                        <td colspan="10">${item.message || "Không tìm thấy dữ liệu."}</td>
                     </tr>
                 `;
             }
 
             const statusName = item.statusName ?? STATUS_LABELS[item.applyTaskStatus] ?? item.applyTaskStatus ?? "";
             const applyTime = item.applyTime ? new Date(item.applyTime).toLocaleString() : "";
+            const sourceLabel = item.source === "History"
+                ? "Lịch sử"
+                : item.source === "Current"
+                    ? "Hiện tại"
+                    : "";
+            const note = item.findBoardStatus ?? "";
+            const remark = item.remark ?? "";
+            const category = item.category ?? "";
             return `
                 <tr>
                     <td>${index + 1}</td>
                     <td>${item.sn ?? ""}</td>
                     <td>${statusName}</td>
-                    <td>${item.findBoardStatus ?? ""}</td>
+                    <td>${note}</td>
+                    <td>${sourceLabel}</td>
+                    <td>${category}</td>
+                    <td>${remark}</td>
                     <td>${item.approveScrapperson ?? ""}</td>
                     <td>${applyTime}</td>
                     <td>${item.taskNumber ?? ""}</td>
@@ -107,12 +118,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
 
         resultContainer.innerHTML = `
-            <table class="table table-bordered table-hover align-middle">
+            <table class="table table-striped table-hover table-sm align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
                         <th>SN</th>
                         <th>Trạng thái</th>
+                        <th>Note</th>
+                        <th>Nguồn</th>
+                        <th>Category</th>
                         <th>Remark</th>
                         <th>Approve</th>
                         <th>Apply Time</th>
@@ -131,7 +145,10 @@ document.addEventListener("DOMContentLoaded", () => {
             STT: index + 1,
             SN: item.sn ?? "",
             TrangThai: item.statusName ?? STATUS_LABELS[item.applyTaskStatus] ?? item.applyTaskStatus ?? "",
-            Remark: item.findBoardStatus ?? "",
+            Note: item.findBoardStatus ?? "",
+            Nguon: item.source === "History" ? "History" : item.source === "Current" ? "Current" : "",
+            Category: item.category ?? "",
+            Remark: item.remark ?? "",
             Approve: item.approveScrapperson ?? "",
             ApplyTime: item.applyTime ? new Date(item.applyTime).toLocaleString() : "",
             TaskNumber: item.taskNumber ?? "",
@@ -158,12 +175,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const statusName = item.statusName ?? STATUS_LABELS[item.applyTaskStatus] ?? item.applyTaskStatus ?? "";
             const applyTime = item.applyTime ? new Date(item.applyTime).toLocaleString() : "";
             const createTime = item.createTime ? new Date(item.createTime).toLocaleString() : "";
+            const sourceLabel = item.source === "Current" ? "Hiện tại" : "Lịch sử";
+            const note = item.findBoardStatus ?? "";
             return `
                 <tr>
                     <td>${index + 1}</td>
                     <td>${item.sn ?? ""}</td>
                     <td>${statusName}</td>
-                    <td>${item.findBoardStatus ?? ""}</td>
+                    <td>${note}</td>
+                    <td>${sourceLabel}</td>
+                    <td>${item.category ?? ""}</td>
+                    <td>${item.remark ?? ""}</td>
                     <td>${item.approveScrapperson ?? ""}</td>
                     <td>${applyTime}</td>
                     <td>${createTime}</td>
@@ -175,12 +197,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
 
         resultContainer.innerHTML = `
-            <table class="table table-bordered table-hover align-middle">
+            <table class="table table-striped table-hover table-sm align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
                         <th>SN</th>
                         <th>Trạng thái</th>
+                        <th>Note</th>
+                        <th>Nguồn</th>
+                        <th>Category</th>
                         <th>Remark</th>
                         <th>Approve</th>
                         <th>Apply Time</th>
@@ -199,7 +224,10 @@ document.addEventListener("DOMContentLoaded", () => {
             STT: index + 1,
             SN: item.sn ?? "",
             TrangThai: item.statusName ?? STATUS_LABELS[item.applyTaskStatus] ?? item.applyTaskStatus ?? "",
-            Remark: item.findBoardStatus ?? "",
+            Note: item.findBoardStatus ?? "",
+            Nguon: item.source === "Current" ? "Current" : "History",
+            Category: item.category ?? "",
+            Remark: item.remark ?? "",
             Approve: item.approveScrapperson ?? "",
             ApplyTime: item.applyTime ? new Date(item.applyTime).toLocaleString() : "",
             CreateTime: item.createTime ? new Date(item.createTime).toLocaleString() : "",
