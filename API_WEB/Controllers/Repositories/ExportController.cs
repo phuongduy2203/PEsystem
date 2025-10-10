@@ -179,7 +179,7 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
-
+        [HttpPost("send-receiving-status")]
         public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
         {
             if (serialNumbers == null || !serialNumbers.Any())
@@ -187,18 +187,27 @@ namespace API_WEB.Controllers.Repositories
 
             try
             {
+                // 🔧 Làm sạch từng serial: trim và loại bỏ xuống dòng, khoảng trắng
+                var cleanedSerials = serialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!cleanedSerials.Any())
+                    return;
+
                 var payload = new
                 {
-                    serialnumbers = string.Join(",", serialNumbers),
-                    owner = owner ?? string.Empty,
-                    location = location ?? string.Empty,
-                    tag = tag ?? string.Empty
+                    serialnumbers = string.Join(",", cleanedSerials),
+                    owner = owner?.Trim() ?? string.Empty,
+                    location = location?.Trim() ?? string.Empty,
+                    tag = tag?.Trim() ?? string.Empty
                 };
 
                 var json = JsonConvert.SerializeObject(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Dùng trực tiếp _httpClient
                 var response = await _httpClient.PostAsync(
                     "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
 
@@ -209,7 +218,7 @@ namespace API_WEB.Controllers.Repositories
                 }
                 else
                 {
-                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {serialNumbers.Count()} serials. Tag={tag}");
+                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {cleanedSerials.Count} serials. Tag={tag}");
                 }
             }
             catch (Exception ex)
@@ -217,6 +226,7 @@ namespace API_WEB.Controllers.Repositories
                 Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
             }
         }
+
 
 
         [HttpPost("UpdateMissingInfo")]

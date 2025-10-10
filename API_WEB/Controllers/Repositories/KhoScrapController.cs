@@ -484,6 +484,7 @@ namespace API_WEB.Controllers.Repositories
         }
 
 
+        [HttpPost("send-receiving-status-ne")]
         public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
         {
             if (serialNumbers == null || !serialNumbers.Any())

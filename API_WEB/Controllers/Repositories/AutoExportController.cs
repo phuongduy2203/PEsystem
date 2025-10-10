@@ -32,6 +32,7 @@ namespace API_WEB.Controllers.Repositories
 
                 // 3. Truy vấn bảng Z_KANBAN_TRACKING_T
                 var wipGroups = await GetWipGroupsFromOracleAsync(oracleConnection, serialNumbers);
+                var wipR107 = await GetR107InfoAsync(oracleConnection, serialNumbers);
 
                 // 4. Lọc SN để xuất kho dựa trên điều kiện
                 var snToExport = new List<string>();
@@ -55,7 +56,7 @@ namespace API_WEB.Controllers.Repositories
                     }
                     //else if (wipGroups[sn] == "B36R_TO_SFG")
                     //{
-                    //    // TH2: WIP_GROUP = "B36R_TO_SFG", kiểm tra thêm trong bảng R109
+                    //    // TH2: WIP_GROUP = "B36R_TO_SFG", kiểm tra thêm trong bảng R107
                     //    var errorFlag = await GetErrorFlagFromR107Async(oracleConnection, sn);
                     //    if (errorFlag == "0" || errorFlag == "1")
                     //    {
