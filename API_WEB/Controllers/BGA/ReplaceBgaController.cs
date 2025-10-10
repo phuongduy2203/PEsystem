@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using API_WEB.ModelsDB;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +16,10 @@ namespace API_WEB.Controllers.BGA
     public class ReplaceBgaController : ControllerBase
     {
         private readonly CSDL_NE _sqlContext;
+        private readonly HttpClient _repairScrapClient;
 
         private static readonly Dictionary<int, int> _linearNextStatusMap = new()
         {
-            { 4, 10 },
             { 10, 11 },
             { 11, 12 },
             { 12, 13 },
@@ -50,6 +53,14 @@ namespace API_WEB.Controllers.BGA
         public ReplaceBgaController(CSDL_NE sqlContext)
         {
             _sqlContext = sqlContext;
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+
+            _repairScrapClient = new HttpClient(handler);
+            _repairScrapClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         private IQueryable<ScrapList> QueryBgaScrapLists()
@@ -132,6 +143,7 @@ namespace API_WEB.Controllers.BGA
         public async Task<IActionResult> GetStatusSummary()
         {
             var summary = await QueryBgaScrapLists()
+                .Where(s => s.ApplyTaskStatus != 4)
                 .GroupBy(s => s.ApplyTaskStatus)
                 .Select(g => new
                 {
@@ -164,23 +176,24 @@ namespace API_WEB.Controllers.BGA
                 .Select(s => new
                 {
                     s.SN,
-                    s.ApplyTime,
-                    s.CreateTime,
-                    s.Category
+                    s.ApplyTime
                 })
                 .ToListAsync();
 
             var payload = records
-                .Where(record => string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category))
                 .Select(record =>
                 {
-                    var referenceTime = record.ApplyTime ?? record.CreateTime;
                     double? hours = null;
                     double? minutes = null;
 
-                    if (referenceTime != default)
+                    if (record.ApplyTime.HasValue)
                     {
-                        var elapsed = now - referenceTime;
+                        var elapsed = now - record.ApplyTime.Value;
+                        if (elapsed.TotalMinutes < 0)
+                        {
+                            elapsed = TimeSpan.Zero;
+                        }
+
                         hours = Math.Round(elapsed.TotalHours, 2);
                         minutes = Math.Round(elapsed.TotalMinutes, 0);
                     }
@@ -190,18 +203,10 @@ namespace API_WEB.Controllers.BGA
                         sn = record.SN,
                         applyTime = record.ApplyTime,
                         hours,
-                        minutes,
-                        referenceTime = referenceTime == default ? (DateTime?)null : referenceTime
+                        minutes
                     };
                 })
-                .OrderByDescending(item => item.referenceTime ?? DateTime.MinValue)
-                .Select(item => new
-                {
-                    item.sn,
-                    item.applyTime,
-                    item.hours,
-                    item.minutes
-                })
+                .OrderByDescending(item => item.applyTime ?? DateTime.MinValue)
                 .ToList();
 
             return Ok(payload);
@@ -216,30 +221,123 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không hợp lệ." });
             }
 
-            var scrapRecords = await QueryBgaScrapLists()
-                .Where(s => normalizedSNs.Contains(s.SN))
-                .ToListAsync();
+                var scrapRecords = await _sqlContext.ScrapLists
+                    .AsNoTracking()
+                    .Where(s => normalizedSNs.Contains(s.SN))
+                    .Select(s => new
+                    {
+                        s.SN,
+                        s.TaskNumber,
+                        s.InternalTask,
+                        s.Desc,
+                        s.ApplyTaskStatus,
+                        s.FindBoardStatus,
+                        s.ApproveScrapperson,
+                        s.ApplyTime,
+                        s.CreateTime,
+                        s.Category,
+                        s.Remark
+                    })
+                    .ToListAsync();
+
+            var scrapLookup = scrapRecords
+                .GroupBy(s => s.SN, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+                var historyRecords = await QueryBgaHistory()
+                    .Where(h => normalizedSNs.Contains(h.SN))
+                    .Select(h => new
+                    {
+                        h.SN,
+                        h.TaskNumber,
+                        h.InternalTask,
+                        h.Desc,
+                        h.ApplyTaskStatus,
+                        h.FindBoardStatus,
+                        h.ApproveScrapperson,
+                        h.ApplyTime,
+                        h.CreateTime,
+                        h.Category,
+                        h.Remark
+                    })
+                    .ToListAsync();
+
+            var historyLookup = historyRecords
+                .GroupBy(h => h.SN, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new
+                {
+                    Key = g.Key,
+                    Value = g
+                        .OrderByDescending(item => item.ApplyTime ?? item.CreateTime)
+                        .FirstOrDefault()
+                })
+                .Where(item => item.Value != null)
+                .ToDictionary(item => item.Key, item => item.Value!, StringComparer.OrdinalIgnoreCase);
 
             var result = new List<object>();
 
             foreach (var sn in normalizedSNs)
             {
-                var record = scrapRecords.FirstOrDefault(s => string.Equals(s.SN, sn, StringComparison.OrdinalIgnoreCase));
-                if (record == null)
+                if (scrapLookup.TryGetValue(sn, out var record))
                 {
+                    var inBgaCategory = string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category);
+                    var waitingApproval = record.ApplyTaskStatus == 4;
+                    var isValid = inBgaCategory && !waitingApproval;
+                    string? message = null;
+
+                    if (!inBgaCategory)
+                    {
+                        message = "SN không thuộc Replace BGA.";
+                    }
+                    else if (waitingApproval)
+                    {
+                        message = "SN đang chờ approve replace BGA tại Scrap view.";
+                    }
+
                     result.Add(new
                     {
-                        sn,
-                        TaskNumber = (string?)null,
-                        InternalTask = (string?)null,
-                        Desc = (string?)null,
-                        ApplyTaskStatus = (int?)null,
-                        statusName = (string?)null,
-                        FindBoardStatus = (string?)null,
-                        ApproveScrapperson = (string?)null,
-                        ApplyTime = (DateTime?)null,
-                        isValid = false,
-                        message = "Không tìm thấy SN trong Replace BGA."
+                        sn = record.SN,
+                        record.TaskNumber,
+                        record.InternalTask,
+                        record.Desc,
+                        record.ApplyTaskStatus,
+                        statusName = GetStatusName(record.ApplyTaskStatus),
+                        record.FindBoardStatus,
+                        record.ApproveScrapperson,
+                        record.ApplyTime,
+                        record.CreateTime,
+                        record.Category,
+                        record.Remark,
+                        isValid,
+                        message,
+                        source = "Current"
+                    });
+
+                    continue;
+                }
+
+                if (historyLookup.TryGetValue(sn, out var history))
+                {
+                    var inBgaCategory = string.IsNullOrWhiteSpace(history.Category) || IsBgaCategory(history.Category);
+                    string? message = inBgaCategory ? null : "SN không thuộc Replace BGA.";
+
+                    result.Add(new
+                    {
+                        sn = history.SN,
+                        history.TaskNumber,
+                        history.InternalTask,
+                        history.Desc,
+                        history.ApplyTaskStatus,
+                        statusName = GetStatusName(history.ApplyTaskStatus),
+                        history.FindBoardStatus,
+                        history.ApproveScrapperson,
+                        history.ApplyTime,
+                        history.CreateTime,
+                        history.Category,
+                        history.Remark,
+                        isValid = inBgaCategory,
+                        message,
+                        source = "History"
                     });
 
                     continue;
@@ -247,17 +345,21 @@ namespace API_WEB.Controllers.BGA
 
                 result.Add(new
                 {
-                    sn = record.SN,
-                    record.TaskNumber,
-                    record.InternalTask,
-                    record.Desc,
-                    record.ApplyTaskStatus,
-                    statusName = GetStatusName(record.ApplyTaskStatus),
-                    record.FindBoardStatus,
-                    record.ApproveScrapperson,
-                    record.ApplyTime,
-                    isValid = true,
-                    message = (string?)null
+                    sn,
+                    TaskNumber = (string?)null,
+                    InternalTask = (string?)null,
+                    Desc = (string?)null,
+                    ApplyTaskStatus = (int?)null,
+                    statusName = (string?)null,
+                    FindBoardStatus = (string?)null,
+                    ApproveScrapperson = (string?)null,
+                    ApplyTime = (DateTime?)null,
+                    CreateTime = (DateTime?)null,
+                    Category = (string?)null,
+                    Remark = (string?)null,
+                    isValid = false,
+                    message = "Không tìm thấy SN trong Replace BGA.",
+                    source = (string?)null
                 });
             }
 
@@ -287,7 +389,27 @@ namespace API_WEB.Controllers.BGA
                     h.FindBoardStatus,
                     h.ApproveScrapperson,
                     h.ApplyTime,
-                    h.CreateTime
+                    h.CreateTime,
+                    h.Category,
+                    h.Remark
+                })
+                .ToListAsync();
+
+            var currentRecords = await QueryBgaScrapLists()
+                .Where(s => normalizedSNs.Contains(s.SN))
+                .Select(s => new
+                {
+                    s.SN,
+                    s.TaskNumber,
+                    s.InternalTask,
+                    s.Desc,
+                    s.ApplyTaskStatus,
+                    s.FindBoardStatus,
+                    s.ApproveScrapperson,
+                    s.ApplyTime,
+                    s.CreateTime,
+                    s.Category,
+                    s.Remark
                 })
                 .ToListAsync();
 
@@ -303,8 +425,29 @@ namespace API_WEB.Controllers.BGA
                     history.FindBoardStatus,
                     history.ApproveScrapperson,
                     history.ApplyTime,
-                    history.CreateTime
+                    history.CreateTime,
+                    history.Category,
+                    history.Remark,
+                    Source = "History"
                 })
+                .Concat(currentRecords.Select(record => new
+                {
+                    record.SN,
+                    record.TaskNumber,
+                    record.InternalTask,
+                    record.Desc,
+                    record.ApplyTaskStatus,
+                    StatusName = GetStatusName(record.ApplyTaskStatus),
+                    record.FindBoardStatus,
+                    record.ApproveScrapperson,
+                    record.ApplyTime,
+                    record.CreateTime,
+                    record.Category,
+                    record.Remark,
+                    Source = "Current"
+                }))
+                .OrderBy(item => item.SN)
+                .ThenByDescending(item => item.ApplyTime ?? item.CreateTime)
                 .ToList();
 
             return Ok(response);
@@ -318,7 +461,7 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không được để trống." });
             }
 
-            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 3 || request.CurrentStatus == 18)
+            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 3 || request.CurrentStatus == 4 || request.CurrentStatus == 18)
             {
                 return BadRequest(new { message = "Trạng thái hiện tại không hợp lệ." });
             }
@@ -431,11 +574,41 @@ namespace API_WEB.Controllers.BGA
             {
                 record.ApplyTaskStatus = nextStatus;
                 record.FindBoardStatus = request.Remark;
+                if (record.CreateTime == default)
+                {
+                    record.CreateTime = updateTime;
+                }
                 record.ApplyTime = updateTime;
             }
 
             await AddHistoryEntriesAsync(scrapRecords);
             await _sqlContext.SaveChangesAsync();
+
+            var repairScrapPayload = new
+            {
+                type = "update",
+                sn_list = string.Join(",", scrapRecords.Select(record => record.SN)),
+                type_bp = (string?)null,
+                status = nextStatus.ToString(),
+                task = (string?)null
+            };
+
+            try
+            {
+                var response = await _repairScrapClient.PostAsJsonAsync(
+                    "https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap",
+                    repairScrapPayload);
+
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Cập nhật ScrapList thành công nhưng đồng bộ repair_scrap thất bại.",
+                    error = ex.Message
+                });
+            }
 
             var nextStatusName = _statusDescriptions.ContainsKey(nextStatus)
                 ? _statusDescriptions[nextStatus]
@@ -458,26 +631,37 @@ namespace API_WEB.Controllers.BGA
 
             var historyEntries = records
                 .Where(record => record != null)
-                .Select(record => new HistoryScrapList
+                .Select(record =>
                 {
-                    SN = record.SN,
-                    KanBanStatus = record.KanBanStatus,
-                    Sloc = record.Sloc,
-                    TaskNumber = record.TaskNumber,
-                    PO = record.PO,
-                    CreatedBy = record.CreatedBy,
-                    Cost = record.Cost,
-                    InternalTask = record.InternalTask,
-                    Desc = record.Desc,
-                    CreateTime = record.CreateTime,
-                    ApproveScrapperson = record.ApproveScrapperson,
-                    ApplyTaskStatus = record.ApplyTaskStatus,
-                    FindBoardStatus = record.FindBoardStatus,
-                    Remark = record.Remark,
-                    Purpose = record.Purpose,
-                    Category = record.Category,
-                    ApplyTime = record.ApplyTime,
-                    SpeApproveTime = record.SpeApproveTime
+                    var appliedAt = record.ApplyTime ?? record.CreateTime;
+                    if (appliedAt == default)
+                    {
+                        appliedAt = DateTime.Now;
+                    }
+
+                    var createdAt = record.CreateTime == default ? appliedAt : record.CreateTime;
+
+                    return new HistoryScrapList
+                    {
+                        SN = record.SN,
+                        KanBanStatus = record.KanBanStatus,
+                        Sloc = record.Sloc,
+                        TaskNumber = record.TaskNumber,
+                        PO = record.PO,
+                        CreatedBy = record.CreatedBy,
+                        Cost = record.Cost,
+                        InternalTask = record.InternalTask,
+                        Desc = record.Desc,
+                        CreateTime = createdAt,
+                        ApproveScrapperson = record.ApproveScrapperson,
+                        ApplyTaskStatus = record.ApplyTaskStatus,
+                        FindBoardStatus = record.FindBoardStatus,
+                        Remark = record.Remark,
+                        Purpose = record.Purpose,
+                        Category = record.Category,
+                        ApplyTime = appliedAt,
+                        SpeApproveTime = record.SpeApproveTime
+                    };
                 })
                 .ToList();
 
