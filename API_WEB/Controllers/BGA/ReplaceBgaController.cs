@@ -164,23 +164,24 @@ namespace API_WEB.Controllers.BGA
                 .Select(s => new
                 {
                     s.SN,
-                    s.ApplyTime,
-                    s.CreateTime,
-                    s.Category
+                    s.ApplyTime
                 })
                 .ToListAsync();
 
             var payload = records
-                .Where(record => string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category))
                 .Select(record =>
                 {
-                    var referenceTime = record.ApplyTime ?? record.CreateTime;
                     double? hours = null;
                     double? minutes = null;
 
-                    if (referenceTime != default)
+                    if (record.ApplyTime.HasValue)
                     {
-                        var elapsed = now - referenceTime;
+                        var elapsed = now - record.ApplyTime.Value;
+                        if (elapsed.TotalMinutes < 0)
+                        {
+                            elapsed = TimeSpan.Zero;
+                        }
+
                         hours = Math.Round(elapsed.TotalHours, 2);
                         minutes = Math.Round(elapsed.TotalMinutes, 0);
                     }
@@ -190,18 +191,10 @@ namespace API_WEB.Controllers.BGA
                         sn = record.SN,
                         applyTime = record.ApplyTime,
                         hours,
-                        minutes,
-                        referenceTime = referenceTime == default ? (DateTime?)null : referenceTime
+                        minutes
                     };
                 })
-                .OrderByDescending(item => item.referenceTime ?? DateTime.MinValue)
-                .Select(item => new
-                {
-                    item.sn,
-                    item.applyTime,
-                    item.hours,
-                    item.minutes
-                })
+                .OrderByDescending(item => item.applyTime ?? DateTime.MinValue)
                 .ToList();
 
             return Ok(payload);
@@ -216,8 +209,21 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không hợp lệ." });
             }
 
-            var scrapRecords = await QueryBgaScrapLists()
+            var scrapRecords = await _sqlContext.ScrapLists
+                .AsNoTracking()
                 .Where(s => normalizedSNs.Contains(s.SN))
+                .Select(s => new
+                {
+                    s.SN,
+                    s.TaskNumber,
+                    s.InternalTask,
+                    s.Desc,
+                    s.ApplyTaskStatus,
+                    s.FindBoardStatus,
+                    s.ApproveScrapperson,
+                    s.ApplyTime,
+                    s.Category
+                })
                 .ToListAsync();
 
             var result = new List<object>();
@@ -256,8 +262,10 @@ namespace API_WEB.Controllers.BGA
                     record.FindBoardStatus,
                     record.ApproveScrapperson,
                     record.ApplyTime,
-                    isValid = true,
-                    message = (string?)null
+                    isValid = string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category),
+                    message = string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category)
+                        ? (string?)null
+                        : "SN không thuộc Replace BGA."
                 });
             }
 
@@ -291,6 +299,22 @@ namespace API_WEB.Controllers.BGA
                 })
                 .ToListAsync();
 
+            var currentRecords = await QueryBgaScrapLists()
+                .Where(s => normalizedSNs.Contains(s.SN))
+                .Select(s => new
+                {
+                    s.SN,
+                    s.TaskNumber,
+                    s.InternalTask,
+                    s.Desc,
+                    s.ApplyTaskStatus,
+                    s.FindBoardStatus,
+                    s.ApproveScrapperson,
+                    s.ApplyTime,
+                    s.CreateTime
+                })
+                .ToListAsync();
+
             var response = histories
                 .Select(history => new
                 {
@@ -303,8 +327,25 @@ namespace API_WEB.Controllers.BGA
                     history.FindBoardStatus,
                     history.ApproveScrapperson,
                     history.ApplyTime,
-                    history.CreateTime
+                    history.CreateTime,
+                    Source = "History"
                 })
+                .Concat(currentRecords.Select(record => new
+                {
+                    record.SN,
+                    record.TaskNumber,
+                    record.InternalTask,
+                    record.Desc,
+                    record.ApplyTaskStatus,
+                    StatusName = GetStatusName(record.ApplyTaskStatus),
+                    record.FindBoardStatus,
+                    record.ApproveScrapperson,
+                    record.ApplyTime,
+                    record.CreateTime,
+                    Source = "Current"
+                }))
+                .OrderBy(item => item.SN)
+                .ThenByDescending(item => item.ApplyTime ?? item.CreateTime)
                 .ToList();
 
             return Ok(response);
