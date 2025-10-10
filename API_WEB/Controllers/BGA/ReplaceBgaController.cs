@@ -221,44 +221,46 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không hợp lệ." });
             }
 
-            var scrapRecords = await _sqlContext.ScrapLists
-                .AsNoTracking()
-                .Where(s => normalizedSNs.Contains(s.SN))
-                .Select(s => new
-                {
-                    s.SN,
-                    s.TaskNumber,
-                    s.InternalTask,
-                    s.Desc,
-                    s.ApplyTaskStatus,
-                    s.FindBoardStatus,
-                    s.ApproveScrapperson,
-                    s.ApplyTime,
-                    s.CreateTime,
-                    s.Category
-                })
-                .ToListAsync();
+                var scrapRecords = await _sqlContext.ScrapLists
+                    .AsNoTracking()
+                    .Where(s => normalizedSNs.Contains(s.SN))
+                    .Select(s => new
+                    {
+                        s.SN,
+                        s.TaskNumber,
+                        s.InternalTask,
+                        s.Desc,
+                        s.ApplyTaskStatus,
+                        s.FindBoardStatus,
+                        s.ApproveScrapperson,
+                        s.ApplyTime,
+                        s.CreateTime,
+                        s.Category,
+                        s.Remark
+                    })
+                    .ToListAsync();
 
             var scrapLookup = scrapRecords
                 .GroupBy(s => s.SN, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-            var historyRecords = await QueryBgaHistory()
-                .Where(h => normalizedSNs.Contains(h.SN))
-                .Select(h => new
-                {
-                    h.SN,
-                    h.TaskNumber,
-                    h.InternalTask,
-                    h.Desc,
-                    h.ApplyTaskStatus,
-                    h.FindBoardStatus,
-                    h.ApproveScrapperson,
-                    h.ApplyTime,
-                    h.CreateTime,
-                    h.Category
-                })
-                .ToListAsync();
+                var historyRecords = await QueryBgaHistory()
+                    .Where(h => normalizedSNs.Contains(h.SN))
+                    .Select(h => new
+                    {
+                        h.SN,
+                        h.TaskNumber,
+                        h.InternalTask,
+                        h.Desc,
+                        h.ApplyTaskStatus,
+                        h.FindBoardStatus,
+                        h.ApproveScrapperson,
+                        h.ApplyTime,
+                        h.CreateTime,
+                        h.Category,
+                        h.Remark
+                    })
+                    .ToListAsync();
 
             var historyLookup = historyRecords
                 .GroupBy(h => h.SN, StringComparer.OrdinalIgnoreCase)
@@ -304,6 +306,8 @@ namespace API_WEB.Controllers.BGA
                         record.ApproveScrapperson,
                         record.ApplyTime,
                         record.CreateTime,
+                        record.Category,
+                        record.Remark,
                         isValid,
                         message,
                         source = "Current"
@@ -329,6 +333,8 @@ namespace API_WEB.Controllers.BGA
                         history.ApproveScrapperson,
                         history.ApplyTime,
                         history.CreateTime,
+                        history.Category,
+                        history.Remark,
                         isValid = inBgaCategory,
                         message,
                         source = "History"
@@ -349,8 +355,11 @@ namespace API_WEB.Controllers.BGA
                     ApproveScrapperson = (string?)null,
                     ApplyTime = (DateTime?)null,
                     CreateTime = (DateTime?)null,
+                    Category = (string?)null,
+                    Remark = (string?)null,
                     isValid = false,
-                    message = "Không tìm thấy SN trong Replace BGA."
+                    message = "Không tìm thấy SN trong Replace BGA.",
+                    source = (string?)null
                 });
             }
 
@@ -380,7 +389,9 @@ namespace API_WEB.Controllers.BGA
                     h.FindBoardStatus,
                     h.ApproveScrapperson,
                     h.ApplyTime,
-                    h.CreateTime
+                    h.CreateTime,
+                    h.Category,
+                    h.Remark
                 })
                 .ToListAsync();
 
@@ -396,7 +407,9 @@ namespace API_WEB.Controllers.BGA
                     s.FindBoardStatus,
                     s.ApproveScrapperson,
                     s.ApplyTime,
-                    s.CreateTime
+                    s.CreateTime,
+                    s.Category,
+                    s.Remark
                 })
                 .ToListAsync();
 
@@ -413,6 +426,8 @@ namespace API_WEB.Controllers.BGA
                     history.ApproveScrapperson,
                     history.ApplyTime,
                     history.CreateTime,
+                    history.Category,
+                    history.Remark,
                     Source = "History"
                 })
                 .Concat(currentRecords.Select(record => new
@@ -427,6 +442,8 @@ namespace API_WEB.Controllers.BGA
                     record.ApproveScrapperson,
                     record.ApplyTime,
                     record.CreateTime,
+                    record.Category,
+                    record.Remark,
                     Source = "Current"
                 }))
                 .OrderBy(item => item.SN)

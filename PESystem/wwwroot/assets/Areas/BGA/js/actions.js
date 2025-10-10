@@ -100,14 +100,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const rows = items.map((item, index) => {
             const statusName = item.statusName ?? STATUS_MAP[item.applyTaskStatus] ?? item.applyTaskStatus ?? "N/A";
-            const remark = item.findBoardStatus ?? "";
+            const category = item.isValid === false && item.message
+                ? item.message
+                : item.category ?? "";
             const statusClass = item.isValid === false ? "text-danger" : "";
             return `
                 <tr class="${statusClass}">
                     <td>${index + 1}</td>
                     <td>${item.sn ?? ""}</td>
                     <td>${statusName}</td>
-                    <td>${remark}</td>
+                    <td>${category}</td>
                 </tr>
             `;
         }).join("");

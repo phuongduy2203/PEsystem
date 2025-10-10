@@ -16,9 +16,51 @@ const STATUS_TEXT = {
 const AXIS_TICK_COLOR = "#f8f9fa";
 const GRID_LINE_COLOR = "rgba(255, 255, 255, 0.2)";
 
+const statusValueLabelsPlugin = {
+    id: "statusValueLabels",
+    afterDatasetsDraw(chart, _args, pluginOptions) {
+        if (!pluginOptions || pluginOptions.display === false) {
+            return;
+        }
+
+        const dataset = chart.data.datasets?.[0];
+        const meta = chart.getDatasetMeta(0);
+        if (!dataset || !Array.isArray(dataset.data)) {
+            return;
+        }
+
+        const ctx = chart.ctx;
+        const color = pluginOptions.color || "#0d6efd";
+        const fontOptions = pluginOptions.font || {};
+        const fontSize = fontOptions.size || 12;
+        const fontWeight = fontOptions.weight || "600";
+        const fontFamily = fontOptions.family || "'Segoe UI', Arial, sans-serif";
+
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+
+        meta.data.forEach((element, index) => {
+            const value = dataset.data[index];
+            if (value === undefined || value === null) {
+                return;
+            }
+
+            const x = element.x;
+            const y = element.y - 6;
+            ctx.fillText(value, x, y);
+        });
+
+        ctx.restore();
+    }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     const statusChartCanvas = document.getElementById("status-chart");
     const statusChartEmpty = document.getElementById("status-chart-empty");
+    const statusChartInfo = document.getElementById("status-chart-info");
     const barkingChartCanvas = document.getElementById("barking-age-chart");
     const barkingChartEmpty = document.getElementById("barking-age-empty");
     const dashboardLastUpdated = document.getElementById("dashboard-last-updated");
@@ -48,11 +90,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const clearStatusInfo = () => {
+        if (statusChartInfo) {
+            statusChartInfo.classList.add("d-none");
+            statusChartInfo.innerHTML = "";
+        }
+    };
+
+    const renderStatusInfo = (items) => {
+        if (!statusChartInfo) {
+            return;
+        }
+
+        if (!Array.isArray(items) || !items.length) {
+            clearStatusInfo();
+            return;
+        }
+
+        const total = items.reduce((sum, item) => sum + (item.count ?? 0), 0);
+        const rows = items.map((item, index) => {
+            const count = item.count ?? 0;
+            const percentage = total ? ((count / total) * 100).toFixed(1) : "0.0";
+            return `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.status}</td>
+                    <td>${item.statusName ?? STATUS_TEXT[item.status] ?? item.status}</td>
+                    <td>${count}</td>
+                    <td>${percentage}%</td>
+                </tr>
+            `;
+        }).join("");
+
+        statusChartInfo.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Trạng thái</th>
+                            <th>Mô tả</th>
+                            <th>Số lượng</th>
+                            <th>Tỷ lệ</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="3">Tổng</th>
+                            <th>${total}</th>
+                            <th>100%</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+
+        statusChartInfo.classList.remove("d-none");
+    };
+
     const showStatusLoading = () => {
         statusChartEmpty.textContent = "Đang tải dữ liệu...";
         statusChartEmpty.classList.remove("d-none", "alert-danger");
         statusChartEmpty.classList.add("alert-info");
         statusChartCanvas.classList.add("d-none");
+        clearStatusInfo();
     };
 
     const showBarkingLoading = () => {
@@ -69,6 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
             statusChartEmpty.classList.add("alert-danger");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
+            clearStatusInfo();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -82,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
             statusChartEmpty.classList.add("alert-info");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
+            clearStatusInfo();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -89,8 +192,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const labels = data.map(item => `${item.status} - ${item.statusName ?? STATUS_TEXT[item.status] ?? item.status}`);
-        const values = data.map(item => item.count ?? 0);
+        const enrichedData = data.map(item => ({
+            status: item.status,
+            count: item.count ?? 0,
+            statusName: item.statusName ?? STATUS_TEXT[item.status] ?? item.status
+        }));
+        const labels = enrichedData.map(item => `${item.status} - ${item.statusName}`);
+        const values = enrichedData.map(item => item.count);
 
         if (statusChartInstance) {
             statusChartInstance.destroy();
@@ -122,6 +230,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         callbacks: {
                             label: context => `${context.parsed.y ?? context.parsed} SN`
                         }
+                    },
+                    statusValueLabels: {
+                        display: true,
+                        color: "#0d6efd",
+                        font: {
+                            size: 12,
+                            weight: "600"
+                        }
                     }
                 },
                 scales: {
@@ -151,11 +267,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     }
                 }
-            }
+            },
+            plugins: [statusValueLabelsPlugin]
         });
 
         statusChartCanvas.classList.remove("d-none");
         statusChartEmpty.classList.add("d-none");
+        renderStatusInfo(enrichedData);
     };
 
     const renderBarkingChart = (data, errorMessage) => {
