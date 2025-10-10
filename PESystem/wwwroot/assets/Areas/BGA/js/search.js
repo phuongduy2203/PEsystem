@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5025/api/bga-replace";
+const API_BASE_URL = "http://10.220.130.119:9090/api/bga-replace";
 const STATUS_LABELS = {
     3: "Replaced BGA ok",
     4: "Waiting approve replace BGA",
