@@ -1,4 +1,5 @@
-﻿using API_WEB.ModelsDB;
+﻿using API_WEB.Helpers;
+using API_WEB.ModelsDB;
 using API_WEB.ModelsOracle;
 using DocumentFormat.OpenXml.InkML;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
@@ -19,13 +20,13 @@ namespace API_WEB.Controllers.Repositories
     {
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
 
-        public KhoScrapController(CSDL_NE sqlContext, OracleDbContext oracleContext, IHttpClientFactory httpClientFactory)
+        public KhoScrapController(CSDL_NE sqlContext, OracleDbContext oracleContext, HttpClient httpClient)
         {
-            _sqlContext = sqlContext;
-            _oracleContext = oracleContext;
-            _httpClientFactory = httpClientFactory;
+            _sqlContext = sqlContext ?? throw new ArgumentNullException(nameof(sqlContext));
+            _oracleContext = oracleContext ?? throw new ArgumentNullException(nameof(oracleContext));
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
         // API 1: Lấy tổng số lượng SN trong bảng Product
@@ -56,7 +57,16 @@ namespace API_WEB.Controllers.Repositories
             try
             {
                 int maxSlots = 260;
-                request.SerialNumbers = request.SerialNumbers.Distinct().ToList();
+                request.SerialNumbers = request.SerialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!request.SerialNumbers.Any())
+                {
+                    return BadRequest(new { success = false, message = "Danh sách Serial Number không hợp lệ." });
+                }
 
                 ////Kiem tra SerialNumber trong ScrapList
                 //var validSerials = await _sqlContext.ScrapLists
@@ -194,7 +204,7 @@ namespace API_WEB.Controllers.Repositories
 
                 // Update Oracle location via RepairStatus API
                 //string location = $"{request.Shelf}{request.Column}-{request.Level}-K{request.Tray}";
-                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, "", "Nhập(Kho Phế)");
+                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Phế)");
 
                 await transaction.CommitAsync();
                 return Ok(new { success = true, results });
@@ -473,24 +483,55 @@ namespace API_WEB.Controllers.Repositories
             await _sqlContext.SaveChangesAsync();
         }
 
-        private async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string location, string tag)
+
+        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
         {
-            if (serialNumbers == null || !serialNumbers.Any()) return;
+            if (serialNumbers == null || !serialNumbers.Any())
+                return;
 
-            var client = _httpClientFactory.CreateClient();
-            var payload = new
+            try
             {
-                serialnumbers = string.Join(",", serialNumbers),
-                owner,
-                location,
-                tag
-            };
+                // 🔧 Làm sạch từng serial: trim và loại bỏ xuống dòng, khoảng trắng
+                var cleanedSerials = serialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
-            var json = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+                if (!cleanedSerials.Any())
+                    return;
 
-            await client.PostAsync("http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+                var payload = new
+                {
+                    serialnumbers = string.Join(",", cleanedSerials),
+                    owner = owner?.Trim() ?? string.Empty,
+                    location = location?.Trim() ?? string.Empty,
+                    tag = tag?.Trim() ?? string.Empty
+                };
+
+                var json = JsonConvert.SerializeObject(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(
+                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
+                }
+                else
+                {
+                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {cleanedSerials.Count} serials. Tag={tag}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
+            }
         }
+
+
 
         [HttpPost("BorrowKhoScrap")]
         public async Task<IActionResult> BorrowKhoScrapSN([FromBody] BorrowSNListRequest request)
@@ -591,7 +632,16 @@ namespace API_WEB.Controllers.Repositories
 
             try
             {
-                request.SerialNumbers = request.SerialNumbers.Distinct().ToList();
+                request.SerialNumbers = request.SerialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!request.SerialNumbers.Any())
+                {
+                    return BadRequest(new { success = false, message = "Danh sách Serial Number không hợp lệ." });
+                }
 
                 //Kiem tra SerialNumber trong ScrapList
                 var validSerials = await _sqlContext.ScrapLists
@@ -607,37 +657,80 @@ namespace API_WEB.Controllers.Repositories
                         invalidSerials = validSerials
                     });
                 }
-                var existingProducts = await _sqlContext.KhoOks
-                    .Where(p => request.SerialNumbers.Contains(p.SERIAL_NUMBER))
-                    .ToDictionaryAsync(p => p.SERIAL_NUMBER);
-
                 var results = new List<object>();
-                var serialsToUpdateOracle = new List<string>();
+                var serialsToUpdateOracle = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var processedSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var serialNumber in request.SerialNumbers)
                 {
-                    var productItem = await _sqlContext.Products.FirstOrDefaultAsync(p => p.SerialNumber == serialNumber);
-                    if(productItem != null)
+                    SerialLinkResolver.SerialLinkInfo linkInfo;
+                    try
                     {
-                        _sqlContext.Products.Remove(productItem);
+                        linkInfo = await SerialLinkResolver.ResolveAsync(_oracleContext, serialNumber);
                     }
-                    var scrapItem = await _sqlContext.KhoScraps.FirstOrDefaultAsync(k => k.SERIAL_NUMBER == serialNumber);
-                    if(scrapItem != null)
+                    catch (Exception ex)
                     {
-                        _sqlContext.KhoScraps.Remove(scrapItem);
+                        results.Add(new
+                        {
+                            serialNumber,
+                            success = false,
+                            message = $"Không thể xác định liên kết SerialNumber: {ex.Message}"
+                        });
+                        continue;
                     }
-                    if(productItem != null || scrapItem != null)
+
+                    var storageSerial = linkInfo.StorageSerial;
+                    var relatedSerials = new HashSet<string>(linkInfo.RelatedSerials, StringComparer.OrdinalIgnoreCase)
+                    {
+                        serialNumber
+                    };
+
+                    if (processedSerials.Overlaps(relatedSerials))
+                    {
+                        results.Add(new
+                        {
+                            serialNumber,
+                            linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                            success = false,
+                            message = "SerialNumber đã được xử lý thông qua serial liên kết khác."
+                        });
+                        continue;
+                    }
+
+                    processedSerials.UnionWith(relatedSerials);
+
+                    var productItems = await _sqlContext.Products
+                        .Where(p => relatedSerials.Contains(p.SerialNumber))
+                        .ToListAsync();
+                    if (productItems.Any())
+                    {
+                        _sqlContext.Products.RemoveRange(productItems);
+                    }
+
+                    var scrapItems = await _sqlContext.KhoScraps
+                        .Where(k => relatedSerials.Contains(k.SERIAL_NUMBER))
+                        .ToListAsync();
+                    if (scrapItems.Any())
+                    {
+                        _sqlContext.KhoScraps.RemoveRange(scrapItems);
+                    }
+                    if (productItems.Any() || scrapItems.Any())
                     {
                         await _sqlContext.SaveChangesAsync();
                     }
                     //Kiem tra neu SerialNumber da ton tai
-                    var existingProduct = await _sqlContext.KhoOks.FirstOrDefaultAsync(p => p.SERIAL_NUMBER == serialNumber);
+                    var existingProduct = await _sqlContext.KhoOks
+                        .FirstOrDefaultAsync(p => relatedSerials.Contains(p.SERIAL_NUMBER));
                     if (existingProduct != null)
                     {
+                        if (!string.Equals(existingProduct.SERIAL_NUMBER, storageSerial, StringComparison.OrdinalIgnoreCase))
+                        {
+                            existingProduct.SERIAL_NUMBER = storageSerial;
+                        }
                         // Nếu trạng thái BorrowStatus là "Borrowed", cập nhật thông tin kệ
                         if (existingProduct.borrowStatus == "Borrowed")
                         {
-                            Console.WriteLine($"Updating product {serialNumber} with new location.");
+                            Console.WriteLine($"Updating product {storageSerial} with new location.");
 
                             existingProduct.ShelfCode = request.Shelf;
                             existingProduct.ColumnNumber = request.Column;
@@ -646,33 +739,53 @@ namespace API_WEB.Controllers.Repositories
                             existingProduct.entryPerson = request.EntryPerson;
                             existingProduct.entryDate = DateTime.Now;
                             existingProduct.borrowDate = null;
-                            existingProduct.borrowPerson = "";
+                            existingProduct.borrowPerson = string.Empty;
                             // Lưu cập nhật vào database
                             _sqlContext.KhoOks.Update(existingProduct);
                             await _sqlContext.SaveChangesAsync();
+                            serialsToUpdateOracle.UnionWith(relatedSerials);
 
-                            results.Add(new { serialNumber, success = true, message = "Sản phẩm đã được cập nhật vị trí." });
+                            results.Add(new
+                            {
+                                serialNumber,
+                                linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                                success = true,
+                                message = "Sản phẩm đã được cập nhật vị trí."
+                            });
                         }
-                        else { results.Add(new { serialNumber, success = false, message = $"SerialNumber{serialNumber} da ton tai trong he thong" }); }
+                        else
+                        {
+                            results.Add(new
+                            {
+                                serialNumber,
+                                linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                                success = false,
+                                message = $"SerialNumber {storageSerial} đã tồn tại trong hệ thống."
+                            });
+                        }
                         continue;
                     }
                     //Save san pham vao SQL server
                     var newProduct = new KhoOk
                     {
-                        SERIAL_NUMBER = serialNumber,
+                        SERIAL_NUMBER = storageSerial,
                         ShelfCode = request.Shelf,
                         ColumnNumber = request.Column,
                         LevelNumber = request.Level,
                         entryDate = DateTime.Now,
-                        entryPerson = request.EntryPerson
+                        entryPerson = request.EntryPerson,
+                        borrowStatus = "Available",
+                        borrowPerson = string.Empty,
+                        borrowDate = null
                     };
                     _sqlContext.KhoOks.Add(newProduct);
-                    serialsToUpdateOracle.Add(serialNumber);
+                    serialsToUpdateOracle.UnionWith(relatedSerials);
                     // Ghi log
-                    await LogAction("IMPORT_KHO_OK", serialNumber, request.EntryPerson, "");
+                    await LogAction("IMPORT_KHO_OK", storageSerial, request.EntryPerson, "");
                     results.Add(new
                     {
                         serialNumber,
+                        linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
                         success = true,
                         message = "Da them san pham thanh cong"
                     });
@@ -680,7 +793,7 @@ namespace API_WEB.Controllers.Repositories
                 await _sqlContext.SaveChangesAsync();
                 // Update Oracle location via RepairStatus API
                 //string location = $"{request.Shelf}{request.Column}-{request.Level}";
-                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, "", "Nhập(Kho Ok)");
+                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Ok)");
 
                 await transaction.CommitAsync();
                 return Ok(new { success = true, results });

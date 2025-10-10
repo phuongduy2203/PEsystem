@@ -2,12 +2,14 @@
 using API_WEB.ModelsOracle;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace API_WEB.Controllers.Repositories
@@ -78,28 +80,36 @@ namespace API_WEB.Controllers.Repositories
                 return BadRequest(new { success = false, message = "SerialNumber is empty!" });
             }
 
-            var sns = request.SerialNumbers.Where(s => !string.IsNullOrWhiteSpace(s))
+            var sns = request.SerialNumbers
+                .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Select(s => s.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            if (sns.Count == 0) return BadRequest(new { success = false, message = "SerialNumber is empty after normalization!" });
+
+            if (sns.Count == 0)
+                return BadRequest(new { success = false, message = "SerialNumber is empty after normalization!" });
+
             using var tx = await _sqlContext.Database.BeginTransactionAsync();
+
             try
             {
+                // Lấy các bản ghi có liên quan
                 var products = await _sqlContext.Products.Where(p => sns.Contains(p.SerialNumber)).ToListAsync();
                 var khoOks = await _sqlContext.KhoOks.Where(o => sns.Contains(o.SERIAL_NUMBER)).ToListAsync();
                 var khoScraps = await _sqlContext.KhoScraps.Where(s => sns.Contains(s.SERIAL_NUMBER)).ToListAsync();
 
+                // Lấy thêm thông tin Serial từ Oracle (nếu cần)
                 var snInfoMap = await GetSnInfoAsync(sns);
 
-                var productBySn = products.GroupBy(p => p.SerialNumber, StringComparer.OrdinalIgnoreCase)
+                var productBySn = products
+                    .GroupBy(p => p.SerialNumber, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
                 var exportEntries = new List<Export>(sns.Count);
+
                 foreach (var sn in sns)
                 {
                     productBySn.TryGetValue(sn, out var p);
-
                     snInfoMap.TryGetValue(sn, out var info);
 
                     exportEntries.Add(new Export
@@ -107,20 +117,39 @@ namespace API_WEB.Controllers.Repositories
                         SerialNumber = sn,
                         ExportDate = DateTime.Now,
                         ExportPerson = request.ExportPerson,
-                        ProductLine = !string.IsNullOrEmpty(info.ProductLine) ? info.ProductLine : (p?.ProductLine ?? string.Empty),
+                        ProductLine = !string.IsNullOrEmpty(info.ProductLine)
+                            ? info.ProductLine
+                            : (p?.ProductLine ?? string.Empty),
                         EntryDate = p?.EntryDate,
-                        ModelName = !string.IsNullOrEmpty(info.ModelName) ? info.ModelName : (p?.ModelName ?? string.Empty),
+                        ModelName = !string.IsNullOrEmpty(info.ModelName)
+                            ? info.ModelName
+                            : (p?.ModelName ?? string.Empty),
                         CheckingB36R = 1
                     });
                 }
+
+                // Xoá dữ liệu khỏi các bảng liên quan
                 if (products.Count > 0) _sqlContext.Products.RemoveRange(products);
                 if (khoOks.Count > 0) _sqlContext.KhoOks.RemoveRange(khoOks);
                 if (khoScraps.Count > 0) _sqlContext.KhoScraps.RemoveRange(khoScraps);
 
+                // Thêm bản ghi Export
                 await _sqlContext.Exports.AddRangeAsync(exportEntries);
                 await _sqlContext.SaveChangesAsync();
                 await tx.CommitAsync();
 
+                // ✅ Sau khi commit thành công → gọi API RepairStatus để xoá location Oracle
+                try
+                {
+                    await SendReceivingStatusAsync(sns, request.ExportPerson ?? string.Empty, null, "Xuất(Kho Ok)");
+                    Console.WriteLine($"[ExportSN] Đã gọi API RepairStatus/receiving-status cho {sns.Count} serials.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ExportSN] Lỗi khi gọi RepairStatus API: {ex.Message}");
+                }
+
+                // Trả về kết quả
                 var data = exportEntries.Select(e => new
                 {
                     e.Id,
@@ -133,20 +162,62 @@ namespace API_WEB.Controllers.Repositories
                     e.ModelName,
                     e.EntryDate
                 });
+
                 return Ok(new
                 {
                     success = true,
                     totalRequested = sns.Count,
-                    deleted = new { products.Count, khoOk = khoOks.Count, khoScrap = khoScraps.Count },
+                    deleted = new { products = products.Count, khoOk = khoOks.Count, khoScrap = khoScraps.Count },
                     data
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await tx.RollbackAsync();
+                Console.WriteLine($"[ExportSN] ERROR: {ex.Message}");
                 return StatusCode(500, new { success = false, message = "Đã xảy ra lỗi hệ thống." });
             }
         }
+
+
+        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
+        {
+            if (serialNumbers == null || !serialNumbers.Any())
+                return;
+
+            try
+            {
+                var payload = new
+                {
+                    serialnumbers = string.Join(",", serialNumbers),
+                    owner = owner ?? string.Empty,
+                    location = location ?? string.Empty,
+                    tag = tag ?? string.Empty
+                };
+
+                var json = JsonConvert.SerializeObject(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                // Dùng trực tiếp _httpClient
+                var response = await _httpClient.PostAsync(
+                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
+                }
+                else
+                {
+                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {serialNumbers.Count()} serials. Tag={tag}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
+            }
+        }
+
 
         [HttpPost("UpdateMissingInfo")]
         public async Task<IActionResult> UpdateMissingInfo()

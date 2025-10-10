@@ -1,4 +1,5 @@
-﻿using API_WEB.ModelsDB;
+﻿using API_WEB.Helpers;
+using API_WEB.ModelsDB;
 using API_WEB.ModelsOracle;
 using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,9 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json;
 using static API_WEB.Controllers.Repositories.KhoScrapController;
 
 namespace API_WEB.Controllers
@@ -20,13 +24,14 @@ namespace API_WEB.Controllers
     {
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
+        private readonly HttpClient _httpClient;
 
-        public ProductController(CSDL_NE sqlContext, OracleDbContext oracleContext)
+        public ProductController(CSDL_NE sqlContext, OracleDbContext oracleContext, HttpClient httpClient)
         {
-            _sqlContext = sqlContext;
-            _oracleContext = oracleContext;
+            _sqlContext = sqlContext ?? throw new ArgumentNullException(nameof(sqlContext));
+            _oracleContext = oracleContext ?? throw new ArgumentNullException(nameof(oracleContext));
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
-
 
         // API 1: Lấy tổng số lượng SN trong bảng Product
         [HttpGet("total")]
@@ -320,151 +325,202 @@ namespace API_WEB.Controllers
             {
                 Console.WriteLine($"Input: shelf = {request.Shelf}, column={request.Column}, level={request.Level}, tray={request.Tray}");
 
+                if (request.SerialNumbers == null || !request.SerialNumbers.Any())
+                {
+                    return BadRequest(new { success = false, message = "Danh sách Serial Number không hợp lệ." });
+                }
+
+                var normalizedSerials = request.SerialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim())
+                    .ToList();
+
+                if (!normalizedSerials.Any())
+                {
+                    return BadRequest(new { success = false, message = "Danh sách Serial Number không hợp lệ." });
+                }
+
                 var shelfData = await _sqlContext.Shelves.FirstOrDefaultAsync(s => s.ShelfCode == request.Shelf);
                 if (shelfData == null)
                 {
                     return BadRequest(new { success = false, message = "Ma ke khong hop le!!!" });
                 }
 
-                //Kiem tra SerialNumber trong ScrapList
-                //var validSerials = await _sqlContext.ScrapLists
-                //    .Where(sl => request.SerialNumbers.Contains(sl.SN) && sl.ApplyTaskStatus != 3)
-                //    .Select(sl => sl.SN)
-                //    .ToListAsync();
-                //var invalidSerials = request.SerialNumbers.Except(validSerials).ToList();
-                //if (!invalidSerials.Any())
-                //{
-                //    return BadRequest(new
-                //    {
-                //        success = false,
-                //        message = "Có SN đã báo phế!",
-                //        invalidSerials
-                //    });
-                //}
-
-                //Lay danh sach cac vi tri da su dung
-                //int maxSlots = 8;
                 int maxSlots = shelfData.ShelfCode.Contains("XE") ? 20 : 8;
                 var occupiedPositions = await _sqlContext.Products
                     .Where(p => p.ShelfId == shelfData.ShelfId &&
-                    p.ColumnNumber == request.Column &&
-                    p.LevelNumber == request.Level &&
-                    p.TrayNumber == request.Tray)
-                    .Select(p => p.PositionInTray.Value)
+                                p.ColumnNumber == request.Column &&
+                                p.LevelNumber == request.Level &&
+                                p.TrayNumber == request.Tray &&
+                                p.PositionInTray.HasValue)
+                    .Select(p => p.PositionInTray!.Value)
                     .ToListAsync();
 
-                //Kiem tra khay day
-                if (occupiedPositions.Count >= maxSlots) { return BadRequest(new { success = false, message = "Khay da day!" }); }
+                if (occupiedPositions.Count >= maxSlots)
+                {
+                    return BadRequest(new { success = false, message = "Khay da day!" });
+                }
 
                 var results = new List<object>();
+                var processedSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var serialsToUpdateOracle = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                foreach (var serialNumber in request.SerialNumbers)
+                foreach (var serialNumber in normalizedSerials)
                 {
+                    SerialLinkResolver.SerialLinkInfo linkInfo;
+                    try
+                    {
+                        linkInfo = await SerialLinkResolver.ResolveAsync(_oracleContext, serialNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        results.Add(new
+                        {
+                            serialNumber,
+                            success = false,
+                            message = $"Không thể xác định liên kết SerialNumber: {ex.Message}"
+                        });
+                        continue;
+                    }
 
-                    //Xoa SN khoi cac kho con lai truoc khi nhap Product
-                    var scrapItem = await _sqlContext.KhoScraps.FirstOrDefaultAsync(k => k.SERIAL_NUMBER == serialNumber);
-                    if(scrapItem != null)
+                    var storageSerial = linkInfo.StorageSerial;
+                    var relatedSerials = new HashSet<string>(linkInfo.RelatedSerials, StringComparer.OrdinalIgnoreCase)
                     {
-                        _sqlContext.KhoScraps.Remove(scrapItem);
-                    }
-                    var okItem = await _sqlContext.KhoOks.FirstOrDefaultAsync(k => k.SERIAL_NUMBER == serialNumber);
-                    if(okItem != null)
+                        serialNumber
+                    };
+
+                    if (processedSerials.Overlaps(relatedSerials))
                     {
-                        _sqlContext.KhoOks.Remove(okItem);
+                        results.Add(new
+                        {
+                            serialNumber,
+                            linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                            success = false,
+                            message = "SerialNumber đã được xử lý thông qua serial liên kết khác."
+                        });
+                        continue;
                     }
-                    if(scrapItem != null || okItem != null)
+
+                    processedSerials.UnionWith(relatedSerials);
+                    var removedFromOtherKho = false;
+
+                    var scrapItems = await _sqlContext.KhoScraps
+                        .Where(k => relatedSerials.Contains(k.SERIAL_NUMBER))
+                        .ToListAsync();
+                    if (scrapItems.Any())
+                    {
+                        _sqlContext.KhoScraps.RemoveRange(scrapItems);
+                        removedFromOtherKho = true;
+                    }
+
+                    var okItems = await _sqlContext.KhoOks
+                        .Where(k => relatedSerials.Contains(k.SERIAL_NUMBER))
+                        .ToListAsync();
+                    if (okItems.Any())
+                    {
+                        _sqlContext.KhoOks.RemoveRange(okItems);
+                        removedFromOtherKho = true;
+                    }
+
+                    if (removedFromOtherKho)
                     {
                         await _sqlContext.SaveChangesAsync();
-                        await LogAction("REMOVE_FROM_OTHER_KHO", serialNumber, request.EntryPerson ?? string.Empty);
+                        await LogAction("REMOVE_FROM_OTHER_KHO", storageSerial, request.EntryPerson ?? string.Empty);
                     }
-                    //Kiem tra neu SerialNumber da ton tai
-                    var existingProduct = await _sqlContext.Products.FirstOrDefaultAsync(p => p.SerialNumber == serialNumber);
+
+                    var existingProduct = await _sqlContext.Products
+                        .FirstOrDefaultAsync(p => relatedSerials.Contains(p.SerialNumber));
+
                     if (existingProduct != null)
                     {
+                        if (!string.Equals(existingProduct.SerialNumber, storageSerial, StringComparison.OrdinalIgnoreCase))
+                        {
+                            existingProduct.SerialNumber = storageSerial;
+                        }
 
-                        // Nếu trạng thái BorrowStatus là "Borrowed", cập nhật thông tin kệ
                         if (existingProduct.BorrowStatus == "Borrowed")
                         {
-                            Console.WriteLine($"Updating product {serialNumber} with new location.");
+                            Console.WriteLine($"Updating product {storageSerial} with new location.");
+
+                            int positionInTray = Enumerable.Range(1, maxSlots)
+                                .Except(occupiedPositions)
+                                .FirstOrDefault();
+
+                            if (positionInTray == 0)
+                            {
+                                results.Add(new
+                                {
+                                    serialNumber,
+                                    linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                                    success = false,
+                                    message = "Không tìm được vị trí trống!"
+                                });
+                                continue;
+                            }
 
                             existingProduct.ShelfId = shelfData.ShelfId;
                             existingProduct.ColumnNumber = request.Column;
                             existingProduct.LevelNumber = request.Level;
                             existingProduct.TrayNumber = request.Tray;
-
-                            // Tìm vị trí trống đầu tiên
-                            int positionInTray = Enumerable.Range(1, maxSlots).Except(occupiedPositions).FirstOrDefault();
-                            if (positionInTray == 0)
-                            {
-                                results.Add(new { serialNumber, success = false, message = "Không tìm được vị trí trống!" });
-                                continue;
-                            }
-
                             existingProduct.PositionInTray = positionInTray;
-                            existingProduct.BorrowStatus = "Available"; // Cập nhật trạng thái
+                            existingProduct.BorrowStatus = "Available";
                             existingProduct.EntryPerson = request.EntryPerson;
                             existingProduct.EntryDate = DateTime.Now;
                             existingProduct.BorrowDate = null;
-                            existingProduct.BorrowPerson = "";
+                            existingProduct.BorrowPerson = string.Empty;
+
                             occupiedPositions.Add(positionInTray);
 
-                            // Lưu cập nhật vào database
                             _sqlContext.Products.Update(existingProduct);
                             await _sqlContext.SaveChangesAsync();
-                            await LogAction("UPDATE_LOCATION", serialNumber, request.EntryPerson ?? string.Empty);
-                            results.Add(new { serialNumber, success = true, message = "Sản phẩm đã được cập nhật vị trí." });
+                            await LogAction("UPDATE_LOCATION", storageSerial, request.EntryPerson ?? string.Empty);
+                            serialsToUpdateOracle.UnionWith(relatedSerials);
+
+                            results.Add(new
+                            {
+                                serialNumber,
+                                linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                                success = true,
+                                message = "Sản phẩm đã được cập nhật vị trí."
+                            });
                         }
-                        else { results.Add(new { serialNumber, success = false, message = $"SerialNumber{serialNumber} da ton tai trong he thong" }); }
+                        else
+                        {
+                            results.Add(new
+                            {
+                                serialNumber,
+                                linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                                success = false,
+                                message = $"SerialNumber {storageSerial} đã tồn tại trong hệ thống."
+                            });
+                        }
+
                         continue;
                     }
 
-                    //Tim vi  tri trong dau tien
-                    int positionIntray = Enumerable.Range(1, maxSlots).Except(occupiedPositions).FirstOrDefault();
+                    int positionIntray = Enumerable.Range(1, maxSlots)
+                        .Except(occupiedPositions)
+                        .FirstOrDefault();
+
                     if (positionIntray == 0)
                     {
-                        results.Add(new { serialNumber, success = false, message = "Khong tim duoc vi tri trong!" });
+                        results.Add(new
+                        {
+                            serialNumber,
+                            linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                            success = false,
+                            message = "Khong tim duoc vi tri trong!"
+                        });
                         continue;
                     }
-                    //Them vi tri vao danh sach da su dung
+
                     occupiedPositions.Add(positionIntray);
 
-                    //Lay modelName tu Oracle
-                    Console.WriteLine($"ModelName for {serialNumber} from Oracle...");
-                    string modelNameQuery = @"SELECT SERIAL_NUMBER, MODEL_NAME, MO_NUMBER, WIP_GROUP, WORK_FLAG, ERROR_FLAG
-                                                FROM SFISM4.R107 
-                                                WHERE SERIAL_NUMBER = :serialNumber AND ROWNUM = 1";
-                    var modelNameParam = new OracleParameter("serialNumber", OracleDbType.Varchar2) { Value = serialNumber };
-                    var modelNameResult = await _oracleContext.OracleDataR107.FromSqlRaw(modelNameQuery, modelNameParam).AsNoTracking().ToListAsync();
+                    var (modelName, productLine) = await GetModelAndProductLineAsync(linkInfo.PrioritySerials);
 
-                    string modelName = modelNameResult.FirstOrDefault()?.MODEL_NAME ?? "";
-
-                    //LAY PRODUCT_LINE TU ORACLE
-                    // Lấy Product_Line từ Oracle nếu có ModelName
-                    string productLine = "";
-                    if (!string.IsNullOrEmpty(modelName))
-                    {
-                        Console.WriteLine($"Product_Line for {modelName} from Oracle...");
-                        string productLineQuery = @"
-                                            SELECT MODEL_NAME, PRODUCT_LINE 
-                                            FROM SFIS1.C_MODEL_DESC_T 
-                                            WHERE MODEL_NAME = :modelName AND ROWNUM = 1";
-                        var productLineParam = new OracleParameter("modelName", OracleDbType.NVarchar2) { Value = modelName };
-
-                        var productLineResult = await _oracleContext.OracleDataCModelDesc
-                            .FromSqlRaw(productLineQuery, productLineParam)
-                            .AsNoTracking().Select(pl => new
-                            {
-                                MODEL_NAME = pl.MODEL_NAME ?? "",
-                                PRODUCT_LINE = pl.PRODUCT_LINE ?? ""
-                            }).ToListAsync();
-                        // Gán giá trị nếu có, nếu không thì để ""
-                        productLine = productLineResult.FirstOrDefault()?.PRODUCT_LINE ?? "";
-                    }
-                    
-                    //Save san pham vao SQL server
                     var newProduct = new Product
                     {
-                        SerialNumber = serialNumber,
+                        SerialNumber = storageSerial,
                         ShelfId = shelfData.ShelfId,
                         ColumnNumber = request.Column,
                         LevelNumber = request.Level,
@@ -475,14 +531,29 @@ namespace API_WEB.Controllers
                         ProductLine = productLine,
                         ModelName = modelName,
                         BorrowDate = null,
-                        BorrowPerson = "",
+                        BorrowPerson = string.Empty,
                         BorrowStatus = "Available"
                     };
+
                     _sqlContext.Products.Add(newProduct);
                     await _sqlContext.SaveChangesAsync();
-                    await LogAction("IMPORT_PRODUCT", serialNumber, request.EntryPerson ?? string.Empty);
-                    results.Add(new { serialNumber, success = true, message = "Da them san pham thanh cong" });
+                    await LogAction("IMPORT_PRODUCT", storageSerial, request.EntryPerson ?? string.Empty);
+                    serialsToUpdateOracle.UnionWith(relatedSerials);
+
+                    results.Add(new
+                    {
+                        serialNumber,
+                        linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                        success = true,
+                        message = "Da them san pham thanh cong"
+                    });
                 }
+
+                if (serialsToUpdateOracle.Any())
+                {
+                    await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Product)");
+                }
+
                 return Ok(new { success = true, results });
             }
             catch (OracleException ex)
@@ -504,6 +575,64 @@ namespace API_WEB.Controllers
             public int Tray { get; set; }
             public string? EntryPerson { get; set; }
             public List<string>? SerialNumbers { get; set; }
+        }
+
+        private async Task<(string ModelName, string ProductLine)> GetModelAndProductLineAsync(IEnumerable<string> serialCandidates)
+        {
+            foreach (var candidate in serialCandidates)
+            {
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    continue;
+                }
+
+                Console.WriteLine($"ModelName for {candidate} from Oracle...");
+                const string modelNameQuery = @"SELECT SERIAL_NUMBER, MODEL_NAME, MO_NUMBER, WIP_GROUP, WORK_FLAG, ERROR_FLAG
+                                                FROM SFISM4.R107
+                                                WHERE SERIAL_NUMBER = :serialNumber AND ROWNUM = 1";
+                var modelNameParam = new OracleParameter("serialNumber", OracleDbType.Varchar2)
+                {
+                    Value = candidate
+                };
+
+                var modelNameResult = await _oracleContext.OracleDataR107
+                    .FromSqlRaw(modelNameQuery, modelNameParam)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var modelName = modelNameResult.FirstOrDefault()?.MODEL_NAME ?? string.Empty;
+
+                if (string.IsNullOrEmpty(modelName))
+                {
+                    continue;
+                }
+
+                Console.WriteLine($"Product_Line for {modelName} from Oracle...");
+                const string productLineQuery = @"SELECT MODEL_NAME, PRODUCT_LINE
+                                            FROM SFIS1.C_MODEL_DESC_T
+                                            WHERE MODEL_NAME = :modelName AND ROWNUM = 1";
+
+                var productLineParam = new OracleParameter("modelName", OracleDbType.NVarchar2)
+                {
+                    Value = modelName
+                };
+
+                var productLineResult = await _oracleContext.OracleDataCModelDesc
+                    .FromSqlRaw(productLineQuery, productLineParam)
+                    .AsNoTracking()
+                    .Select(pl => new
+                    {
+                        MODEL_NAME = pl.MODEL_NAME ?? string.Empty,
+                        PRODUCT_LINE = pl.PRODUCT_LINE ?? string.Empty
+                    })
+                    .ToListAsync();
+
+                var productLine = productLineResult.FirstOrDefault()?.PRODUCT_LINE ?? string.Empty;
+
+                return (modelName, productLine);
+            }
+
+            return (string.Empty, string.Empty);
         }
 
         [HttpGet("TrayInfo")]
@@ -902,5 +1031,55 @@ namespace API_WEB.Controllers
             });
             await _sqlContext.SaveChangesAsync();
         }
+
+
+        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
+        {
+            if (serialNumbers == null || !serialNumbers.Any())
+                return;
+
+            try
+            {
+                // 🔧 Làm sạch từng serial: trim và loại bỏ xuống dòng, khoảng trắng
+                var cleanedSerials = serialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!cleanedSerials.Any())
+                    return;
+
+                var payload = new
+                {
+                    serialnumbers = string.Join(",", cleanedSerials),
+                    owner = owner?.Trim() ?? string.Empty,
+                    location = location?.Trim() ?? string.Empty,
+                    tag = tag?.Trim() ?? string.Empty
+                };
+
+                var json = JsonConvert.SerializeObject(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(
+                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
+                }
+                else
+                {
+                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {cleanedSerials.Count} serials. Tag={tag}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
+            }
+        }
+
+
     }
 }

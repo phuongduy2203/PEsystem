@@ -219,8 +219,9 @@ namespace API_WEB.Controllers.App
             return Ok(new { totalLists = result.Count, lists = result });
         }
 
+
         [HttpGet("summary")]
-        public async Task<IActionResult> GetSummary([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetSummary([FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to)
         {
             if (from.HasValue && to.HasValue && from > to)
                 return BadRequest(new { message = "`from` phải ≤ `to`" });
@@ -229,10 +230,10 @@ namespace API_WEB.Controllers.App
             var scanQuery = _sqlContext.ScanLogs.AsNoTracking().AsQueryable();
 
             if (from.HasValue)
-                scanQuery = scanQuery.Where(x => x.CreatedAt >= from.Value);
+                scanQuery = scanQuery.Where(x => x.CreatedAt >= from.Value.LocalDateTime);
 
             if (to.HasValue)
-                scanQuery = scanQuery.Where(x => x.CreatedAt < to.Value);
+                scanQuery = scanQuery.Where(x => x.CreatedAt < to.Value.LocalDateTime);
 
             var scanCount = await scanQuery.CountAsync();
 
@@ -264,10 +265,10 @@ namespace API_WEB.Controllers.App
                 .AsQueryable();
 
             if (from.HasValue)
-                foundQuery = foundQuery.Where(x => x.ScanTime >= from.Value);
+                foundQuery = foundQuery.Where(x => x.ScanTime >= from.Value.LocalDateTime);
 
             if (to.HasValue)
-                foundQuery = foundQuery.Where(x => x.ScanTime < to.Value);
+                foundQuery = foundQuery.Where(x => x.ScanTime < to.Value.LocalDateTime);
 
             var foundItems = await foundQuery
                 .OrderBy(x => x.ScanTime)
@@ -284,6 +285,7 @@ namespace API_WEB.Controllers.App
                 foundItems
             });
         }
+
 
         [HttpGet("export-excel")]
         public async Task<IActionResult> ExportAll()

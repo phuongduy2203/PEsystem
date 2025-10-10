@@ -866,7 +866,7 @@ namespace API_WEB.Controllers.Scrap
                 var rejectedSNs = new List<string>();
                 foreach (var record in recordsToUpdate)
                 {
-                    if (record.TaskNumber != null || record.PO != null)
+                    if (record.TaskNumber != null || record.TaskNumber != "N/A")
                     {
                         rejectedSNs.Add(record.SN);
                     }
@@ -1382,7 +1382,7 @@ namespace API_WEB.Controllers.Scrap
                     {
                         rejectedSNs.Add($"{sn.SN} (Đã chuyển kho phế thành công)");
                     }
-                    else if (sn.ApplyTaskStatus == 3)
+                    else if (sn.ApplyTaskStatus == 3 || sn.ApplyTaskStatus == 8)
                     {
                         updateSNs.Add(sn); // SN hợp lệ để cập nhật
                         insertSNs.Remove(sn.SN); // Loại bỏ SN khỏi danh sách insert

@@ -221,30 +221,6 @@
                 showError(saveData.message);
                 return;
             }
-
-            // Gửi API nhận bản
-            const payload = {
-                serialnumbers: serialNumbers.join(","),
-                owner: currentUser,
-                //location: trayInput.value.trim(),
-                location: "",
-                tag: "Nhận(Nhập kho)"
-            };
-
-            const receiveResponse = await fetch("http://10.220.130.119:9090/api/RepairStatus/receiving-status", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const receiveResult = await receiveResponse.json();
-            showInfo("Trạng thái nhận bản:" + receiveResult.message);
-
-            if (receiveResult.message.replace(/"/g, '') === "OK") {
-                location.reload();
-            }
         } catch (error) {
             console.error("Lỗi khi xử lý yêu cầu:", error);
             showError("Error!");

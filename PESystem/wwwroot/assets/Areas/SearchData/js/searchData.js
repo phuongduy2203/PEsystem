@@ -34,13 +34,37 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = show ? 'flex' : 'none';
     }
 
+
     function formatLocalDateTime(date) {
-        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-            return '';
-        }
-        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        return localDate.toISOString().slice(0, 16);
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+        const pad = n => String(n).padStart(2, '0');
+        const Y = date.getFullYear();
+        const M = pad(date.getMonth() + 1);
+        const D = pad(date.getDate());
+        const h = pad(date.getHours());
+        const m = pad(date.getMinutes());
+        // datetime-local expects "YYYY-MM-DDTHH:MM"
+        return `${Y}-${M}-${D}T${h}:${m}`;
     }
+
+
+    function buildRangeParams() {
+        const params = new URLSearchParams();
+        if (fromInput?.value) {
+            // Gửi đúng định dạng local, không timezone
+            const fromStr = `${fromInput.value}:00`;
+            params.append('from', fromStr);
+        }
+        if (toInput?.value) {
+            const toStr = `${toInput.value}:00`;
+            params.append('to', toStr);
+        }
+        console.log("⏰ Sending params (no timezone):", params.toString());
+        return params;
+    }
+
+
+
 
     function setDefaultRange() {
         if (!fromInput || !toInput) return;
@@ -50,23 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
         start.setHours(7, 30, 0, 0);
         fromInput.value = formatLocalDateTime(start);
         toInput.value = formatLocalDateTime(now);
-    }
-
-    function buildRangeParams() {
-        const params = new URLSearchParams();
-        if (fromInput?.value) {
-            const fromDate = new Date(fromInput.value);
-            if (!Number.isNaN(fromDate.getTime())) {
-                params.append('from', fromDate.toISOString());
-            }
-        }
-        if (toInput?.value) {
-            const toDate = new Date(toInput.value);
-            if (!Number.isNaN(toDate.getTime())) {
-                params.append('to', toDate.toISOString());
-            }
-        }
-        return params;
     }
 
     function getRangeKey(params) {

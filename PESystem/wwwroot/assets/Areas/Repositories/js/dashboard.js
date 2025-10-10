@@ -167,6 +167,7 @@ async function updateBorrowedLocationStats(totalBorrowed) {
         for (let i = 0; i < serialNumbers.length; i += BORROWED_LOCATION_CHUNK_SIZE) {
             const chunk = serialNumbers.slice(i, i + BORROWED_LOCATION_CHUNK_SIZE);
             const locationResponse = await fetch(`${API_BASE_URL}/api/Search/FindLocations`, {
+            //const locationResponse = await fetch(`http://localhost:5025/api/Search/FindLocations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(chunk)
@@ -755,6 +756,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (serialNumbers.length) {
                 try {
                     const locationResponse = await fetch(`${API_BASE_URL}/api/Search/FindLocations`, {
+                    //const locationResponse = await fetch(`http://localhost:5025/api/Search/FindLocations`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(serialNumbers)

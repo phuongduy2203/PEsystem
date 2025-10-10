@@ -59,6 +59,7 @@ async function fetchLocationMapBySerials(serials = [], options = {}) {
 
     try {
         const response = await fetch('http://10.220.130.119:9090/api/Search/FindLocations', {
+        //const response = await fetch('http://localhost:5025/api/Search/FindLocations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(uniqueSerials)

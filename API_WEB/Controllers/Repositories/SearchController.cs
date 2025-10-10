@@ -1,12 +1,14 @@
-﻿using API_WEB.Models.Repositories;
+﻿using API_WEB.Helpers;
+using API_WEB.Models.Repositories;
 using API_WEB.Models.SmartFA;
 using API_WEB.ModelsDB;
 using API_WEB.ModelsOracle;
-using DocumentFormat.OpenXml.InkML;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Oracle.ManagedDataAccess.Client;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
@@ -18,11 +20,13 @@ namespace API_WEB.Controllers.Repositories
     {
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
+        private readonly string _oracleConnectionString;
 
-        public SearchController(CSDL_NE sqlContext, OracleDbContext oracleContext)
+        public SearchController(CSDL_NE sqlContext, OracleDbContext oracleContext, IConfiguration configuration)
         {
             _sqlContext = sqlContext;
             _oracleContext = oracleContext;
+            _oracleConnectionString = configuration.GetConnectionString("OracleConnection") ?? throw new InvalidOperationException("Oracle connection string is not configured.");
         }
 
         [HttpPost("GetKeyPartDetails")]
@@ -39,8 +43,7 @@ namespace API_WEB.Controllers.Repositories
 
             try
             {
-                // Kết nối đến Oracle Database
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 var results = new List<object>();
@@ -212,7 +215,7 @@ namespace API_WEB.Controllers.Repositories
                 var remainingSerialNumbers = serialNumbers.Except(foundSerialNumbersInSql).ToList();
 
                 // 2. Kết nối Oracle
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // 3. Lấy dữ liệu từ Oracle cho tất cả serialNumbers
@@ -300,7 +303,7 @@ namespace API_WEB.Controllers.Repositories
                 var remainingSerialNumbers = serialNumbers.Except(foundSerialNumbersInSql).ToList();
 
                 // 2. Kết nối Oracle
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // 3. Lấy dữ liệu từ Oracle cho tất cả serialNumbers
@@ -397,7 +400,8 @@ namespace API_WEB.Controllers.Repositories
 
                 // 3. Kết nối Oracle và lấy dữ liệu nhóm
                 var excelData = new List<InforProduct>();
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // Chia nhỏ serialNumbers thành các batch (tối đa 1000 phần tử mỗi batch)
@@ -574,7 +578,7 @@ namespace API_WEB.Controllers.Repositories
                 var remainingSerialNumbers = serialNumbers.Except(foundSerialNumbersInSql).ToList();
 
                 // 2. Kết nối Oracle
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // 3. Lấy dữ liệu từ Oracle cho tất cả serialNumbers
@@ -596,7 +600,7 @@ namespace API_WEB.Controllers.Repositories
                         EntryDate = product?.entryDate,
                         EntryPerson = product?.entryPerson ?? "",
                         Note = product?.Note ?? "",
-                        ProductLine = oracleInfo?.ProductLine?? "",
+                        ProductLine = oracleInfo?.ProductLine ?? "",
                         MoNumber = oracleInfo?.MoNumber ?? "",
                         Data1 = oracleInfo?.Data1 ?? "",
                         ModelName = oracleInfo?.ModelName ?? "",
@@ -641,28 +645,226 @@ namespace API_WEB.Controllers.Repositories
                 return BadRequest(new { success = false, message = "serialNumbers is required." });
             }
 
-            var sns = serialNumbers
+            var sanitizedSerials = serialNumbers
                 .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                .Select(sn => sn.Trim().ToUpper())
+                .Select(sn => sn.Trim())
+                .ToList();
+
+            if (!sanitizedSerials.Any())
+            {
+                return BadRequest(new { success = false, message = "serialNumbers is required." });
+            }
+
+            var normalizedRequests = sanitizedSerials
+                .Select(sn => sn.ToUpperInvariant())
                 .Distinct()
                 .ToList();
+
+            var normalizedToOriginal = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var serial in sanitizedSerials)
+            {
+                var normalized = serial.ToUpperInvariant();
+                if (!normalizedToOriginal.ContainsKey(normalized))
+                {
+                    normalizedToOriginal[normalized] = serial;
+                }
+            }
+
+            var requestInfos = new Dictionary<string, SerialLinkResolver.SerialLinkInfo>(StringComparer.OrdinalIgnoreCase);
+            var candidateToRequests = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var allCandidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var request in normalizedRequests)
+            {
+                var lookupSerial = normalizedToOriginal.TryGetValue(request, out var original)
+                    ? original
+                    : request;
+
+                SerialLinkResolver.SerialLinkInfo linkInfo;
+                try
+                {
+                    linkInfo = await SerialLinkResolver.ResolveAsync(_oracleContext, lookupSerial);
+                }
+                catch
+                {
+                    linkInfo = new SerialLinkResolver.SerialLinkInfo
+                    {
+                        CanonicalSerial = lookupSerial,
+                        StorageSerial = lookupSerial,
+                        RelatedSerials = new[] { lookupSerial },
+                        PrioritySerials = new[] { lookupSerial }
+                    };
+                }
+
+                requestInfos[request] = linkInfo;
+
+                void MapCandidate(string? candidate)
+                {
+                    if (string.IsNullOrWhiteSpace(candidate))
+                    {
+                        return;
+                    }
+
+                    var normalizedCandidate = candidate.Trim().ToUpperInvariant();
+                    allCandidates.Add(normalizedCandidate);
+
+                    if (!candidateToRequests.TryGetValue(normalizedCandidate, out var requests))
+                    {
+                        requests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        candidateToRequests[normalizedCandidate] = requests;
+                    }
+
+                    requests.Add(request);
+                }
+
+                MapCandidate(request);
+                MapCandidate(lookupSerial);
+
+                if (linkInfo.RelatedSerials != null)
+                {
+                    foreach (var candidate in linkInfo.RelatedSerials)
+                    {
+                        MapCandidate(candidate);
+                    }
+                }
+
+                MapCandidate(linkInfo.StorageSerial);
+                MapCandidate(linkInfo.LinkedFgSerial);
+                MapCandidate(linkInfo.LinkedSfgSerial);
+            }
+
+            if (!allCandidates.Any())
+            {
+                return Ok(new
+                {
+                    success = true,
+                    data = new List<object>(),
+                    totalFound = 0,
+                    totalNotFound = normalizedRequests.Count,
+                    notFoundSerialNumbers = normalizedRequests
+                });
+            }
+
+            var candidateList = allCandidates.ToList();
 
             try
             {
                 var results = new List<object>();
-                var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                // Track các SN bị Borrowed tại kho nào (KhoScrap/KhoOk/Product)
+                var processedRecords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var resolvedRequests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var borrowedCandidates = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                // Lấy info (ProductLine, ModelName) từ Oracle cho tất cả SN
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                void TrackResolved(string serial)
+                {
+                    if (string.IsNullOrWhiteSpace(serial))
+                    {
+                        return;
+                    }
+
+                    var normalizedSerial = serial.Trim().ToUpperInvariant();
+                    if (candidateToRequests.TryGetValue(normalizedSerial, out var mappedRequests))
+                    {
+                        foreach (var req in mappedRequests)
+                        {
+                            resolvedRequests.Add(req);
+                        }
+                    }
+                }
+
+                string ResolveDisplaySerial(string? serial)
+                {
+                    if (string.IsNullOrWhiteSpace(serial))
+                    {
+                        return string.Empty;
+                    }
+
+                    var normalizedSerial = serial.Trim().ToUpperInvariant();
+
+                    if (candidateToRequests.TryGetValue(normalizedSerial, out var mappedRequests) &&
+                        mappedRequests != null && mappedRequests.Count > 0)
+                    {
+                        string? preferredRequest = null;
+
+                        foreach (var request in mappedRequests)
+                        {
+                            if (requestInfos.TryGetValue(request, out var info) &&
+                                string.Equals(info.CanonicalSerial, request, StringComparison.OrdinalIgnoreCase))
+                            {
+                                preferredRequest = request;
+                                break;
+                            }
+                        }
+
+                        if (preferredRequest == null)
+                        {
+                            foreach (var request in mappedRequests)
+                            {
+                                if (string.Equals(request, normalizedSerial, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    preferredRequest = request;
+                                    break;
+                                }
+                            }
+                        }
+
+                        preferredRequest ??= mappedRequests.FirstOrDefault();
+
+                        if (!string.IsNullOrWhiteSpace(preferredRequest) &&
+                            normalizedToOriginal.TryGetValue(preferredRequest, out var originalValue))
+                        {
+                            return originalValue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(preferredRequest))
+                        {
+                            return preferredRequest;
+                        }
+                    }
+
+                    if (normalizedToOriginal.TryGetValue(normalizedSerial, out var directOriginal))
+                    {
+                        return directOriginal;
+                    }
+
+                    return serial;
+                }
+
+                void TrackProcessed(string serial)
+                {
+                    if (string.IsNullOrWhiteSpace(serial))
+                    {
+                        return;
+                    }
+
+                    var normalizedSerial = serial.Trim().ToUpperInvariant();
+                    processedRecords.Add(normalizedSerial);
+                    TrackResolved(normalizedSerial);
+                }
+
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
-                var oracleData = await GetOracleDataAsync(connection, sns);
+
+                var oracleData = await GetOracleDataAsync(connection, candidateList);
+
+                InforProduct? ResolveOracleInfo(string? serial)
+                {
+                    if (string.IsNullOrWhiteSpace(serial))
+                    {
+                        return null;
+                    }
+
+                    var normalized = serial.Trim().ToUpperInvariant();
+                    if (oracleData.TryGetValue(normalized, out var info))
+                    {
+                        return info;
+                    }
+
+                    return oracleData.TryGetValue(serial, out info) ? info : null;
+                }
 
                 // ========== 1) KHO SCRAP ==========
                 var khoScraps = await _sqlContext.KhoScraps
-                    .Where(k => sns.Contains(k.SERIAL_NUMBER))
+                    .Where(k => candidateList.Contains(k.SERIAL_NUMBER))
                     .Select(k => new
                     {
                         k.SERIAL_NUMBER,
@@ -677,130 +879,178 @@ namespace API_WEB.Controllers.Repositories
 
                 foreach (var s in khoScraps)
                 {
-                    if (!string.IsNullOrWhiteSpace(s.borrowStatus) &&
-                        s.borrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
+                    var serial = s.SERIAL_NUMBER?.Trim();
+                    if (string.IsNullOrEmpty(serial))
                     {
-                        // SN Borrowed tại KhoScrap -> ghi nhận để xử lý sau bằng RepairTask
-                        if (!borrowedCandidates.ContainsKey(s.SERIAL_NUMBER))
-                            borrowedCandidates[s.SERIAL_NUMBER] = "KhoScrap";
-                        processed.Add(s.SERIAL_NUMBER);
                         continue;
                     }
 
-                    var info = oracleData.GetValueOrDefault(s.SERIAL_NUMBER);
+                    if (!string.IsNullOrWhiteSpace(s.borrowStatus) &&
+                        s.borrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var normalizedSerial = serial.ToUpperInvariant();
+                        if (!borrowedCandidates.ContainsKey(normalizedSerial))
+                        {
+                            borrowedCandidates[normalizedSerial] = "KhoScrap";
+                        }
+
+                        TrackProcessed(serial);
+                        continue;
+                    }
+
+                    var info = ResolveOracleInfo(serial);
                     results.Add(new
                     {
-                        serialNumber = s.SERIAL_NUMBER,
+                        serialNumber = ResolveDisplaySerial(serial),
                         warehouse = "KhoScrap",
                         location = BuildLocation(s.ShelfCode, s.ColumnNumber, s.LevelNumber, s.TrayNumber, s.Position),
                         productLine = info?.ProductLine ?? "",
                         modelName = info?.ModelName ?? ""
                     });
-                    processed.Add(s.SERIAL_NUMBER);
+                    TrackProcessed(serial);
                 }
 
                 // ========== 2) KHO OK ==========
-                var remainingForKhoOk = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-                var khoOks = await _sqlContext.KhoOks
-                    .Where(k => remainingForKhoOk.Contains(k.SERIAL_NUMBER))
-                    .Select(k => new
-                    {
-                        k.SERIAL_NUMBER,
-                        k.ShelfCode,
-                        k.ColumnNumber,
-                        k.LevelNumber,
-                        k.borrowStatus
-                    })
-                    .ToListAsync();
+                var remainingForKhoOk = candidateList
+                    .Where(sn => !processedRecords.Contains(sn))
+                    .ToList();
 
-                foreach (var k in khoOks)
+                if (remainingForKhoOk.Any())
                 {
-                    if (!string.IsNullOrWhiteSpace(k.borrowStatus) &&
-                        k.borrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!borrowedCandidates.ContainsKey(k.SERIAL_NUMBER))
-                            borrowedCandidates[k.SERIAL_NUMBER] = "KhoOk";
-                        processed.Add(k.SERIAL_NUMBER);
-                        continue;
-                    }
+                    var khoOks = await _sqlContext.KhoOks
+                        .Where(k => remainingForKhoOk.Contains(k.SERIAL_NUMBER))
+                        .Select(k => new
+                        {
+                            k.SERIAL_NUMBER,
+                            k.ShelfCode,
+                            k.ColumnNumber,
+                            k.LevelNumber,
+                            k.borrowStatus
+                        })
+                        .ToListAsync();
 
-                    var info = oracleData.GetValueOrDefault(k.SERIAL_NUMBER);
-                    results.Add(new
+                    foreach (var k in khoOks)
                     {
-                        serialNumber = k.SERIAL_NUMBER,
-                        warehouse = "KhoOk",
-                        location = BuildLocation(k.ShelfCode, k.ColumnNumber, k.LevelNumber, null, null),
-                        productLine = info?.ProductLine ?? "",
-                        modelName = info?.ModelName ?? ""
-                    });
-                    processed.Add(k.SERIAL_NUMBER);
+                        var serial = k.SERIAL_NUMBER?.Trim();
+                        if (string.IsNullOrEmpty(serial))
+                        {
+                            continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(k.borrowStatus) &&
+                            k.borrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var normalizedSerial = serial.ToUpperInvariant();
+                            if (!borrowedCandidates.ContainsKey(normalizedSerial))
+                            {
+                                borrowedCandidates[normalizedSerial] = "KhoOk";
+                            }
+
+                            TrackProcessed(serial);
+                            continue;
+                        }
+
+                        var info = ResolveOracleInfo(serial);
+                        results.Add(new
+                        {
+                            serialNumber = ResolveDisplaySerial(serial),
+                            warehouse = "KhoOk",
+                            location = BuildLocation(k.ShelfCode, k.ColumnNumber, k.LevelNumber, null, null),
+                            productLine = info?.ProductLine ?? "",
+                            modelName = info?.ModelName ?? ""
+                        });
+                        TrackProcessed(serial);
+                    }
                 }
 
                 // ========== 3) PRODUCT ==========
-                var remainingForProduct = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-                var products = await _sqlContext.Products
-                    .Include(p => p.Shelf)
-                    .Where(p => remainingForProduct.Contains(p.SerialNumber))
-                    .Select(p => new
-                    {
-                        p.SerialNumber,
-                        ShelfCode = p.Shelf != null ? p.Shelf.ShelfCode : null,
-                        p.ColumnNumber,
-                        p.LevelNumber,
-                        p.TrayNumber,
-                        PositionInTray = p.PositionInTray,
-                        p.BorrowStatus
-                    })
-                    .ToListAsync();
+                var remainingForProduct = candidateList
+                    .Where(sn => !processedRecords.Contains(sn))
+                    .ToList();
 
-                foreach (var p in products)
+                if (remainingForProduct.Any())
                 {
-                    if (!string.IsNullOrWhiteSpace(p.BorrowStatus) &&
-                        p.BorrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!borrowedCandidates.ContainsKey(p.SerialNumber))
-                            borrowedCandidates[p.SerialNumber] = "Product";
-                        processed.Add(p.SerialNumber);
-                        continue;
-                    }
+                    var products = await _sqlContext.Products
+                        .Include(p => p.Shelf)
+                        .Where(p => remainingForProduct.Contains(p.SerialNumber))
+                        .Select(p => new
+                        {
+                            p.SerialNumber,
+                            ShelfCode = p.Shelf != null ? p.Shelf.ShelfCode : null,
+                            p.ColumnNumber,
+                            p.LevelNumber,
+                            p.TrayNumber,
+                            PositionInTray = p.PositionInTray,
+                            p.BorrowStatus
+                        })
+                        .ToListAsync();
 
-                    var info = oracleData.GetValueOrDefault(p.SerialNumber);
-                    results.Add(new
+                    foreach (var p in products)
                     {
-                        serialNumber = p.SerialNumber,
-                        warehouse = "Product",
-                        location = BuildLocation(p.ShelfCode, p.ColumnNumber, p.LevelNumber, p.TrayNumber, p.PositionInTray),
-                        productLine = info?.ProductLine ?? "",
-                        modelName = info?.ModelName ?? ""
-                    });
-                    processed.Add(p.SerialNumber);
+                        var serial = p.SerialNumber?.Trim();
+                        if (string.IsNullOrEmpty(serial))
+                        {
+                            continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(p.BorrowStatus) &&
+                            p.BorrowStatus.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var normalizedSerial = serial.ToUpperInvariant();
+                            if (!borrowedCandidates.ContainsKey(normalizedSerial))
+                            {
+                                borrowedCandidates[normalizedSerial] = "Product";
+                            }
+
+                            TrackProcessed(serial);
+                            continue;
+                        }
+
+                        var info = ResolveOracleInfo(serial);
+                        results.Add(new
+                        {
+                            serialNumber = ResolveDisplaySerial(serial),
+                            warehouse = "Product",
+                            location = BuildLocation(p.ShelfCode, p.ColumnNumber, p.LevelNumber, p.TrayNumber, p.PositionInTray),
+                            productLine = info?.ProductLine ?? "",
+                            modelName = info?.ModelName ?? ""
+                        });
+                        TrackProcessed(serial);
+                    }
                 }
 
                 // ========== 4a) Xử lý các SN Borrowed ==========
                 if (borrowedCandidates.Count > 0)
                 {
-                    var borrowedSNs = borrowedCandidates.Keys.ToList();
+                    var borrowedSerials = borrowedCandidates.Keys.ToList();
 
                     var repairRecordsForBorrowed = await _oracleContext.OracleDataRepairTask
-                        .Where(r => borrowedSNs.Contains(r.SERIAL_NUMBER))
+                        .Where(r => borrowedSerials.Contains(r.SERIAL_NUMBER))
                         .Select(r => new { r.SERIAL_NUMBER, r.DATA18 })
                         .ToListAsync();
 
                     var repairDict = repairRecordsForBorrowed
-                        .GroupBy(r => r.SERIAL_NUMBER)
-                        .ToDictionary(g => g.Key, g => g.Select(x => x.DATA18).FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
+                        .GroupBy(r => r.SERIAL_NUMBER?.Trim().ToUpperInvariant())
+                        .ToDictionary(
+                            g => g.Key ?? string.Empty,
+                            g => g.Select(x => x.DATA18).FirstOrDefault(),
+                            StringComparer.OrdinalIgnoreCase);
 
-                    foreach (var sn in borrowedSNs)
+                    foreach (var serialKey in borrowedSerials)
                     {
-                        var info = oracleData.GetValueOrDefault(sn);
-                        var data18 = (repairDict.TryGetValue(sn, out var loc) ? loc : null)?.Trim();
+                        var info = ResolveOracleInfo(serialKey);
+                        var data18 = string.Empty;
+
+                        if (repairDict.TryGetValue(serialKey, out var rawLoc))
+                        {
+                            data18 = rawLoc?.Trim() ?? string.Empty;
+                        }
 
                         if (!string.IsNullOrWhiteSpace(data18))
                         {
-                            // ✅ Có vị trí trong RepairTask → warehouse = RepairTask
                             results.Add(new
                             {
-                                serialNumber = sn,
+                                serialNumber = ResolveDisplaySerial(serialKey),
                                 warehouse = "RepairTask",
                                 location = data18,
                                 productLine = info?.ProductLine ?? "",
@@ -809,327 +1059,176 @@ namespace API_WEB.Controllers.Repositories
                         }
                         else
                         {
-                            // ❌ Không có vị trí trong RepairTask → vẫn giữ kho gốc, location = Borrowed
                             results.Add(new
                             {
-                                serialNumber = sn,
-                                warehouse = borrowedCandidates[sn], // kho gốc
+                                serialNumber = ResolveDisplaySerial(serialKey),
+                                warehouse = borrowedCandidates[serialKey],
                                 location = "Borrowed",
                                 productLine = info?.ProductLine ?? "",
                                 modelName = info?.ModelName ?? ""
                             });
                         }
 
-                        // processed đã add trước đó
+                        TrackResolved(serialKey);
                     }
                 }
 
-
                 // ========== 4b) Với các SN còn lại (không Borrowed & chưa tìm thấy kho), thử lấy DATA18 ở RepairTask ==========
-                var stillRemaining = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-                if (stillRemaining.Any())
-                {
-                    var repairRecords = await _oracleContext.OracleDataRepairTask
-                        .Where(r => stillRemaining.Contains(r.SERIAL_NUMBER))
-                        .Select(r => new { r.SERIAL_NUMBER, r.DATA18 })
-                        .ToListAsync();
+                var unresolvedRequests = normalizedRequests
+                    .Where(sn => !resolvedRequests.Contains(sn))
+                    .ToList();
 
-                    foreach (var r in repairRecords)
+                if (unresolvedRequests.Any())
+                {
+                    var repairLookupCandidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var request in unresolvedRequests)
                     {
-                        if (!string.IsNullOrWhiteSpace(r.DATA18))
+                        if (requestInfos.TryGetValue(request, out var info))
                         {
-                            var info = oracleData.GetValueOrDefault(r.SERIAL_NUMBER);
+                            if (info.PrioritySerials != null)
+                            {
+                                foreach (var candidate in info.PrioritySerials)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(candidate))
+                                    {
+                                        repairLookupCandidates.Add(candidate.Trim().ToUpperInvariant());
+                                    }
+                                }
+                            }
+
+                            if (info.RelatedSerials != null)
+                            {
+                                foreach (var candidate in info.RelatedSerials)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(candidate))
+                                    {
+                                        repairLookupCandidates.Add(candidate.Trim().ToUpperInvariant());
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            repairLookupCandidates.Add(request);
+                        }
+                    }
+
+                    if (repairLookupCandidates.Count > 0)
+                    {
+                        var repairCandidatesList = repairLookupCandidates.ToList();
+
+                        var repairRecords = await _oracleContext.OracleDataRepairTask
+                            .Where(r => repairCandidatesList.Contains(r.SERIAL_NUMBER))
+                            .Select(r => new { r.SERIAL_NUMBER, r.DATA18 })
+                            .ToListAsync();
+
+                        foreach (var record in repairRecords)
+                        {
+                            if (string.IsNullOrWhiteSpace(record.DATA18))
+                            {
+                                continue;
+                            }
+
+                            var serial = record.SERIAL_NUMBER?.Trim();
+                            if (string.IsNullOrEmpty(serial))
+                            {
+                                continue;
+                            }
+
+                            var info = ResolveOracleInfo(serial);
+
                             results.Add(new
                             {
-                                serialNumber = r.SERIAL_NUMBER,
+                                serialNumber = ResolveDisplaySerial(serial),
                                 warehouse = "RepairTask",
-                                location = r.DATA18.Trim(),
+                                location = record.DATA18.Trim(),
                                 productLine = info?.ProductLine ?? "",
                                 modelName = info?.ModelName ?? ""
                             });
-                            processed.Add(r.SERIAL_NUMBER);
+
+                            TrackResolved(serial);
                         }
                     }
                 }
 
-                var notFound = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
+                // ========== 5️⃣ Tổng hợp kết quả cuối cùng ==========
+                var notFound = normalizedRequests
+                    .Where(sn => !resolvedRequests.Contains(sn))
+                    .ToList();
 
-                return Ok(new
+                // ✅ Tạo bản sao danh sách kết quả
+                var finalResults = new List<object>(results);
+
+                // ✅ Đảm bảo serial người dùng nhập (FG hoặc SFG) luôn xuất hiện trong kết quả
+                foreach (var request in normalizedRequests)
                 {
-                    success = true,
-                    data = results,
-                    totalFound = results.Count,
-                    totalNotFound = notFound.Count,
-                    notFoundSerialNumbers = notFound
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
-            }
-        }
-
-        [HttpPost("FindFG")]
-        public async Task<IActionResult> FindFG([FromBody] List<string> serialNumbers)
-        {
-            if (serialNumbers == null || !serialNumbers.Any())
-                return BadRequest(new { success = false, message = "serialNumbers is required." });
-
-            var sns = serialNumbers
-                .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                .Select(sn => sn.Trim().ToUpper())
-                .Distinct()
-                .ToList();
-
-            try
-            {
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
-                await connection.OpenAsync();
-
-                var oracleData = await GetOracleDataAsync(connection, sns);
-
-                var results = new List<object>();
-                var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var borrowedCandidates = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                // ✅ gọi hàm xử lý nội bộ
-                await FindLocationsInternal(connection, sns, processed, results, borrowedCandidates);
-
-                // ✅ trả kết quả
-                var notFound = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-
-                return Ok(new
-                {
-                    success = true,
-                    data = results,
-                    totalFound = results.Count,
-                    totalNotFound = notFound.Count,
-                    notFoundSerialNumbers = notFound
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
-            }
-        }
-
-
-        // =======================================================
-        // 🧩 HÀM XỬ LÝ CHÍNH — KHÔNG MỞ CONNECTION MỚI
-        // =======================================================
-        private async Task FindLocationsInternal(
-            OracleConnection connection,
-            List<string> sns,
-            HashSet<string> processed,
-            List<object> results,
-            Dictionary<string, string> borrowedCandidates)
-        {
-            // ====== LẤY MODEL_NAME (để xác định 900/692/930) ======
-            var modelNames = await _oracleContext.OracleDataR107
-                .Where(r => sns.Contains(r.SERIAL_NUMBER))
-                .Select(r => new { r.SERIAL_NUMBER, r.MODEL_NAME })
-                .ToListAsync();
-            var modelDict = modelNames.ToDictionary(x => x.SERIAL_NUMBER, x => x.MODEL_NAME, StringComparer.OrdinalIgnoreCase);
-
-            // ====== 1. KHO SCRAP ======
-            var khoScraps = await _sqlContext.KhoScraps
-                .Where(k => sns.Contains(k.SERIAL_NUMBER))
-                .Select(k => new
-                {
-                    k.SERIAL_NUMBER,
-                    k.ShelfCode,
-                    k.ColumnNumber,
-                    k.LevelNumber,
-                    k.TrayNumber,
-                    k.Position,
-                    k.borrowStatus
-                })
-                .ToListAsync();
-
-            foreach (var s in khoScraps)
-            {
-                if (s.borrowStatus?.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    borrowedCandidates[s.SERIAL_NUMBER] = "KhoScrap";
-                    processed.Add(s.SERIAL_NUMBER);
-                    continue;
-                }
-
-                results.Add(new
-                {
-                    serialNumber = s.SERIAL_NUMBER,
-                    warehouse = "KhoScrap",
-                    location = BuildLocation(s.ShelfCode, s.ColumnNumber, s.LevelNumber, s.TrayNumber, s.Position),
-                });
-                processed.Add(s.SERIAL_NUMBER);
-            }
-
-            // ====== 2. KHO OK ======
-            var remainingForKhoOk = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-            var khoOks = await _sqlContext.KhoOks
-                .Where(k => remainingForKhoOk.Contains(k.SERIAL_NUMBER))
-                .Select(k => new
-                {
-                    k.SERIAL_NUMBER,
-                    k.ShelfCode,
-                    k.ColumnNumber,
-                    k.LevelNumber,
-                    k.borrowStatus
-                })
-                .ToListAsync();
-
-            foreach (var k in khoOks)
-            {
-                if (k.borrowStatus?.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    borrowedCandidates[k.SERIAL_NUMBER] = "KhoOk";
-                    processed.Add(k.SERIAL_NUMBER);
-                    continue;
-                }
-
-                results.Add(new
-                {
-                    serialNumber = k.SERIAL_NUMBER,
-                    warehouse = "KhoOk",
-                    location = BuildLocation(k.ShelfCode, k.ColumnNumber, k.LevelNumber, null, null)
-                });
-                processed.Add(k.SERIAL_NUMBER);
-            }
-
-            // ====== 3. PRODUCT ======
-            var remainingForProduct = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-            var products = await _sqlContext.Products
-                .Include(p => p.Shelf)
-                .Where(p => remainingForProduct.Contains(p.SerialNumber))
-                .Select(p => new
-                {
-                    p.SerialNumber,
-                    ShelfCode = p.Shelf != null ? p.Shelf.ShelfCode : null,
-                    p.ColumnNumber,
-                    p.LevelNumber,
-                    p.TrayNumber,
-                    PositionInTray = p.PositionInTray,
-                    p.BorrowStatus
-                })
-                .ToListAsync();
-
-            foreach (var p in products)
-            {
-                if (p.BorrowStatus?.Trim().Equals("Borrowed", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    borrowedCandidates[p.SerialNumber] = "Product";
-                    processed.Add(p.SerialNumber);
-                    continue;
-                }
-
-                results.Add(new
-                {
-                    serialNumber = p.SerialNumber,
-                    warehouse = "Product",
-                    location = BuildLocation(p.ShelfCode, p.ColumnNumber, p.LevelNumber, p.TrayNumber, p.PositionInTray)
-                });
-                processed.Add(p.SerialNumber);
-            }
-
-            // ====== 4. BORROWED & REPAIRTASK ======
-            if (borrowedCandidates.Count > 0)
-            {
-                var borrowedSNs = borrowedCandidates.Keys.ToList();
-
-                var repairRecordsForBorrowed = await _oracleContext.OracleDataRepairTask
-                    .Where(r => borrowedSNs.Contains(r.SERIAL_NUMBER))
-                    .Select(r => new { r.SERIAL_NUMBER, r.DATA18 })
-                    .ToListAsync();
-
-                var repairDict = repairRecordsForBorrowed
-                    .GroupBy(r => r.SERIAL_NUMBER)
-                    .ToDictionary(g => g.Key, g => g.Select(x => x.DATA18).FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
-
-                foreach (var sn in borrowedSNs)
-                {
-                    var data18 = (repairDict.TryGetValue(sn, out var loc) ? loc : null)?.Trim();
-
-                    results.Add(new
+                    // Nếu serial nhập đã có trong kết quả thì bỏ qua
+                    if (results.Any(r =>
+                        string.Equals((string?)r.GetType().GetProperty("serialNumber")?.GetValue(r),
+                        request, StringComparison.OrdinalIgnoreCase)))
                     {
-                        serialNumber = sn,
-                        warehouse = string.IsNullOrWhiteSpace(data18) ? borrowedCandidates[sn] : "RepairTask",
-                        location = string.IsNullOrWhiteSpace(data18) ? "Borrowed" : data18
-                    });
-                    processed.Add(sn);
-                }
-            }
+                        continue;
+                    }
 
-            // ====== 5. Còn lại: lấy DATA18 trong RepairTask ======
-            var stillRemaining = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-            if (stillRemaining.Any())
-            {
-                var repairRecords = await _oracleContext.OracleDataRepairTask
-                    .Where(r => stillRemaining.Contains(r.SERIAL_NUMBER))
-                    .Select(r => new { r.SERIAL_NUMBER, r.DATA18 })
-                    .ToListAsync();
-
-                foreach (var r in repairRecords)
-                {
-                    if (!string.IsNullOrWhiteSpace(r.DATA18))
+                    // Nếu serial chưa có → kiểm tra có serial liên kết (SFG hoặc FG) đã được tìm thấy chưa
+                    if (requestInfos.TryGetValue(request, out var info))
                     {
-                        results.Add(new
+                        // Nếu nhập FG → tìm xem có SFG tương ứng trong kết quả chưa
+                        var linkedSFG = info.LinkedSfgSerial;
+                        if (!string.IsNullOrWhiteSpace(linkedSFG))
                         {
-                            serialNumber = r.SERIAL_NUMBER,
-                            warehouse = "RepairTask",
-                            location = r.DATA18.Trim()
-                        });
-                        processed.Add(r.SERIAL_NUMBER);
+                            var match = results.FirstOrDefault(r =>
+                                string.Equals((string?)r.GetType().GetProperty("serialNumber")?.GetValue(r),
+                                linkedSFG, StringComparison.OrdinalIgnoreCase));
+
+                            if (match != null)
+                            {
+                                // Lấy thông tin của SFG để gán lại cho FG nhập vào
+                                var warehouse = (string?)match.GetType().GetProperty("warehouse")?.GetValue(match);
+                                var location = (string?)match.GetType().GetProperty("location")?.GetValue(match);
+                                var productLine = (string?)match.GetType().GetProperty("productLine")?.GetValue(match);
+                                var modelName = (string?)match.GetType().GetProperty("modelName")?.GetValue(match);
+
+                                finalResults.Add(new
+                                {
+                                    serialNumber = request,
+                                    warehouse,
+                                    location,
+                                    productLine,
+                                    modelName
+                                });
+                            }
+                        }
                     }
                 }
-            }
 
-            // ====== 6. TRA NGƯỢC SFG ======
-            var notFound = sns.Except(processed, StringComparer.OrdinalIgnoreCase).ToList();
-            var candidatesForLink = notFound
-                .Where(sn =>
-                    modelDict.TryGetValue(sn, out var wg) &&
-                    (wg.StartsWith("900") || wg.StartsWith("692") || wg.StartsWith("930")))
-                .ToList();
+                // ✅ Cập nhật danh sách notFound sau khi thêm FG vào finalResults
+                var finalFoundSerials = finalResults
+                    .Select(r => (string?)r.GetType().GetProperty("serialNumber")?.GetValue(r))
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var sn in candidatesForLink)
-            {
-                string? linkedSn = await GetLinkedSFGAsync(connection, sn);
-                if (!string.IsNullOrWhiteSpace(linkedSn))
+                var finalNotFound = normalizedRequests
+                    .Where(sn => !finalFoundSerials.Contains(sn))
+                    .ToList();
+
+                // ✅ Trả về kết quả
+                return Ok(new
                 {
-                    // gọi lại chính logic nội bộ chứ KHÔNG mở connection mới
-                    await FindLocationsInternal(connection,
-                        new List<string> { linkedSn },
-                        processed,
-                        results,
-                        borrowedCandidates);
-                    processed.Add(sn);
-                }
+                    success = true,
+                    data = finalResults,
+                    totalFound = finalResults.Count,
+                    totalNotFound = finalNotFound.Count,
+                    notFoundSerialNumbers = finalNotFound
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
-
-
-        // =======================================================
-        // 🔍 Helper: Lấy SN_SFG từ Oracle
-        // =======================================================
-        private async Task<string?> GetLinkedSFGAsync(OracleConnection connection, string serialNumber)
-        {
-            const string query = @"
-        SELECT KEY_PART_SN AS SN_SFG
-        FROM sfism4.R_WIP_KEYPARTS_T
-        WHERE GROUP_NAME = 'SFG_LINK_FG' 
-          AND LENGTH(SERIAL_NUMBER) IN (12, 18, 21, 20) 
-          AND LENGTH(KEY_PART_SN) IN (14, 13)
-          AND SERIAL_NUMBER = :serial";
-
-            await using var cmd = new OracleCommand(query, connection);
-            cmd.BindByName = true;
-            cmd.Parameters.Add(new OracleParameter(":serial", OracleDbType.Varchar2) { Value = serialNumber });
-
-            var result = await cmd.ExecuteScalarAsync();
-            return result?.ToString()?.Trim();
-        }
-
-
 
 
         //=======================XUẤT EXCEL SCRAP====================
@@ -1175,7 +1274,8 @@ namespace API_WEB.Controllers.Repositories
 
                 // 3. Kết nối Oracle và lấy dữ liệu nhóm
                 var excelData = new List<InforProduct>();
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
+
                 await connection.OpenAsync();
 
                 // Chia nhỏ serialNumbers thành các batch (tối đa 1000 phần tử mỗi batch)
@@ -1291,7 +1391,7 @@ namespace API_WEB.Controllers.Repositories
                     worksheet.Cell(currentRow, 22).Value = "NOTE";
                     worksheet.Cell(currentRow, 23).Value = "TYPE";
                     // Điền dữ liệu
-                    foreach (var data in excelData) 
+                    foreach (var data in excelData)
                     {
                         currentRow++;
                         worksheet.Cell(currentRow, 1).Value = data.SerialNumber;
@@ -1348,7 +1448,7 @@ namespace API_WEB.Controllers.Repositories
             }
             else
             {
-                 baseLoc = $"{shelf}{column}-{level}-K{tray}";
+                baseLoc = $"{shelf}{column}-{level}-K{tray}";
             }
             return position.HasValue ? $"{baseLoc}-{position}" : baseLoc;
         }
@@ -1507,7 +1607,7 @@ namespace API_WEB.Controllers.Repositories
                 }
 
                 //Kết nối Oracle
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 //Lấy thông tin từ Oracle cho tất cả serialNumbers
@@ -1747,11 +1847,6 @@ namespace API_WEB.Controllers.Repositories
             return linkedSerialNumbers;
         }
 
-        //=======XUAT EXCEL TOAN BO KHO SCRAP VA KHO REPAIR
-
-
-
-
         //===============XUẤT EXCEL=================
         [HttpGet("ExportAllDataToExcel")]
         public async Task<IActionResult> ExportAllDataToExcel()
@@ -1774,7 +1869,7 @@ namespace API_WEB.Controllers.Repositories
 
                 // 3. Kết nối Oracle và lấy dữ liệu nhóm
                 var excelData = new List<InforProduct>();
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // Chia nhỏ serialNumbers thành các batch (tối đa 1000 phần tử mỗi batch)
@@ -2153,8 +2248,6 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
-
-
         //==========XUAT EXCEL TOAN BO KHO REPAIR VA KHO SCRAP========
         [HttpGet("ExportCombinedDataToExcel")]
         public async Task<IActionResult> ExportCombinedDataToExcel()
@@ -2207,7 +2300,7 @@ namespace API_WEB.Controllers.Repositories
                 // 4. Kết nối Oracle và lấy dữ liệu
                 var excelDataRepair = new List<InforProduct>();
                 var excelDataScrap = new List<InforProduct>();
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await using var connection = new OracleConnection(_oracleConnectionString);
                 await connection.OpenAsync();
 
                 // Chia nhỏ serialNumbers thành các batch (tối đa 1000 phần tử mỗi batch)

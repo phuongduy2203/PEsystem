@@ -466,108 +466,108 @@ namespace API_WEB.Controllers.SmartFA
         }
 
 
-        [HttpGet("getCheckInRepair")]
-        public async Task<IActionResult> getCheckInRepair()
-        {
-            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
-            try
-            {
-                await connection.OpenAsync();
-                var checkInQuery = @"
-                    SELECT 
-                        A.SERIAL_NUMBER,
-                        B.PRODUCT_LINE,
-                        C.MODEL_NAME,
-                        C.MO_NUMBER,
-                        A.TEST_GROUP AS STATION_NAME,
-                        A.TEST_TIME,
-                        A.TEST_CODE AS ERROR_CODE,
-                        D.ERROR_DESC,
-                        C.WIP_GROUP,
-                        C.ERROR_FLAG,
-                        C.WORK_FLAG,
-                        TRUNC(SYSDATE - A.TEST_TIME) as AGING_HOURS
-                    FROM SFISM4.R_REPAIR_TASK_T A
-                    INNER JOIN SFIS1.C_MODEL_DESC_T B
-                        ON A.MODEL_NAME = B.MODEL_NAME
-                    LEFT JOIN SFISM4.R107 C
-                        ON A.SERIAL_NUMBER = C.SERIAL_NUMBER
-                    LEFT JOIN SFIS1.C_ERROR_CODE_T D
-                        ON A.TEST_CODE = D.ERROR_CODE
-                    LEFT JOIN (
-                        SELECT SERIAL_NUMBER, P_SENDER, IN_DATETIME
-                        FROM (
-                            SELECT 
-                                E.SERIAL_NUMBER,
-                                E.P_SENDER,
-                                E.IN_DATETIME,
-                                ROW_NUMBER() OVER (PARTITION BY E.SERIAL_NUMBER ORDER BY E.IN_DATETIME DESC) AS RN
-                            FROM SFISM4.R_REPAIR_IN_OUT_T E
-                        )
-                        WHERE RN = 1
-                    ) E ON E.SERIAL_NUMBER = A.SERIAL_NUMBER
-                    WHERE B.MODEL_SERIAL = 'ADAPTER'
-                      AND NOT REGEXP_LIKE(C.WIP_GROUP, 'BR2C|BCFA')
-                      AND (
-                            (
-                                NOT EXISTS (
-                                    SELECT 1
-                                    FROM SFISM4.Z_KANBAN_TRACKING_T Z
-                                    WHERE Z.SERIAL_NUMBER = A.SERIAL_NUMBER
-                                )
-                                AND E.P_SENDER IN (
-                                    'V0904136','V3209541','V0945375','V0928908','V3245384','V3211693'
-                                )
-                            )
-                            OR EXISTS (
-                                SELECT 1
-                                FROM SFISM4.Z_KANBAN_TRACKING_T Z
-                                WHERE Z.SERIAL_NUMBER = A.SERIAL_NUMBER
-                            )
-                         )";
-                var checkInList = new List<CheckInRecord>();
-                await using (var cmd = new OracleCommand(checkInQuery, connection))
-                {
-                    await using var reader = await cmd.ExecuteReaderAsync();
-                    while (await reader.ReadAsync())
-                    {
-                        checkInList.Add(new CheckInRecord
-                        {
-                            SERIAL_NUMBER = reader["SERIAL_NUMBER"].ToString() ?? string.Empty,
-                            MODEL_NAME = reader["MODEL_NAME"].ToString() ?? string.Empty,
-                            PRODUCT_LINE = reader["PRODUCT_LINE"].ToString() ?? string.Empty,
-                            MO_NUMBER = reader["MO_NUMBER"].ToString() ?? string.Empty,
-                            WIP_GROUP = reader["WIP_GROUP"].ToString() ?? string.Empty,
-                            ERROR_FLAG = reader["ERROR_FLAG"].ToString() ?? string.Empty,
-                            WORK_FLAG = reader["WORK_FLAG"].ToString() ?? string.Empty,
-                            STATION_NAME = reader["STATION_NAME"].ToString() ?? string.Empty,
-                            ERROR_CODE = reader["ERROR_CODE"].ToString() ?? string.Empty,
-                            ERROR_DESC = reader["ERROR_DESC"].ToString() ?? string.Empty,
-                            TEST_TIME = reader["TEST_TIME"] as DateTime?,
-                            AGING_HOURS = reader["AGING_HOURS"].ToString() ?? string.Empty,
-                        });
-                    }
-                }
-                var filteredList = await FilterMissingLocationsAsync(checkInList);
-                var response = new
-                {
-                    count = filteredList.Count,
-                    data = filteredList
-                };
-                return Ok(response);
-            }
-            catch (OracleException ex)
-            {
-                return StatusCode(500, $"Database error: {ex.Message}");
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                {
-                    await connection.CloseAsync();
-                }
-            }
-        }
+        //[HttpGet("getCheckInRepair")]
+        //public async Task<IActionResult> getCheckInRepair()
+        //{
+        //    await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+        //    try
+        //    {
+        //        await connection.OpenAsync();
+        //        var checkInQuery = @"
+        //            SELECT 
+        //                A.SERIAL_NUMBER,
+        //                B.PRODUCT_LINE,
+        //                C.MODEL_NAME,
+        //                C.MO_NUMBER,
+        //                A.TEST_GROUP AS STATION_NAME,
+        //                A.TEST_TIME,
+        //                A.TEST_CODE AS ERROR_CODE,
+        //                D.ERROR_DESC,
+        //                C.WIP_GROUP,
+        //                C.ERROR_FLAG,
+        //                C.WORK_FLAG,
+        //                TRUNC(SYSDATE - A.TEST_TIME) as AGING_HOURS
+        //            FROM SFISM4.R_REPAIR_TASK_T A
+        //            INNER JOIN SFIS1.C_MODEL_DESC_T B
+        //                ON A.MODEL_NAME = B.MODEL_NAME
+        //            LEFT JOIN SFISM4.R107 C
+        //                ON A.SERIAL_NUMBER = C.SERIAL_NUMBER
+        //            LEFT JOIN SFIS1.C_ERROR_CODE_T D
+        //                ON A.TEST_CODE = D.ERROR_CODE
+        //            LEFT JOIN (
+        //                SELECT SERIAL_NUMBER, P_SENDER, IN_DATETIME
+        //                FROM (
+        //                    SELECT 
+        //                        E.SERIAL_NUMBER,
+        //                        E.P_SENDER,
+        //                        E.IN_DATETIME,
+        //                        ROW_NUMBER() OVER (PARTITION BY E.SERIAL_NUMBER ORDER BY E.IN_DATETIME DESC) AS RN
+        //                    FROM SFISM4.R_REPAIR_IN_OUT_T E
+        //                )
+        //                WHERE RN = 1
+        //            ) E ON E.SERIAL_NUMBER = A.SERIAL_NUMBER
+        //            WHERE B.MODEL_SERIAL = 'ADAPTER'
+        //              AND NOT REGEXP_LIKE(C.WIP_GROUP, 'BR2C|BCFA')
+        //              AND (
+        //                    (
+        //                        NOT EXISTS (
+        //                            SELECT 1
+        //                            FROM SFISM4.Z_KANBAN_TRACKING_T Z
+        //                            WHERE Z.SERIAL_NUMBER = A.SERIAL_NUMBER
+        //                        )
+        //                        AND E.P_SENDER IN (
+        //                            'V0904136','V3209541','V0945375','V0928908','V3245384','V3211693'
+        //                        )
+        //                    )
+        //                    OR EXISTS (
+        //                        SELECT 1
+        //                        FROM SFISM4.Z_KANBAN_TRACKING_T Z
+        //                        WHERE Z.SERIAL_NUMBER = A.SERIAL_NUMBER
+        //                    )
+        //                 )";
+        //        var checkInList = new List<CheckInRecord>();
+        //        await using (var cmd = new OracleCommand(checkInQuery, connection))
+        //        {
+        //            await using var reader = await cmd.ExecuteReaderAsync();
+        //            while (await reader.ReadAsync())
+        //            {
+        //                checkInList.Add(new CheckInRecord
+        //                {
+        //                    SERIAL_NUMBER = reader["SERIAL_NUMBER"].ToString() ?? string.Empty,
+        //                    MODEL_NAME = reader["MODEL_NAME"].ToString() ?? string.Empty,
+        //                    PRODUCT_LINE = reader["PRODUCT_LINE"].ToString() ?? string.Empty,
+        //                    MO_NUMBER = reader["MO_NUMBER"].ToString() ?? string.Empty,
+        //                    WIP_GROUP = reader["WIP_GROUP"].ToString() ?? string.Empty,
+        //                    ERROR_FLAG = reader["ERROR_FLAG"].ToString() ?? string.Empty,
+        //                    WORK_FLAG = reader["WORK_FLAG"].ToString() ?? string.Empty,
+        //                    STATION_NAME = reader["STATION_NAME"].ToString() ?? string.Empty,
+        //                    ERROR_CODE = reader["ERROR_CODE"].ToString() ?? string.Empty,
+        //                    ERROR_DESC = reader["ERROR_DESC"].ToString() ?? string.Empty,
+        //                    TEST_TIME = reader["TEST_TIME"] as DateTime?,
+        //                    AGING_HOURS = reader["AGING_HOURS"].ToString() ?? string.Empty,
+        //                });
+        //            }
+        //        }
+        //        var filteredList = await FilterMissingLocationsAsync(checkInList);
+        //        var response = new
+        //        {
+        //            count = filteredList.Count,
+        //            data = filteredList
+        //        };
+        //        return Ok(response);
+        //    }
+        //    catch (OracleException ex)
+        //    {
+        //        return StatusCode(500, $"Database error: {ex.Message}");
+        //    }
+        //    finally
+        //    {
+        //        if (connection.State == ConnectionState.Open)
+        //        {
+        //            await connection.CloseAsync();
+        //        }
+        //    }
+        //}
 
 
         [HttpGet("getLackLocation")]
@@ -809,92 +809,92 @@ namespace API_WEB.Controllers.SmartFA
             }
         }
 
-        private async Task<List<CheckInRecord>> FilterMissingLocationsAsync(List<CheckInRecord> source)
-        {
-            if (source == null || source.Count == 0)
-            {
-                return source ?? new List<CheckInRecord>();
-            }
+        //private async Task<List<CheckInRecord>> FilterMissingLocationsAsync(List<CheckInRecord> source)
+        //{
+        //    if (source == null || source.Count == 0)
+        //    {
+        //        return source ?? new List<CheckInRecord>();
+        //    }
 
-            try
-            {
-                var serialNumbers = source
-                    .Select(r => (r.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant())
-                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+        //    try
+        //    {
+        //        var serialNumbers = source
+        //            .Select(r => (r.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant())
+        //            .Where(sn => !string.IsNullOrWhiteSpace(sn))
+        //            .Distinct(StringComparer.OrdinalIgnoreCase)
+        //            .ToList();
 
-                if (!serialNumbers.Any())
-                {
-                    return source;
-                }
+        //        if (!serialNumbers.Any())
+        //        {
+        //            return source;
+        //        }
 
-                var searchController = new SearchController(_sqlContext, _oracleContext);
-                var findLocationResult = await searchController.FindLocations(serialNumbers);
+        //        var searchController = new SearchController(_sqlContext, _oracleContext);
+        //        var findLocationResult = await searchController.FindLocations(serialNumbers);
 
-                if (findLocationResult is not OkObjectResult okResult || okResult.Value == null)
-                {
-                    return source;
-                }
+        //        if (findLocationResult is not OkObjectResult okResult || okResult.Value == null)
+        //        {
+        //            return source;
+        //        }
 
-                var serialized = JsonConvert.SerializeObject(okResult.Value);
-                var locationData = JsonConvert.DeserializeObject<FindLocationsResponse>(serialized);
+        //        var serialized = JsonConvert.SerializeObject(okResult.Value);
+        //        var locationData = JsonConvert.DeserializeObject<FindLocationsResponse>(serialized);
 
-                if (locationData == null)
-                {
-                    return source;
-                }
+        //        if (locationData == null)
+        //        {
+        //            return source;
+        //        }
 
-                var missingSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        //        var missingSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                if (locationData.NotFoundSerialNumbers != null)
-                {
-                    foreach (var sn in locationData.NotFoundSerialNumbers)
-                    {
-                        if (!string.IsNullOrWhiteSpace(sn))
-                        {
-                            missingSet.Add(sn.Trim().ToUpperInvariant());
-                        }
-                    }
-                }
+        //        if (locationData.NotFoundSerialNumbers != null)
+        //        {
+        //            foreach (var sn in locationData.NotFoundSerialNumbers)
+        //            {
+        //                if (!string.IsNullOrWhiteSpace(sn))
+        //                {
+        //                    missingSet.Add(sn.Trim().ToUpperInvariant());
+        //                }
+        //            }
+        //        }
 
-                if (locationData.Data != null)
-                {
-                    foreach (var item in locationData.Data)
-                    {
-                        var serialNumber = (item?.SerialNumber ?? string.Empty).Trim().ToUpperInvariant();
-                        if (string.IsNullOrWhiteSpace(serialNumber))
-                        {
-                            continue;
-                        }
+        //        if (locationData.Data != null)
+        //        {
+        //            foreach (var item in locationData.Data)
+        //            {
+        //                var serialNumber = (item?.SerialNumber ?? string.Empty).Trim().ToUpperInvariant();
+        //                if (string.IsNullOrWhiteSpace(serialNumber))
+        //                {
+        //                    continue;
+        //                }
 
-                        var location = item?.Location?.Trim();
-                        if (string.IsNullOrWhiteSpace(location) ||
-                            string.Equals(location, "Borrowed", StringComparison.OrdinalIgnoreCase))
-                        {
-                            missingSet.Add(serialNumber);
-                        }
-                        else
-                        {
-                            missingSet.Remove(serialNumber);
-                        }
-                    }
-                }
+        //                var location = item?.Location?.Trim();
+        //                if (string.IsNullOrWhiteSpace(location) ||
+        //                    string.Equals(location, "Borrowed", StringComparison.OrdinalIgnoreCase))
+        //                {
+        //                    missingSet.Add(serialNumber);
+        //                }
+        //                else
+        //                {
+        //                    missingSet.Remove(serialNumber);
+        //                }
+        //            }
+        //        }
 
-                if (!missingSet.Any())
-                {
-                    return new List<CheckInRecord>();
-                }
+        //        if (!missingSet.Any())
+        //        {
+        //            return new List<CheckInRecord>();
+        //        }
 
-                return source
-                    .Where(record => missingSet.Contains((record.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant()))
-                    .ToList();
-            }
-            catch
-            {
-                return source;
-            }
-        }
+        //        return source
+        //            .Where(record => missingSet.Contains((record.SERIAL_NUMBER ?? string.Empty).Trim().ToUpperInvariant()))
+        //            .ToList();
+        //    }
+        //    catch
+        //    {
+        //        return source;
+        //    }
+        //}
 
         //Số lượng tồn kho của Before Kanban và After Kanban
         [HttpGet("GetTonKhoSummary")]
@@ -1000,7 +1000,7 @@ namespace API_WEB.Controllers.SmartFA
                 SELECT 
                     CASE 
                         WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                             THEN COALESCE(kp.KEY_PART_SN, a.SERIAL_NUMBER)
+                             THEN COALESCE(kp.KEY_PART_SN, kr.KEY_PART_SN)
                         ELSE a.SERIAL_NUMBER
                     END AS SFG,
                     a.SERIAL_NUMBER AS FG,
@@ -1063,6 +1063,7 @@ namespace API_WEB.Controllers.SmartFA
                             a.MO_NUMBER LIKE '8%' 
                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
                             AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136')
+                            AND r107.WIP_GROUP LIKE '%B36R%'
                         )
                     )
                     AND a.IN_DATETIME BETWEEN :startDate and :endDate";
