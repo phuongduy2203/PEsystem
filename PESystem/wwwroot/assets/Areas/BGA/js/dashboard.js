@@ -19,7 +19,8 @@ const GRID_LINE_COLOR = "rgba(255, 255, 255, 0.2)";
 const statusValueLabelsPlugin = {
     id: "statusValueLabels",
     afterDatasetsDraw(chart, _args, pluginOptions) {
-        if (!pluginOptions || pluginOptions.display === false) {
+        const options = pluginOptions || {};
+        if (options.display === false) {
             return;
         }
 
@@ -30,16 +31,41 @@ const statusValueLabelsPlugin = {
         }
 
         const ctx = chart.ctx;
-        const color = pluginOptions.color || "#0d6efd";
-        const fontOptions = pluginOptions.font || {};
+        const color = options.color || "#0d6efd";
+        const fontOptions = options.font || {};
         const fontSize = fontOptions.size || 12;
         const fontWeight = fontOptions.weight || "600";
         const fontFamily = fontOptions.family || "'Segoe UI', Arial, sans-serif";
+        const lineHeight = fontOptions.lineHeight || Math.round(fontSize * 1.3);
+        const align = options.align || "center";
+        const offset = typeof options.offset === "number" ? options.offset : 8;
+
+        const labels = Array.isArray(chart.data.labels) ? chart.data.labels : [];
+        const statusDetails = Array.isArray(dataset.statusDetails) ? dataset.statusDetails : [];
+
+        const buildStatusText = (detail, fallbackLabel) => {
+            if (detail && typeof detail === "object") {
+                const statusCode = detail.status ?? fallbackLabel ?? "";
+                const statusName = detail.statusName;
+                let text = statusName ? `${statusCode} - ${statusName}` : `${statusCode}`;
+                text = `${text}`.trim();
+                if (text.length > 34) {
+                    text = `${text.slice(0, 31)}...`;
+                }
+                return text;
+            }
+
+            if (typeof fallbackLabel === "string" && fallbackLabel.length) {
+                return fallbackLabel;
+            }
+
+            return "";
+        };
 
         ctx.save();
         ctx.fillStyle = color;
         ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-        ctx.textAlign = "center";
+        ctx.textAlign = align;
         ctx.textBaseline = "bottom";
 
         meta.data.forEach((element, index) => {
@@ -48,9 +74,29 @@ const statusValueLabelsPlugin = {
                 return;
             }
 
+            const detail = statusDetails[index];
+            const fallbackLabel = typeof labels[index] === "string" ? labels[index] : "";
+            const statusText = buildStatusText(detail, fallbackLabel);
+            const lines = [];
+
+            if (statusText) {
+                lines.push(`TT: ${statusText}`);
+            }
+
+            lines.push(`SL: ${value}`);
+
+            const totalHeight = (lines.length - 1) * lineHeight;
             const x = element.x;
-            const y = element.y - 6;
-            ctx.fillText(value, x, y);
+            const startY = element.y - offset;
+
+            lines.forEach((line, lineIndex) => {
+                if (!line) {
+                    return;
+                }
+
+                const lineY = startY - (totalHeight - (lineIndex * lineHeight));
+                ctx.fillText(line, x, lineY);
+            });
         });
 
         ctx.restore();
@@ -60,7 +106,6 @@ const statusValueLabelsPlugin = {
 document.addEventListener("DOMContentLoaded", () => {
     const statusChartCanvas = document.getElementById("status-chart");
     const statusChartEmpty = document.getElementById("status-chart-empty");
-    const statusChartInfo = document.getElementById("status-chart-info");
     const barkingChartCanvas = document.getElementById("barking-age-chart");
     const barkingChartEmpty = document.getElementById("barking-age-empty");
     const dashboardLastUpdated = document.getElementById("dashboard-last-updated");
@@ -90,70 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const clearStatusInfo = () => {
-        if (statusChartInfo) {
-            statusChartInfo.classList.add("d-none");
-            statusChartInfo.innerHTML = "";
-        }
-    };
-
-    const renderStatusInfo = (items) => {
-        if (!statusChartInfo) {
-            return;
-        }
-
-        if (!Array.isArray(items) || !items.length) {
-            clearStatusInfo();
-            return;
-        }
-
-        const total = items.reduce((sum, item) => sum + (item.count ?? 0), 0);
-        const rows = items.map((item, index) => {
-            const count = item.count ?? 0;
-            const percentage = total ? ((count / total) * 100).toFixed(1) : "0.0";
-            return `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${item.status}</td>
-                    <td>${item.statusName ?? STATUS_TEXT[item.status] ?? item.status}</td>
-                    <td>${count}</td>
-                    <td>${percentage}%</td>
-                </tr>
-            `;
-        }).join("");
-
-        statusChartInfo.innerHTML = `
-            <div class="table-responsive">
-                <table class="table table-sm table-striped table-bordered align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Trạng thái</th>
-                            <th>Mô tả</th>
-                            <th>Số lượng</th>
-                            <th>Tỷ lệ</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="3">Tổng</th>
-                            <th>${total}</th>
-                            <th>100%</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>`;
-
-        statusChartInfo.classList.remove("d-none");
-    };
-
     const showStatusLoading = () => {
         statusChartEmpty.textContent = "Đang tải dữ liệu...";
         statusChartEmpty.classList.remove("d-none", "alert-danger");
         statusChartEmpty.classList.add("alert-info");
         statusChartCanvas.classList.add("d-none");
-        clearStatusInfo();
     };
 
     const showBarkingLoading = () => {
@@ -170,7 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
             statusChartEmpty.classList.add("alert-danger");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
-            clearStatusInfo();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -178,13 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (!data.length) {
+        if (!Array.isArray(data) || !data.length) {
             statusChartEmpty.textContent = "Không có dữ liệu để hiển thị.";
             statusChartEmpty.classList.remove("alert-danger");
             statusChartEmpty.classList.add("alert-info");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
-            clearStatusInfo();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -199,6 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }));
         const labels = enrichedData.map(item => `${item.status} - ${item.statusName}`);
         const values = enrichedData.map(item => item.count);
+        const statusDetails = enrichedData.map(item => ({
+            status: item.status,
+            statusName: item.statusName
+        }));
 
         if (statusChartInstance) {
             statusChartInstance.destroy();
@@ -213,7 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     data: values,
                     backgroundColor: "rgba(54, 162, 235, 0.6)",
                     borderColor: "rgba(54, 162, 235, 1)",
-                    borderWidth: 1
+                    borderWidth: 1,
+                    statusDetails
                 }]
             },
             options: {
@@ -228,15 +217,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     tooltip: {
                         callbacks: {
-                            label: context => `${context.parsed.y ?? context.parsed} SN`
+                            title: (tooltipItems) => {
+                                if (!tooltipItems || !tooltipItems.length) {
+                                    return "";
+                                }
+
+                                const item = tooltipItems[0];
+                                const detail = statusDetails[item.dataIndex];
+                                if (detail && detail.statusName) {
+                                    return `${detail.status} - ${detail.statusName}`;
+                                }
+                                return item.label ?? "";
+                            },
+                            label: context => `Số lượng: ${context.parsed.y ?? context.parsed}`
                         }
                     },
                     statusValueLabels: {
                         display: true,
                         color: "#0d6efd",
                         font: {
-                            size: 12,
-                            weight: "600"
+                            size: 11,
+                            weight: "600",
+                            lineHeight: 14
                         }
                     }
                 },
@@ -273,7 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         statusChartCanvas.classList.remove("d-none");
         statusChartEmpty.classList.add("d-none");
-        renderStatusInfo(enrichedData);
     };
 
     const renderBarkingChart = (data, errorMessage) => {
