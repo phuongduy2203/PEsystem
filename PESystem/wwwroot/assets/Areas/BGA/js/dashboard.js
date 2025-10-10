@@ -13,6 +13,9 @@ const STATUS_TEXT = {
     18: "Replaced BGA ok"
 };
 
+const AXIS_TICK_COLOR = "#f8f9fa";
+const GRID_LINE_COLOR = "rgba(255, 255, 255, 0.2)";
+
 document.addEventListener("DOMContentLoaded", () => {
     const statusChartCanvas = document.getElementById("status-chart");
     const statusChartEmpty = document.getElementById("status-chart-empty");
@@ -109,7 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: AXIS_TICK_COLOR
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: context => `${context.parsed.y ?? context.parsed} SN`
@@ -121,14 +129,25 @@ document.addEventListener("DOMContentLoaded", () => {
                         ticks: {
                             autoSkip: false,
                             maxRotation: 45,
-                            minRotation: 0
+                            minRotation: 0,
+                            color: AXIS_TICK_COLOR
+                        },
+                        grid: {
+                            color: GRID_LINE_COLOR
                         }
                     },
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: "Số lượng"
+                            text: "Số lượng",
+                            color: AXIS_TICK_COLOR
+                        },
+                        ticks: {
+                            color: AXIS_TICK_COLOR
+                        },
+                        grid: {
+                            color: GRID_LINE_COLOR
                         }
                     }
                 }
@@ -232,15 +251,33 @@ document.addEventListener("DOMContentLoaded", () => {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: "Số giờ"
+                            text: "Số giờ",
+                            color: AXIS_TICK_COLOR
+                        },
+                        ticks: {
+                            color: AXIS_TICK_COLOR
+                        },
+                        grid: {
+                            color: GRID_LINE_COLOR
                         }
                     },
                     y: {
-                        ticks: { autoSkip: false }
+                        ticks: {
+                            autoSkip: false,
+                            color: AXIS_TICK_COLOR
+                        },
+                        grid: {
+                            color: GRID_LINE_COLOR
+                        }
                     }
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: AXIS_TICK_COLOR
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: context => tooltips[context.dataIndex]
