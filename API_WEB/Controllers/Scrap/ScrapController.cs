@@ -1364,7 +1364,7 @@ namespace API_WEB.Controllers.Scrap
                     .ToListAsync();
 
                 var rejectedSNs = new List<string>();
-                var updateSNs = new List<ScrapList>(); // Danh sách SN có ApplyTaskStatus = 3 để cập nhật (nếu cần)
+                var updateSNs = new List<ScrapList>(); // Danh sách SN hợp lệ để cập nhật trạng thái
                 var insertSNs = request.SNs.ToList(); // Danh sách SN để insert
 
                 foreach (var sn in existingSNs)
@@ -1384,7 +1384,19 @@ namespace API_WEB.Controllers.Scrap
                     }
                     else if (sn.ApplyTaskStatus == 4)
                     {
-                        rejectedSNs.Add($"{sn.SN} (SN đang chờ SPE approve BGA)");
+                        if (request.Approve == "4")
+                        {
+                            updateSNs.Add(sn);
+                            insertSNs.Remove(sn.SN);
+                        }
+                        else
+                        {
+                            rejectedSNs.Add($"{sn.SN} (SN đang chờ SPE approve BGA)");
+                        }
+                    }
+                    else if (sn.ApplyTaskStatus == 10)
+                    {
+                        rejectedSNs.Add($"{sn.SN} (SN đang trong quy trình Replace BGA)");
                     }
                     else if (sn.ApplyTaskStatus == 5)
                     {
@@ -1523,6 +1535,7 @@ namespace API_WEB.Controllers.Scrap
 
                 // Tạo biến ApproveTag
                 int approveTag = request.Approve == "2" ? 2 : 4;
+                var updateTime = DateTime.Now;
 
                 // Tạo danh sách ScrapList để lưu vào bảng (cho các SN mới)
                 var scrapListEntries = new List<ScrapList>();
@@ -1539,8 +1552,8 @@ namespace API_WEB.Controllers.Scrap
                         Remark = request.Remark,
                         CreatedBy = request.CreatedBy,
                         Desc = request.Description ?? "N/A",
-                        CreateTime = DateTime.Now,
-                        ApplyTime = null,
+                        CreateTime = updateTime,
+                        ApplyTime = updateTime,
                         ApproveScrapperson = "N/A",
                         ApplyTaskStatus = approveTag,
                         FindBoardStatus = "N/A",
@@ -1563,8 +1576,11 @@ namespace API_WEB.Controllers.Scrap
                     sn.Remark = request.Remark;
                     sn.CreatedBy = request.CreatedBy;
                     sn.Desc = request.Description ?? "N/A";
-                    sn.CreateTime = DateTime.Now;
-                    sn.ApplyTime = null;
+                    if (sn.CreateTime == default)
+                    {
+                        sn.CreateTime = updateTime;
+                    }
+                    sn.ApplyTime = updateTime;
                     sn.ApproveScrapperson = "N/A";
                     sn.ApplyTaskStatus = approveTag;
                     sn.FindBoardStatus = "N/A";
