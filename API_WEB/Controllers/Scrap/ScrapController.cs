@@ -46,26 +46,37 @@ namespace API_WEB.Controllers.Scrap
 
             var historyEntries = records
                 .Where(record => record != null)
-                .Select(record => new HistoryScrapList
+                .Select(record =>
                 {
-                    SN = record.SN,
-                    KanBanStatus = record.KanBanStatus,
-                    Sloc = record.Sloc,
-                    TaskNumber = record.TaskNumber,
-                    PO = record.PO,
-                    CreatedBy = record.CreatedBy,
-                    Cost = record.Cost,
-                    InternalTask = record.InternalTask,
-                    Desc = record.Desc,
-                    CreateTime = record.CreateTime,
-                    ApproveScrapperson = record.ApproveScrapperson,
-                    ApplyTaskStatus = record.ApplyTaskStatus,
-                    FindBoardStatus = record.FindBoardStatus,
-                    Remark = record.Remark,
-                    Purpose = record.Purpose,
-                    Category = record.Category,
-                    ApplyTime = record.ApplyTime,
-                    SpeApproveTime = record.SpeApproveTime
+                    var appliedAt = record.ApplyTime ?? record.CreateTime;
+                    if (appliedAt == default)
+                    {
+                        appliedAt = DateTime.Now;
+                    }
+
+                    var createdAt = record.CreateTime == default ? appliedAt : record.CreateTime;
+
+                    return new HistoryScrapList
+                    {
+                        SN = record.SN,
+                        KanBanStatus = record.KanBanStatus,
+                        Sloc = record.Sloc,
+                        TaskNumber = record.TaskNumber,
+                        PO = record.PO,
+                        CreatedBy = record.CreatedBy,
+                        Cost = record.Cost,
+                        InternalTask = record.InternalTask,
+                        Desc = record.Desc,
+                        CreateTime = createdAt,
+                        ApproveScrapperson = record.ApproveScrapperson,
+                        ApplyTaskStatus = record.ApplyTaskStatus,
+                        FindBoardStatus = record.FindBoardStatus,
+                        Remark = record.Remark,
+                        Purpose = record.Purpose,
+                        Category = record.Category,
+                        ApplyTime = appliedAt,
+                        SpeApproveTime = record.SpeApproveTime
+                    };
                 })
                 .ToList();
 
@@ -291,7 +302,7 @@ namespace API_WEB.Controllers.Scrap
                         ApplyTaskStatusValue = 0;
                         break;
                     case "4":
-                        ApplyTaskStatusValue = 3; // Sửa lỗi chính tả từ "Enginerr sample"
+                        ApplyTaskStatusValue = 10;
                         break;
                     default:
                         ApplyTaskStatusValue = 0; // Giá trị mặc định nếu Purpose không hợp lệ
@@ -304,6 +315,8 @@ namespace API_WEB.Controllers.Scrap
                 var unmatchedSNs = new List<string>();
 
                 // Cập nhật các bản ghi hợp lệ trong bảng ScrapList
+                var updateTime = DateTime.Now;
+
                 foreach (var scrapEntry in validSNs)
                 {
                     // Tìm dữ liệu từ API bên thứ ba tương ứng với SN
@@ -336,8 +349,11 @@ namespace API_WEB.Controllers.Scrap
                     //scrapEntry.Remark = null; // Để trống
                     scrapEntry.CreatedBy = request.CreatedBy;
                     scrapEntry.Desc = request.Description ?? ""; // Không cho phép NULL, dùng chuỗi rỗng nếu Description là null
-                    scrapEntry.CreateTime = DateTime.Now; // Thời gian hiện tại
-                    scrapEntry.ApplyTime = DateTime.Now; // Giá trị ban đầu cho ApplyTime
+                    if (scrapEntry.CreateTime == default)
+                    {
+                        scrapEntry.CreateTime = updateTime;
+                    }
+                    scrapEntry.ApplyTime = updateTime; // Thời gian thay đổi trạng thái
                     scrapEntry.ApproveScrapperson = request.ApproveScrapPerson;
                     scrapEntry.ApplyTaskStatus = ApplyTaskStatusValue;
                     scrapEntry.FindBoardStatus = "chưa tìm thấy"; // Mặc định
@@ -1348,7 +1364,7 @@ namespace API_WEB.Controllers.Scrap
                     .ToListAsync();
 
                 var rejectedSNs = new List<string>();
-                var updateSNs = new List<ScrapList>(); // Danh sách SN có ApplyTaskStatus = 3 để cập nhật (nếu cần)
+                var updateSNs = new List<ScrapList>(); // Danh sách SN hợp lệ để cập nhật trạng thái
                 var insertSNs = request.SNs.ToList(); // Danh sách SN để insert
 
                 foreach (var sn in existingSNs)
@@ -1368,7 +1384,19 @@ namespace API_WEB.Controllers.Scrap
                     }
                     else if (sn.ApplyTaskStatus == 4)
                     {
-                        rejectedSNs.Add($"{sn.SN} (SN đang chờ SPE approve BGA)");
+                        if (request.Approve == "4")
+                        {
+                            updateSNs.Add(sn);
+                            insertSNs.Remove(sn.SN);
+                        }
+                        else
+                        {
+                            rejectedSNs.Add($"{sn.SN} (SN đang chờ SPE approve BGA)");
+                        }
+                    }
+                    else if (sn.ApplyTaskStatus == 10)
+                    {
+                        rejectedSNs.Add($"{sn.SN} (SN đang trong quy trình Replace BGA)");
                     }
                     else if (sn.ApplyTaskStatus == 5)
                     {
@@ -1445,6 +1473,7 @@ namespace API_WEB.Controllers.Scrap
                 await bonepileConnection.OpenAsync();
 
                 var foundSNsInBonepile = new List<string>();
+                var foundSNsInKanban = new List<string>();
                 if (request.Remark == "BP-10" || request.Remark == "BP-20")
                 {
                     // Query bảng bonepile 2.0: SFISM4.NVIDIA_BONEPILE_SN_LOG
@@ -1459,6 +1488,24 @@ namespace API_WEB.Controllers.Scrap
                     {
                         foundSNsInBonepile.Add(bonepileReader.GetString(0));
                     }
+
+                    // Các SN BP-10/BP-20 không được tồn tại trong Z_KANBAN_TRACKING_T
+                    var kanbanParams = string.Join(",", request.SNs.Select((_, i) => $":k{i}"));
+                    using var kanbanCheckCommand = new OracleCommand($"SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T WHERE SERIAL_NUMBER IN ({kanbanParams})", bonepileConnection);
+                    for (int i = 0; i < request.SNs.Count; i++)
+                    {
+                        kanbanCheckCommand.Parameters.Add(new OracleParameter($"k{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
+                    }
+                    using var kanbanReader = await kanbanCheckCommand.ExecuteReaderAsync();
+                    while (await kanbanReader.ReadAsync())
+                    {
+                        foundSNsInKanban.Add(kanbanReader.GetString(0));
+                    }
+                }
+
+                if (foundSNsInKanban.Any())
+                {
+                    return BadRequest(new { message = $"Các SN sau tồn tại trong SFISM4.Z_KANBAN_TRACKING_T và không thể xử lý với Remark {request.Remark}: {string.Join(", ", foundSNsInKanban)}" });
                 }
 
                 // Xử lý theo Remark
@@ -1507,6 +1554,7 @@ namespace API_WEB.Controllers.Scrap
 
                 // Tạo biến ApproveTag
                 int approveTag = request.Approve == "2" ? 2 : 4;
+                var updateTime = DateTime.Now;
 
                 // Tạo danh sách ScrapList để lưu vào bảng (cho các SN mới)
                 var scrapListEntries = new List<ScrapList>();
@@ -1523,8 +1571,8 @@ namespace API_WEB.Controllers.Scrap
                         Remark = request.Remark,
                         CreatedBy = request.CreatedBy,
                         Desc = request.Description ?? "N/A",
-                        CreateTime = DateTime.Now,
-                        ApplyTime = null,
+                        CreateTime = updateTime,
+                        ApplyTime = updateTime,
                         ApproveScrapperson = "N/A",
                         ApplyTaskStatus = approveTag,
                         FindBoardStatus = "N/A",
@@ -1547,8 +1595,11 @@ namespace API_WEB.Controllers.Scrap
                     sn.Remark = request.Remark;
                     sn.CreatedBy = request.CreatedBy;
                     sn.Desc = request.Description ?? "N/A";
-                    sn.CreateTime = DateTime.Now;
-                    sn.ApplyTime = null;
+                    if (sn.CreateTime == default)
+                    {
+                        sn.CreateTime = updateTime;
+                    }
+                    sn.ApplyTime = updateTime;
                     sn.ApproveScrapperson = "N/A";
                     sn.ApplyTaskStatus = approveTag;
                     sn.FindBoardStatus = "N/A";
@@ -2002,6 +2053,7 @@ namespace API_WEB.Controllers.Scrap
 
                 // Tạo danh sách ScrapList để insert
                 var scrapListEntries = new List<ScrapList>();
+                var createdAt = DateTime.Now;
                 foreach (var sn in request.SNs)
                 {
                     var scrapEntry = new ScrapList
@@ -2015,8 +2067,8 @@ namespace API_WEB.Controllers.Scrap
                         Remark = null,
                         CreatedBy = request.CreatedBy,
                         Desc = request.Description ?? "N/A",
-                        CreateTime = DateTime.Now,
-                        ApplyTime = null,
+                        CreateTime = createdAt,
+                        ApplyTime = createdAt,
                         ApproveScrapperson = "N/A",
                         ApplyTaskStatus = 8, // Mặc định là 8
                         FindBoardStatus = "N/A",
