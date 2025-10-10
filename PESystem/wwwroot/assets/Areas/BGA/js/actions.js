@@ -9,7 +9,8 @@ const STATUS_MAP = {
     14: "Check VI BGA pad",
     15: "Replace BGA",
     16: "Xray",
-    17: "ICT, FT"
+    17: "ICT, FT",
+    18: "Replaced BGA ok"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -18,7 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const remarkInput = document.getElementById("remark-input");
     const updateButton = document.getElementById("update-status-btn");
     const updateFeedback = document.getElementById("update-status-feedback");
-    const xrayGroup = document.getElementById("xray-result-group");
+    const decisionGroup = document.getElementById("status-decision-group");
+    const decisionLabel = document.getElementById("status-decision-label");
     const previewBody = document.getElementById("status-preview-body");
     const previewFeedback = document.getElementById("status-preview-feedback");
     const previewTotal = document.getElementById("preview-total");
@@ -46,12 +48,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const toggleXrayGroup = () => {
-        if (parseInt(currentStatusSelect.value, 10) === 16) {
-            xrayGroup?.classList.remove("d-none");
+    const clearDecisionSelection = () => {
+        document.querySelectorAll('input[name="status-decision"]').forEach(radio => {
+            radio.checked = false;
+        });
+    };
+
+    const toggleDecisionGroup = () => {
+        const selectedStatus = parseInt(currentStatusSelect.value, 10);
+        if (selectedStatus === 16 || selectedStatus === 17) {
+            const labelText = selectedStatus === 16 ? "Kết quả Xray" : "Kết quả ICT/FT";
+            if (decisionLabel) {
+                decisionLabel.textContent = labelText;
+            }
+            decisionGroup?.classList.remove("d-none");
+            clearDecisionSelection();
         } else {
-            xrayGroup?.classList.add("d-none");
-            document.querySelectorAll('input[name="xray-result"]').forEach(radio => radio.checked = false);
+            decisionGroup?.classList.add("d-none");
+            clearDecisionSelection();
         }
     };
 
@@ -141,8 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     snInput.addEventListener("input", debouncePreview);
-    toggleXrayGroup();
-    currentStatusSelect.addEventListener("change", toggleXrayGroup);
+    toggleDecisionGroup();
+    currentStatusSelect.addEventListener("change", toggleDecisionGroup);
 
     updateButton.addEventListener("click", async () => {
         const snRaw = snInput.value;
@@ -175,13 +189,19 @@ document.addEventListener("DOMContentLoaded", () => {
             remark
         };
 
-        if (currentStatus === 16) {
-            const xraySelection = document.querySelector('input[name="xray-result"]:checked');
-            if (!xraySelection) {
-                showUpdateFeedback("Vui lòng chọn kết quả Xray.", false);
+        if (currentStatus === 16 || currentStatus === 17) {
+            const decisionSelection = document.querySelector('input[name="status-decision"]:checked');
+            if (!decisionSelection) {
+                const message = currentStatus === 16
+                    ? "Vui lòng chọn kết quả Xray."
+                    : "Vui lòng chọn kết quả ICT/FT.";
+                showUpdateFeedback(message, false);
                 return;
             }
-            payload.xrayResult = xraySelection.value;
+            payload.decision = decisionSelection.value;
+            if (currentStatus === 16) {
+                payload.xrayResult = decisionSelection.value;
+            }
         }
 
         try {
@@ -205,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showUpdateFeedback(data.message || "Cập nhật thành công.", true);
             remarkInput.value = "";
             snInput.value = "";
-            document.querySelectorAll('input[name="xray-result"]').forEach(radio => radio.checked = false);
+            clearDecisionSelection();
             resetPreview("Nhập SN để xem trạng thái hiện tại.");
         } catch (error) {
             showUpdateFeedback(error.message || "Đã xảy ra lỗi khi cập nhật.", false);

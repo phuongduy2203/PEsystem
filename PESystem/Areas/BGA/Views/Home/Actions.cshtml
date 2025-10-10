@@ -33,16 +33,17 @@
                         </select>
                     </div>
 
-                    <div id="xray-result-group" class="mb-3 d-none">
-                        <label class="form-label fw-semibold d-block">Kết quả Xray</label>
+                    <div id="status-decision-group" class="mb-3 d-none">
+                        <label id="status-decision-label" class="form-label fw-semibold d-block">Kết quả</label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="xray-result" id="xray-ok" value="OK">
-                            <label class="form-check-label" for="xray-ok">OK</label>
+                            <input class="form-check-input" type="radio" name="status-decision" id="status-decision-ok" value="OK">
+                            <label class="form-check-label" for="status-decision-ok">OK</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="xray-result" id="xray-ng" value="NG">
-                            <label class="form-check-label" for="xray-ng">NG</label>
+                            <input class="form-check-input" type="radio" name="status-decision" id="status-decision-ng" value="NG">
+                            <label class="form-check-label" for="status-decision-ng">NG</label>
                         </div>
+                        <div class="form-text">Chỉ áp dụng cho các bước cần xác nhận kết quả (Xray, ICT/FT).</div>
                     </div>
 
                     <div class="mb-3">

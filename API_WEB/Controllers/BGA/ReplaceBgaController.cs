@@ -14,7 +14,7 @@ namespace API_WEB.Controllers.BGA
     {
         private readonly CSDL_NE _sqlContext;
 
-        private static readonly Dictionary<int, int> _nextStatusMap = new()
+        private static readonly Dictionary<int, int> _linearNextStatusMap = new()
         {
             { 4, 10 },
             { 10, 11 },
@@ -22,9 +22,7 @@ namespace API_WEB.Controllers.BGA
             { 12, 13 },
             { 13, 14 },
             { 14, 15 },
-            { 15, 16 },
-            { 16, 17 }, // Will be overridden when processing x-ray result
-            { 17, 3 }
+            { 15, 16 }
         };
 
         private static readonly Dictionary<int, string> _statusDescriptions = new()
@@ -38,6 +36,7 @@ namespace API_WEB.Controllers.BGA
             { 15, "Replace BGA" },
             { 16, "Xray" },
             { 17, "ICT, FT" },
+            { 18, "Replaced BGA ok" },
             { 3, "Replaced BGA ok" }
         };
 
@@ -57,14 +56,14 @@ namespace API_WEB.Controllers.BGA
         {
             return _sqlContext.ScrapLists
                 .AsNoTracking()
-                .Where(s => s.Category != null && EF.Functions.Like(s.Category, "%BGA%"));
+                .Where(s => s.Category == null || EF.Functions.Like(s.Category, "%BGA%"));
         }
 
         private IQueryable<HistoryScrapList> QueryBgaHistory()
         {
             return _sqlContext.HistoryScrapLists
                 .AsNoTracking()
-                .Where(h => h.Category != null && EF.Functions.Like(h.Category, "%BGA%"));
+                .Where(h => h.Category == null || EF.Functions.Like(h.Category, "%BGA%"));
         }
 
         private static List<string> NormalizeSerialNumbers(IEnumerable<string>? serialNumbers)
@@ -159,24 +158,49 @@ namespace API_WEB.Controllers.BGA
         {
             var now = DateTime.Now;
 
-            var records = await QueryBgaScrapLists()
+            var records = await _sqlContext.ScrapLists
+                .AsNoTracking()
                 .Where(s => s.ApplyTaskStatus == 11)
-                .OrderByDescending(s => s.ApplyTime)
                 .Select(s => new
                 {
                     s.SN,
-                    s.ApplyTime
+                    s.ApplyTime,
+                    s.CreateTime,
+                    s.Category
                 })
                 .ToListAsync();
 
             var payload = records
-                .Select(record => new
+                .Where(record => string.IsNullOrWhiteSpace(record.Category) || IsBgaCategory(record.Category))
+                .Select(record =>
                 {
-                    sn = record.SN,
-                    applyTime = record.ApplyTime,
-                    hours = record.ApplyTime.HasValue
-                        ? Math.Round((now - record.ApplyTime.Value).TotalHours, 2)
-                        : (double?)null
+                    var referenceTime = record.ApplyTime ?? record.CreateTime;
+                    double? hours = null;
+                    double? minutes = null;
+
+                    if (referenceTime != default)
+                    {
+                        var elapsed = now - referenceTime;
+                        hours = Math.Round(elapsed.TotalHours, 2);
+                        minutes = Math.Round(elapsed.TotalMinutes, 0);
+                    }
+
+                    return new
+                    {
+                        sn = record.SN,
+                        applyTime = record.ApplyTime,
+                        hours,
+                        minutes,
+                        referenceTime = referenceTime == default ? (DateTime?)null : referenceTime
+                    };
+                })
+                .OrderByDescending(item => item.referenceTime ?? DateTime.MinValue)
+                .Select(item => new
+                {
+                    item.sn,
+                    item.applyTime,
+                    item.hours,
+                    item.minutes
                 })
                 .ToList();
 
@@ -221,10 +245,6 @@ namespace API_WEB.Controllers.BGA
                     continue;
                 }
 
-                var statusName = _statusDescriptions.ContainsKey(record.ApplyTaskStatus)
-                    ? _statusDescriptions[record.ApplyTaskStatus]
-                    : record.ApplyTaskStatus.ToString();
-
                 result.Add(new
                 {
                     sn = record.SN,
@@ -232,7 +252,7 @@ namespace API_WEB.Controllers.BGA
                     record.InternalTask,
                     record.Desc,
                     record.ApplyTaskStatus,
-                    statusName,
+                    statusName = GetStatusName(record.ApplyTaskStatus),
                     record.FindBoardStatus,
                     record.ApproveScrapperson,
                     record.ApplyTime,
@@ -298,7 +318,7 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không được để trống." });
             }
 
-            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 3)
+            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 3 || request.CurrentStatus == 18)
             {
                 return BadRequest(new { message = "Trạng thái hiện tại không hợp lệ." });
             }
@@ -330,7 +350,7 @@ namespace API_WEB.Controllers.BGA
                 .ToListAsync();
 
             var nonBgaRecords = scrapRecords
-                .Where(record => !IsBgaCategory(record?.Category))
+                .Where(record => !string.IsNullOrWhiteSpace(record?.Category) && !IsBgaCategory(record?.Category))
                 .Select(record => record?.SN)
                 .Where(sn => !string.IsNullOrEmpty(sn))
                 .Cast<string>()
@@ -369,17 +389,24 @@ namespace API_WEB.Controllers.BGA
             }
 
             int nextStatus;
-            if (request.CurrentStatus == 16)
+            if (request.CurrentStatus == 16 || request.CurrentStatus == 17)
             {
-                if (string.IsNullOrWhiteSpace(request.XrayResult))
+                var decision = string.IsNullOrWhiteSpace(request.Decision)
+                    ? request.XrayResult
+                    : request.Decision;
+
+                if (string.IsNullOrWhiteSpace(decision))
                 {
-                    return BadRequest(new { message = "Vui lòng chọn kết quả Xray (OK hoặc NG)." });
+                    var message = request.CurrentStatus == 16
+                        ? "Vui lòng chọn kết quả Xray (OK hoặc NG)."
+                        : "Vui lòng chọn kết quả ICT/FT (OK hoặc NG).";
+                    return BadRequest(new { message });
                 }
 
-                var normalizedResult = request.XrayResult.Trim().ToUpperInvariant();
+                var normalizedResult = decision.Trim().ToUpperInvariant();
                 if (normalizedResult == "OK")
                 {
-                    nextStatus = 17;
+                    nextStatus = request.CurrentStatus == 16 ? 17 : 18;
                 }
                 else if (normalizedResult == "NG")
                 {
@@ -387,22 +414,24 @@ namespace API_WEB.Controllers.BGA
                 }
                 else
                 {
-                    return BadRequest(new { message = "Giá trị XrayResult chỉ được phép là OK hoặc NG." });
+                    return BadRequest(new { message = "Giá trị kết quả chỉ được phép là OK hoặc NG." });
                 }
             }
             else
             {
-                if (!_nextStatusMap.TryGetValue(request.CurrentStatus, out nextStatus))
+                if (!_linearNextStatusMap.TryGetValue(request.CurrentStatus, out nextStatus))
                 {
                     return BadRequest(new { message = "Không xác định được trạng thái tiếp theo." });
                 }
             }
 
+            var updateTime = DateTime.Now;
+
             foreach (var record in scrapRecords)
             {
                 record.ApplyTaskStatus = nextStatus;
                 record.FindBoardStatus = request.Remark;
-                record.ApplyTime = DateTime.Now;
+                record.ApplyTime = updateTime;
             }
 
             await AddHistoryEntriesAsync(scrapRecords);
@@ -466,6 +495,7 @@ namespace API_WEB.Controllers.BGA
         public List<string> SNs { get; set; } = new();
         public int CurrentStatus { get; set; }
         public string? Remark { get; set; }
+        public string? Decision { get; set; }
         public string? XrayResult { get; set; }
     }
 

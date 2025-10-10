@@ -9,7 +9,8 @@ const STATUS_TEXT = {
     14: "Check VI BGA pad",
     15: "Replace BGA",
     16: "Xray",
-    17: "ICT, FT"
+    17: "ICT, FT",
+    18: "Replaced BGA ok"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -188,7 +189,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const tooltips = validData.map(item => {
             const applyTime = item.applyTime ? new Date(item.applyTime).toLocaleString() : "Không xác định";
             const hours = item.hours ?? 0;
-            return `SN: ${item.sn}\nApply time: ${applyTime}\nSố giờ: ${Math.round(hours * 10) / 10}`;
+            const minutes = typeof item.minutes === "number" && !Number.isNaN(item.minutes)
+                ? item.minutes
+                : Math.round(hours * 60);
+            return `SN: ${item.sn}\nApply time: ${applyTime}\nSố giờ: ${Math.round(hours * 10) / 10}\n~ ${minutes} phút`;
         });
 
         if (missingCount > 0) {

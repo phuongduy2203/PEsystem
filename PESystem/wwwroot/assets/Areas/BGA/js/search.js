@@ -9,7 +9,8 @@ const STATUS_LABELS = {
     14: "Check VI BGA pad",
     15: "Replace BGA",
     16: "Xray",
-    17: "ICT, FT"
+    17: "ICT, FT",
+    18: "Replaced BGA ok"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
