@@ -41,23 +41,21 @@ namespace API_WEB.ModelsDB
 
         public int? QTY2 { get; set; } // Cho phép NULL
 
-        [Required] // NOT NULL
-        [StringLength(50)]
-        public string TIME1 { get; set; }
+
+        public DateTime? BORROWED_TIME { get; set; }
 
         [Required] // NOT NULL
         [StringLength(50)]
-        public string OP1 { get; set; }
+        public string? OP1 { get; set; }
 
-        [StringLength(50)]
-        public string? TIME2 { get; set; } // Cho phép NULL
+        public DateTime? RETURN_TIME { get; set; } // Cho phép NULL
 
         [StringLength(50)]
         public string? OP2 { get; set; } // Cho phép NULL
 
         [Required] // NOT NULL
         [StringLength(50)]
-        public string ESD { get; set; }
+        public string? ESD { get; set; }
 
         [StringLength(50)]
         public string? LOCATION { get; set; } // Cho phép NULL

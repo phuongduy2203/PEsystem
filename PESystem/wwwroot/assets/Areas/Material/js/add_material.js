@@ -353,27 +353,58 @@
             try {
                 const { value: formValues } = await Swal.fire({
                     title: 'Nhập thông tin phát liệu',
-                    html:
-                       `<div>
-                            <label for="qtyOK">Số lượng OK:</label>
-                            <input type="number" id="swal-qtyOK" class="swal2-input" placeholder="Nhập số lượng OK" min="0" value="0">
-                        </div>
-                        <div>
-                            <label for="qtyNG">Số lượng NG:</label>
-                            <input type="number" id="swal-qtyNG" class="swal2-input" placeholder="Nhập số lượng NG" min="0" value="0">
-                        </div>
-                        <div>
-                            <label for="opBorrow">Người nhận:</label>
-                            <input type="text" id="swal-opBorrow" class="swal2-input" placeholder="Nhập mã người nhận">
-                        </div>`,
+                    html: `
+                    <style>
+                      .swal-form-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                        margin-bottom: 6px;
+                      }
+                      .swal-form-row label {
+                        flex: 0 0 120px;
+                        font-weight: 500;
+                        text-align: left;
+                      }
+                      .swal-form-row input {
+                        flex: 1;
+                      }
+                    </style>
+
+                    <div class="swal-form-row">
+                      <label for="qtyOK">Mã All Part:</label>
+                      <input type="text" id="swal-all-part" class="swal2-input" placeholder="Nhập Mã All Part...">
+                    </div>
+                    <div class="swal-form-row">
+                      <label for="qtyOK">Số lượng OK:</label>
+                      <input type="number" id="swal-qtyOK" class="swal2-input" placeholder="Nhập số lượng OK" min="0" value="0">
+                    </div>
+
+                    <div class="swal-form-row">
+                      <label for="qtyNG">Số lượng NG:</label>
+                      <input type="number" id="swal-qtyNG" class="swal2-input" placeholder="Nhập số lượng NG" min="0" value="0">
+                    </div>
+
+                    <div class="swal-form-row">
+                      <label for="opBorrow">Người nhận:</label>
+                      <input type="text" id="swal-opBorrow" class="swal2-input" placeholder="Nhập mã người nhận">
+                    </div>
+                    `,
+
                     focusConfirm: false,
                     preConfirm: () => {
                         const qtyOK = parseInt(document.getElementById('swal-qtyOK').value || 0);
                         const qtyNG = parseInt(document.getElementById('swal-qtyNG').value || 0);
                         const opBorrow = document.getElementById('swal-opBorrow').value.trim();
+                        const codeAllPart = document.getElementById('swal-all-part').value.trim();
 
                         if (!opBorrow) {
-                            Swal.showValidationMessage('Vui lòng nhập mã người nhận.');
+                            Swal.showValidationMessage('Vui lòng nhập mã người nhận!');
+                            return false;
+                        }
+                        if (!codeAllPart) {
+                            Swal.showValidationMessage('Vui lòng nhập mã All Part!');
                             return false;
                         }
                         return { qtyOK, qtyNG, opBorrow };
@@ -402,7 +433,8 @@
                             qtyOK: formValues.qtyOK,
                             qtyNG: formValues.qtyNG,
                             op: currentUser,
-                            oPborrow: formValues.opBorrow
+                            oPborrow: formValues.opBorrow,
+                            maAllPart: formValues.codeAllPart
                         })
                     });
 
@@ -432,16 +464,33 @@
             }
             try {
                 const { value: formValues } = await Swal.fire({
-                    title: 'Nhap thong tin xuat lieu',
+                    title: 'Nhập Thông Tin Xuất Liệu',
                     html: `
-                <div>
-                    <label for="qty">Số lượng:</label>
-                    <input type="number" id="swal-qty" class="swal2-input" placeholder="Nhập số lượng xuất" min="0" value="0">
-                </div>
-                <div>
-                    <label for="remark">Ghi chú (Remark):</label>
-                    <input type="text" id="swal-remark" class="swal2-input" placeholder="Nhập ghi chú">
-                </div>`,
+                    <style>
+                      .swal-form-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                        margin-bottom: 6px;
+                      }
+                      .swal-form-row label {
+                        flex: 0 0 120px;
+                        font-weight: 500;
+                        text-align: left;
+                      }
+                      .swal-form-row input {
+                        flex: 1;
+                      }
+                    </style>
+                    <div class="swal-form-row">
+                      <label for="qtyOK">Số lượng:</label>
+                      <input type="number" id="swal-qty" class="swal2-input" placeholder="Nhập số lượng" min="0" value="0">
+                    </div>
+                    <div class="swal-form-row">
+                      <label for="remark">Remark (Note):</label>
+                      <input type="text" id="swal-remark" class="swal2-input" placeholder="Nhập ...">
+                    </div>`,
                     focusConfirm: false,
                     preConfirm: () => {
                         const qty = parseInt(document.getElementById('swal-qty').value) || 0;
@@ -454,8 +503,8 @@
                         return { qty, remark };
                     },
                     showCancelButton: true,
-                    confirmButtonText: 'XAC NHAN',
-                    cancelButtonText: 'HUY',
+                    confirmButtonText: 'Xác nhận',
+                    cancelButtonText: 'Hủy',
                     showLoaderOnConfirm: true,
                     allowOutsideClick: () => !Swal.isLoading()
                 });

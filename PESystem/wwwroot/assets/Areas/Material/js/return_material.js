@@ -94,9 +94,9 @@
                     { data: 'type', defaultContent: '', render: createTooltipCell },
                     { data: 'qtY1', defaultContent: '', render: createTooltipCell },
                     { data: 'qtY2', defaultContent: '', render: createTooltipCell },
-                    { data: 'timE1', defaultContent: '', render: createTooltipCell },
+                    { data: 'borroweD_TIME', defaultContent: '', render: createTooltipCell },
                     { data: 'oP1', defaultContent: '', render: createTooltipCell },
-                    { data: 'timE2', defaultContent: '', render: createTooltipCell },
+                    { data: 'returN_TIME', defaultContent: '', render: createTooltipCell },
                     { data: 'oP2', defaultContent: '', render: createTooltipCell },
                     { data: 'esd', defaultContent: '', render: createTooltipCell },
                     { data: 'location', defaultContent: '', render: createTooltipCell },
@@ -158,10 +158,10 @@
             title: "Chọn Type",
             input: "select",
             inputOptions: {
-                "":"Tất cả(All)",
-                Input: "Nhập kho",
+                "": "Tất cả(All)",
+                Input: "Nhập Kho",
                 Borrow: "Phát Liệu",
-                DefectiveExport: "Xuất kho"
+                DefectiveExport: "Xuất Kho"
             },
             inputPlaceholder: "Chọn...",
             showCancelButton: true,
@@ -176,7 +176,7 @@
             }
         });
 
-        if (type!== undefined) {
+        if (type !== undefined) {
             Swal.fire(`Bạn đã chọn: ${type || 'Tất cả'}`);
             loadHistoryTable(type);
         }
@@ -218,26 +218,46 @@
                 showWarning("Vui lòng chọn ít nhất 1 hàng!");
                 return;
             }
-
             try {
                 const { value: formValues } = await Swal.fire({
                     title: 'Nhập thông tin thu liệu',
                     html: `
-                    <div>
-                        <label for="qtyOK">Số lượng OK:</label>
-                        <input type="number" id="swal-qtyOK" class="swal2-input" placeholder="Nhập số lượng OK" min="0" value="0">
+                    <style>
+                      .swal-form-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                        margin-bottom: 6px;
+                      }
+                      .swal-form-row label {
+                        flex: 0 0 120px;
+                        font-weight: 500;
+                        text-align: left;
+                      }
+                      .swal-form-row input {
+                        flex: 1;
+                      }
+                    </style>
+
+                    <div class="swal-form-row">
+                      <label for="qtyOK">Số lượng OK:</label>
+                      <input type="number" id="swal-qtyOK" class="swal2-input" placeholder="Nhập số lượng OK" min="0" value="0">
                     </div>
-                    <div>
-                        <label for="qtyNG">Số lượng NG:</label>
-                        <input type="number" id="swal-qtyNG" class="swal2-input" placeholder="Nhập số lượng NG" min="0" value="0">                        
+
+                    <div class="swal-form-row">
+                      <label for="qtyNG">Số lượng NG:</label>
+                      <input type="number" id="swal-qtyNG" class="swal2-input" placeholder="Nhập số lượng NG" min="0" value="0">
                     </div>
-                    <div>
-                        <label for="remark">Remark (Note):</label>
-                        <input type="text" id="swal-remark" class="swal2-input" placeholder="Nhập ...">
+
+                    <div class="swal-form-row">
+                      <label for="remark">Remark (Note):</label>
+                      <input type="text" id="swal-remark" class="swal2-input" placeholder="Nhập ...">
                     </div>
-                    <div>
-                        <label for="opReturn">Người trả(OP):</label>
-                        <input type="text" id="swal-opReturn" class="swal2-input" placeholder="Nhập mã người trả">
+
+                    <div class="swal-form-row">
+                      <label for="opReturn">Người trả (OP):</label>
+                      <input type="text" id="swal-opReturn" class="swal2-input" placeholder="Nhập mã người trả">
                     </div>
                     `,
                     focusConfirm: false,
@@ -251,7 +271,7 @@
                             Swal.showValidationMessage('Vui lòng nhập mã người trả.');
                             return false;
                         }
-                        return { qtyOK, qtyNG,remark, opReturn };
+                        return { qtyOK, qtyNG, remark, opReturn };
                     },
                     showCancelButton: true,
                     confirmButtonText: 'Xác nhận',
