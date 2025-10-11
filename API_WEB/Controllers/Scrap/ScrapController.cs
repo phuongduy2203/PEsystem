@@ -10,7 +10,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
-using Oracle.ManagedDataAccess.Client;
 
 namespace API_WEB.Controllers.Scrap
 {
@@ -1426,129 +1425,80 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = $"Các SN sau đã có trong scrap list: {string.Join(", ", rejectedSNs)}" });
                 }
 
-                // ket noi voi oracle data base
-                var oracleConnectionString = _oracleContext.Database.GetConnectionString();
+                var distinctRequestSns = request.SNs.Distinct().ToList();
 
-                using (var connection = new OracleConnection(oracleConnectionString))
+                if (request.Approve == "2")
                 {
-                    await connection.OpenAsync();
+                    var invalidSnRecords = await _oracleContext.OracleDataR117
+                        .AsNoTracking()
+                        .Where(r => distinctRequestSns.Contains(r.SERIAL_NUMBER)
+                                    && r.GROUP_NAME == "SMTLOADING"
+                                    && EF.Functions.Like(r.MO_NUMBER, "5%"))
+                        .Select(r => new { r.SERIAL_NUMBER, r.MO_NUMBER })
+                        .ToListAsync();
 
-                    // Chuẩn bị câu lệnh SQL
-                    string snList = string.Join(",", request.SNs.Select(sn => $"'{sn}'"));
-                    string sqlQuery = $@"
-                    SELECT SERIAL_NUMBER, MO_NUMBER 
-                    FROM SFISM4.R117 
-                    WHERE SERIAL_NUMBER IN ({snList}) 
-                    AND GROUP_NAME = 'SMTLOADING' 
-                    AND MO_NUMBER LIKE '5%'";
-
-                    // Chỉ kiểm tra điều kiện MO_NUMBER nếu Approve = 2 (những bản cần xin báo phế)
-                    if (request.Approve == "2")
+                    if (invalidSnRecords.Any())
                     {
+                        var invalidSnMessages = invalidSnRecords
+                            .Select(r => $"{r.SERIAL_NUMBER} (MO: {r.MO_NUMBER})")
+                            .ToList();
 
-                        using (var command = new OracleCommand(sqlQuery, connection))
-                        {
-                            using (var reader = await command.ExecuteReaderAsync())
-                            {
-                                var invalidSNs = new List<string>();
-                                while (await reader.ReadAsync())
-                                {
-                                    string serialNumber = reader.GetString(0);
-                                    string moNumber = reader.GetString(1);
-                                    invalidSNs.Add($"{serialNumber} (MO: {moNumber})");
-                                }
-
-                                if (invalidSNs.Any())
-                                {
-                                    return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSNs)}" });
-                                }
-                            }
-                        }
+                        return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSnMessages)}" });
                     }
                 }
 
+                var foundSnInKanban = new List<string>();
+                var foundSnInBonepile = new List<string>();
 
-                // Kiểm tra điều kiện Bonepile dựa trên Remark
-                using var bonepileConnection = new OracleConnection(oracleConnectionString);
-                await bonepileConnection.OpenAsync();
-
-                var foundSNsInBonepile = new List<string>();
-                var foundSNsInKanban = new List<string>();
                 if (request.Remark == "BP-10" || request.Remark == "BP-20")
                 {
-                    // Query bảng bonepile 2.0: SFISM4.NVIDIA_BONEPILE_SN_LOG
-                    var snParams = string.Join(",", request.SNs.Select((_, i) => $":p{i}"));
-                    using var bonepileCommand = new OracleCommand($"SELECT SERIAL_NUMBER FROM sfism4.nvidia_bonpile_sn_log WHERE SERIAL_NUMBER IN ({snParams})", bonepileConnection);
-                    for (int i = 0; i < request.SNs.Count; i++)
-                    {
-                        bonepileCommand.Parameters.Add(new OracleParameter($"p{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
-                    }
-                    using var bonepileReader = await bonepileCommand.ExecuteReaderAsync();
-                    while (await bonepileReader.ReadAsync())
-                    {
-                        foundSNsInBonepile.Add(bonepileReader.GetString(0));
-                    }
+                    foundSnInBonepile = await _oracleContext.NvidiaBonepileSnLogs
+                        .AsNoTracking()
+                        .Where(b => distinctRequestSns.Contains(b.SERIAL_NUMBER))
+                        .Select(b => b.SERIAL_NUMBER)
+                        .ToListAsync();
 
-                    // Các SN BP-10/BP-20 không được tồn tại trong Z_KANBAN_TRACKING_T
-                    var kanbanParams = string.Join(",", request.SNs.Select((_, i) => $":k{i}"));
-                    using var kanbanCheckCommand = new OracleCommand($"SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T WHERE SERIAL_NUMBER IN ({kanbanParams})", bonepileConnection);
-                    for (int i = 0; i < request.SNs.Count; i++)
-                    {
-                        kanbanCheckCommand.Parameters.Add(new OracleParameter($"k{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
-                    }
-                    using var kanbanReader = await kanbanCheckCommand.ExecuteReaderAsync();
-                    while (await kanbanReader.ReadAsync())
-                    {
-                        foundSNsInKanban.Add(kanbanReader.GetString(0));
-                    }
+                    foundSnInKanban = await _oracleContext.OracleDataZKanbanTracking
+                        .AsNoTracking()
+                        .Where(k => distinctRequestSns.Contains(k.SERIAL_NUMBER))
+                        .Select(k => k.SERIAL_NUMBER)
+                        .ToListAsync();
                 }
-
-                if (foundSNsInKanban.Any())
+                else if (request.Remark == "B36R")
                 {
-                    return BadRequest(new { message = $"Các SN sau tồn tại trong SFISM4.Z_KANBAN_TRACKING_T và không thể xử lý với Remark {request.Remark}: {string.Join(", ", foundSNsInKanban)}" });
+                    foundSnInKanban = await _oracleContext.OracleDataZKanbanTracking
+                        .AsNoTracking()
+                        .Where(k => distinctRequestSns.Contains(k.SERIAL_NUMBER))
+                        .Select(k => k.SERIAL_NUMBER)
+                        .ToListAsync();
                 }
 
-                // Xử lý theo Remark
+                if (foundSnInKanban.Any())
+                {
+                    return BadRequest(new { message = $"Các SN sau tồn tại trong SFISM4.Z_KANBAN_TRACKING_T và không thể xử lý với Remark {request.Remark}: {string.Join(", ", foundSnInKanban)}" });
+                }
+
                 if (request.Remark == "BP-10")
                 {
-                    // Pass nếu không tồn tại trong bonepile 2.0 (không có SN nào trong bảng)
-                    if (foundSNsInBonepile.Any())
+                    if (foundSnInBonepile.Any())
                     {
-                        return BadRequest(new { message = $"Các SN sau đã tồn tại trong bonepile 2.0 (SFISM4.NVIDIA_BONEPILE_SN_LOG): {string.Join(", ", foundSNsInBonepile)}" });
+                        return BadRequest(new { message = $"Các SN sau đã tồn tại trong bonepile 2.0 (SFISM4.NVIDIA_BONEPILE_SN_LOG): {string.Join(", ", foundSnInBonepile)}" });
                     }
                 }
                 else if (request.Remark == "BP-20")
                 {
-                    // Pass nếu tất cả SN đều có trong bảng, reject nếu thiếu bất kỳ SN nào
-                    var missingSNs = request.SNs.Except(foundSNsInBonepile).ToList();
-                    if (missingSNs.Any())
+                    var missingSnFromBonepile = distinctRequestSns.Except(foundSnInBonepile).ToList();
+                    if (missingSnFromBonepile.Any())
                     {
-                        return BadRequest(new { message = $"Các SN sau không tồn tại trong bảng Bonepile 2.0 (SFISM4.NVIDIA_BONEPILE_SN_LOG): {string.Join(", ", missingSNs)}" });
+                        return BadRequest(new { message = $"Các SN sau không tồn tại trong bảng Bonepile 2.0 (SFISM4.NVIDIA_BONEPILE_SN_LOG): {string.Join(", ", missingSnFromBonepile)}" });
                     }
                 }
                 else if (request.Remark == "B36R")
                 {
-                    // Query bảng Z_KANBAN_TRACKING_T
-                    using var kanbanConnection = new OracleConnection(oracleConnectionString);
-                    await kanbanConnection.OpenAsync();
-                    var kanbanFoundSNs = new List<string>();
-                    var snParams = string.Join(",", request.SNs.Select((_, i) => $":p{i}"));
-                    using var kanbanCommand = new OracleCommand($"SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T WHERE SERIAL_NUMBER IN ({snParams})", kanbanConnection);
-                    for (int i = 0; i < request.SNs.Count; i++)
+                    var missingSnFromKanban = distinctRequestSns.Except(foundSnInKanban).ToList();
+                    if (missingSnFromKanban.Any())
                     {
-                        kanbanCommand.Parameters.Add(new OracleParameter($"p{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
-                    }
-                    using var kanbanReader = await kanbanCommand.ExecuteReaderAsync();
-                    while (await kanbanReader.ReadAsync())
-                    {
-                        kanbanFoundSNs.Add(kanbanReader.GetString(0));
-                    }
-
-                    // Pass nếu tất cả SN đều có trong Z_KANBAN_TRACKING_T
-                    var missingKanbanSNs = request.SNs.Except(kanbanFoundSNs).ToList();
-                    if (missingKanbanSNs.Any())
-                    {
-                        return BadRequest(new { message = $"Các SN sau không tồn tại trong SFISM4.Z_KANBAN_TRACKING_T: {string.Join(", ", missingKanbanSNs)}" });
+                        return BadRequest(new { message = $"Các SN sau không tồn tại trong SFISM4.Z_KANBAN_TRACKING_T: {string.Join(", ", missingSnFromKanban)}" });
                     }
                 }
 

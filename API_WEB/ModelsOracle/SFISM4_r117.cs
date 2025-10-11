@@ -6,5 +6,6 @@
         public string GROUP_NAME { get; set; }
         public string ERROR_FLAG { get; set; }
         public string WIP_GROUP { get; set; }
+        public string MO_NUMBER { get; set; }
     }
 }
