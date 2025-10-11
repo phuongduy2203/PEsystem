@@ -20,6 +20,7 @@ namespace API_WEB.ModelsOracle
         public DbSet<SYSTEM_AUTO_BLOCK> OracleSystemBlock { get; set; } = null!;
         public DbSet<SYSTEM_HOLD> OracleSystemHold { get; set; } = null!;
         public DbSet<SFISM4_Z_KANBAN_TRACKING_T> OracleDataZKanbanTracking { get; set; } = null!;
+        public DbSet<NvidiaBonepileSnLog> NvidiaBonepileSnLogs { get; set; } = null!;
         public DbSet<FailedSerialNumber> FailedSerialNumbers { get; set; } // lấy dữ liệu fail hass-bi
         public DbSet<GetAteSn> GetAteSnRecords { get; set; } // DbSet cho bảng
         public DbSet<ErrorCode> ErrorCodes { get; set; } // DbSet cho bảng
@@ -133,7 +134,8 @@ namespace API_WEB.ModelsOracle
                 entity.Property(e => e.GROUP_NAME).HasColumnName("GROUP_NAME");
                 entity.Property(e => e.ERROR_FLAG).HasColumnName("ERROR_FLAG");
                 entity.Property(e => e.WIP_GROUP).HasColumnName("WIP_GROUP");
-            });            
+                entity.Property(e => e.MO_NUMBER).HasColumnName("MO_NUMBER");
+            });
             modelBuilder.Entity<SFISM4_r108>(entity =>
             {
                 entity.ToTable("R108", schema: "SFISM4");
@@ -147,6 +149,12 @@ namespace API_WEB.ModelsOracle
                 entity.HasKey(e => e.SERIAL_NUMBER);
                 entity.Property(e => e.SERIAL_NUMBER).HasColumnName("SERIAL_NUMBER");
                 entity.Property(e => e.WIP_GROUP).HasColumnName("WIP_GROUP");
+            });
+            modelBuilder.Entity<NvidiaBonepileSnLog>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToTable("NVIDIA_BONPILE_SN_LOG", schema: "SFISM4");
+                entity.Property(e => e.SERIAL_NUMBER).HasColumnName("SERIAL_NUMBER");
             });
             modelBuilder.Entity<SYSTEM_HOLD>(entity =>
             {
