@@ -396,7 +396,7 @@ namespace API_WEB.Controllers.Scrap
 
                 // Tìm số thứ tự lớn nhất của InternalTask trong ngày hiện tại
                 var existingTasks = await _sqlContext.ScrapLists
-                    .Where(s => s.CreateTime.Date == currentDate.Date && s.InternalTask.StartsWith(prefix))
+                    .Where(s => s.InternalTask != null && s.InternalTask.StartsWith(prefix))
                     .Select(s => s.InternalTask)
                     .ToListAsync();
 
@@ -425,11 +425,10 @@ namespace API_WEB.Controllers.Scrap
                 string newInternalTask = $"{prefix}{newSequenceNumber}"; // Ví dụ: Task-20250327-5
 
                 // Kiểm tra xem InternalTask đã tồn tại chưa (đề phòng trường hợp bất ngờ)
-                bool isUnique = !await _sqlContext.ScrapLists.AnyAsync(s => s.InternalTask == newInternalTask);
-                if (!isUnique)
+                while (await _sqlContext.ScrapLists.AnyAsync(s => s.InternalTask == newInternalTask))
                 {
-                    // Nếu không unique (rất hiếm xảy ra), thử lại
-                    return await GenerateUniqueInternalTask();
+                    newSequenceNumber++;
+                    newInternalTask = $"{prefix}{newSequenceNumber}";
                 }
 
                 return newInternalTask;
