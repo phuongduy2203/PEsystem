@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using API_WEB.ModelsDB;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +13,6 @@ namespace API_WEB.Controllers.BGA
     public class ReplaceBgaController : ControllerBase
     {
         private readonly CSDL_NE _sqlContext;
-        private readonly HttpClient _repairScrapClient;
 
         private static readonly Dictionary<int, int> _linearNextStatusMap = new()
         {
@@ -25,7 +21,8 @@ namespace API_WEB.Controllers.BGA
             { 12, 13 },
             { 13, 14 },
             { 14, 15 },
-            { 15, 16 }
+            { 15, 16 },
+            { 18, 19 }
         };
 
         private static readonly Dictionary<int, string> _statusDescriptions = new()
@@ -39,8 +36,9 @@ namespace API_WEB.Controllers.BGA
             { 15, "Replace BGA" },
             { 16, "Xray" },
             { 17, "ICT, FT" },
-            { 18, "Replaced BGA ok" },
-            { 3, "Replaced BGA ok" }
+            { 18, "Waiting return PD line ok" },
+            { 19, "Return PD line ok" },
+            { 3, "Return PD line ok" }
         };
 
         private static string GetStatusName(int status)
@@ -53,14 +51,6 @@ namespace API_WEB.Controllers.BGA
         public ReplaceBgaController(CSDL_NE sqlContext)
         {
             _sqlContext = sqlContext;
-
-            var handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-            };
-
-            _repairScrapClient = new HttpClient(handler);
-            _repairScrapClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         private IQueryable<ScrapList> QueryBgaScrapLists()
@@ -461,7 +451,7 @@ namespace API_WEB.Controllers.BGA
                 return BadRequest(new { message = "Danh sách SN không được để trống." });
             }
 
-            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 3 || request.CurrentStatus == 4 || request.CurrentStatus == 18)
+            if (!_statusDescriptions.ContainsKey(request.CurrentStatus) || request.CurrentStatus == 4 || request.CurrentStatus == 19)
             {
                 return BadRequest(new { message = "Trạng thái hiện tại không hợp lệ." });
             }
@@ -583,32 +573,6 @@ namespace API_WEB.Controllers.BGA
 
             await AddHistoryEntriesAsync(scrapRecords);
             await _sqlContext.SaveChangesAsync();
-
-            var repairScrapPayload = new
-            {
-                type = "update",
-                sn_list = string.Join(",", scrapRecords.Select(record => record.SN)),
-                type_bp = (string?)null,
-                status = nextStatus.ToString(),
-                task = (string?)null
-            };
-
-            try
-            {
-                var response = await _repairScrapClient.PostAsJsonAsync(
-                    "https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap",
-                    repairScrapPayload);
-
-                response.EnsureSuccessStatusCode();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "Cập nhật ScrapList thành công nhưng đồng bộ repair_scrap thất bại.",
-                    error = ex.Message
-                });
-            }
 
             var nextStatusName = _statusDescriptions.ContainsKey(nextStatus)
                 ? _statusDescriptions[nextStatus]

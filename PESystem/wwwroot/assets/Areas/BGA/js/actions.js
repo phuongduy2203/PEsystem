@@ -1,6 +1,6 @@
 const API_BASE_URL = "http://10.220.130.119:9090/api/bga-replace";
 const STATUS_MAP = {
-    3: "Replaced BGA ok",
+    3: "Return PD line ok",
     4: "Waiting approve replace BGA",
     10: "Check in barking",
     11: "Check out barking",
@@ -10,7 +10,8 @@ const STATUS_MAP = {
     15: "Replace BGA",
     16: "Xray",
     17: "ICT, FT",
-    18: "Replaced BGA ok"
+    18: "Waiting return PD line ok",
+    19: "Return PD line ok"
 };
 
 document.addEventListener("DOMContentLoaded", () => {

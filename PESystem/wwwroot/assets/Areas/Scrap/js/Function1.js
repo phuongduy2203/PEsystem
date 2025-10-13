@@ -301,27 +301,39 @@ document.addEventListener("DOMContentLoaded", function () {
             const inputSnResult = await inputSnResponse.json();
 
             if (inputSnResponse.ok) {
-                // Gọi API repair_scrap sau khi input-sn-wait-spe-approve thành công
-                const repairScrapData = {
-                    type: "insert",
-                    sn_list: snListString,
-                    type_bp: typeBonepile,
-                    status: typeApprove,
-                    task: null
-                };
+                let shouldCallRepairScrap = typeApprove !== "4";
+                let repairScrapSucceeded = true;
+                let repairScrapResult = "";
 
-                const repairScrapResponse = await fetch("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(repairScrapData)
-                });
+                if (shouldCallRepairScrap) {
+                    // Gọi API repair_scrap sau khi input-sn-wait-spe-approve thành công
+                    const repairScrapData = {
+                        type: "insert",
+                        sn_list: snListString,
+                        type_bp: typeBonepile,
+                        status: typeApprove,
+                        task: null
+                    };
 
-                const repairScrapResult = await repairScrapResponse.text();
+                    const repairScrapResponse = await fetch("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(repairScrapData)
+                    });
 
-                if (repairScrapResponse.ok && repairScrapResult === "\"OK\"") {
-                    // Gọi API UpdateScrap sau khi repair_scrap thành công
+                    repairScrapResult = await repairScrapResponse.text();
+                    repairScrapSucceeded = repairScrapResponse.ok && repairScrapResult === "\"OK\"";
+                    if (!repairScrapSucceeded) {
+                        console.warn("repair_scrap API failed:", repairScrapResult);
+                    }
+                } else {
+                    repairScrapResult = "Bỏ qua gọi repair_scrap cho trạng thái Waiting SPE Approve BGA";
+                }
+
+                if (repairScrapSucceeded) {
+                    // Gọi API UpdateScrap sau khi repair_scrap thành công hoặc được bỏ qua
                     const updateResponse = await fetch("http://10.220.130.119:9090/api/Product/UpdateScrap", {
                         method: "PUT",
                         headers: {
@@ -336,22 +348,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     const updateResult = await updateResponse.json();
 
                     if (updateResponse.ok) {
-                        // Nếu cả ba API đều thành công
+                        // Nếu cả hai bước đều thành công hoặc được bỏ qua theo yêu cầu
                         resultDiv.innerHTML = `
                         <div class="alert alert-success">
-                            <strong>Thành công:</strong> ${inputSnResult.message}
+                            <strong>Thành công:</strong> ${inputSnResult.message}${shouldCallRepairScrap ? "" : "<br><small class=\"text-muted\">" + repairScrapResult + "</small>"}
                         </div>
                     `;
                     } else {
                         console.warn("UpdateProduct API failed:", updateResult.message);
                         resultDiv.innerHTML = `
                         <div class="alert alert-warning">
-                            <strong>Cảnh báo:</strong> Lưu SN và repair_scrap thành công nhưng cập nhật sản phẩm trong kho thất bại: ${updateResult.message}
+                            <strong>Cảnh báo:</strong> Lưu SN thành công nhưng cập nhật sản phẩm trong kho thất bại: ${updateResult.message}
                         </div>
                     `;
                     }
                 } else {
-                    console.warn("repair_scrap API failed:", repairScrapResult);
                     resultDiv.innerHTML = `
                     <div class="alert alert-warning">
                         <strong>Cảnh báo:</strong> Gọi API repair_scrap thất bại: ${repairScrapResult}
