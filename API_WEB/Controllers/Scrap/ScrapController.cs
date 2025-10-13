@@ -439,15 +439,15 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 3
+        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 10
         [HttpGet("get-scrap-status-zero")]
         public async Task<IActionResult> GetScrapStatusZero()
         {
             try
             {
-                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 3
+                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 10
                 var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 3) // Lọc theo ApplyTaskStatus = 0 hoặc 3
+                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 10) // Lọc theo ApplyTaskStatus = 0 hoặc 10
                     .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
                     .Select(g => new
                     {
