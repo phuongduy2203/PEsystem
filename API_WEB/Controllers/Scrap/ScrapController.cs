@@ -1785,25 +1785,6 @@ namespace API_WEB.Controllers.Scrap
                 await AddHistoryEntriesAsync(updatedRecords);
                 await _sqlContext.SaveChangesAsync();
 
-                // Chuẩn bị dữ liệu để gọi API bên thứ ba
-                var snListString = string.Join(",", matchedSNs);
-                var status = updatedRecords[0].ApplyTaskStatus.ToString(); // Lấy trạng thái cuối cùng sau khi cập nhật
-
-                var externalRequest = new
-                {
-                    type = "update",
-                    sn_list = snListString,
-                    type_bp = (string)null,
-                    status = status,
-                    task = (string)null
-                };
-
-                // Gọi API bên thứ ba
-                var externalResponse = await _httpClient.PostAsJsonAsync("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", externalRequest);
-                externalResponse.EnsureSuccessStatusCode();
-                var externalResult = await externalResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"External API response: {externalResult}");
-
                 string message = "Cập nhật trạng thái ApplyTaskStatus thành công.";
                 return Ok(new { message });
             }
@@ -1899,115 +1880,9 @@ namespace API_WEB.Controllers.Scrap
 
         // API: Đồng bộ dữ liệu từ ScrapList với SFISM4.R_REPAIR_SCRAP
         [HttpPost("sync-scrap")]
-        public async Task<IActionResult> SyncScrap()
+        public IActionResult SyncScrap()
         {
-            try
-            {
-                // Lấy tất cả dữ liệu từ bảng ScrapList với cột InternalTask chứa ký tự "Task"
-                var scrapLists = await _sqlContext.ScrapLists
-                    .Where(s => s.InternalTask != null && s.InternalTask.Contains("Task"))
-                    .ToListAsync();
-
-                if (!scrapLists.Any())
-                {
-                    return Ok(new { message = "Không có dữ liệu nào trong ScrapList cần đồng bộ." });
-                }
-
-                // Tạo HttpClient riêng cho URL này (vì BaseAddress khác với _httpClient hiện tại)
-                var syncHttpClient = new HttpClient(new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true // Bỏ qua kiểm tra chứng chỉ (test)
-                });
-                syncHttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var baseUrl = "https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap";
-
-                int successCount = 0;
-                int failureCount = 0;
-                var failureDetails = new List<string>();
-
-                foreach (var entry in scrapLists)
-                {
-
-                    // Tạo request cho insert
-                    var insertRequest = new
-                    {
-                        type = "insert",
-                        sn_list = entry.SN,
-                        type_bp = entry.Remark,
-                        status = entry.ApplyTaskStatus.ToString(),
-                        task = entry.TaskNumber
-                    };
-
-                    HttpResponseMessage response;
-                    string content;
-
-                    try
-                    {
-                        // Gọi API với type "insert"
-                        response = await syncHttpClient.PostAsJsonAsync(baseUrl, insertRequest);
-                        content = await response.Content.ReadAsStringAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        failureDetails.Add($"SN {entry.SN}: Lỗi khi gọi API insert - {ex.Message}");
-                        failureCount++;
-                        continue;
-                    }
-
-                    if (response.IsSuccessStatusCode && content.Trim() == "\"OK\"")
-                    {
-                        successCount++;
-                        continue; // Thành công, tiếp tục SN tiếp theo
-                    }
-
-                    // Nếu không thành công, thử update
-                    var updateRequest = new
-                    {
-                        type = "update",
-                        sn_list = entry.SN,
-                        type_bp = entry.Remark,
-                        status = entry.ApplyTaskStatus.ToString(),
-                        task = entry.TaskNumber
-                    };
-
-                    try
-                    {
-                        // Gọi API với type "update"
-                        response = await syncHttpClient.PostAsJsonAsync(baseUrl, updateRequest);
-                        content = await response.Content.ReadAsStringAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        failureDetails.Add($"SN {entry.SN}: Lỗi khi gọi API update - {ex.Message}");
-                        failureCount++;
-                        continue;
-                    }
-
-                    if (response.IsSuccessStatusCode && content.Trim() == "\"OK\"")
-                    {
-                        successCount++;
-                    }
-                    else
-                    {
-                        failureDetails.Add($"SN {entry.SN}: Đồng bộ thất bại - Response: {content}, StatusCode: {response.StatusCode}");
-                        failureCount++;
-                    }
-                }
-
-                // Trả về kết quả đồng bộ
-                return Ok(new
-                {
-                    message = "Quá trình đồng bộ hoàn tất.",
-                    successCount,
-                    failureCount,
-                    failureDetails
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đồng bộ dữ liệu.", error = ex.Message });
-            }
+            return Ok(new { message = "Chức năng đồng bộ repair_scrap đã được vô hiệu hóa." });
         }
 
         // API: Process can not repair - Insert vào bảng ScrapList

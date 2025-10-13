@@ -10,7 +10,8 @@ const STATUS_TEXT = {
     15: "Replace BGA",
     16: "Xray",
     17: "ICT, FT",
-    18: "Replaced BGA ok"
+    18: "Waiting return PD line",
+    19: "Return PD line ok"
 };
 
 const AXIS_TICK_COLOR = "#f8f9fa";
@@ -106,8 +107,13 @@ const statusValueLabelsPlugin = {
 document.addEventListener("DOMContentLoaded", () => {
     const statusChartCanvas = document.getElementById("status-chart");
     const statusChartEmpty = document.getElementById("status-chart-empty");
+    const statusSummaryInfo = document.getElementById("status-summary-info");
+    const statusDownloadSelect = document.getElementById("status-download-select");
+    const statusDownloadButton = document.getElementById("status-download-btn");
     const barkingChartCanvas = document.getElementById("barking-age-chart");
     const barkingChartEmpty = document.getElementById("barking-age-empty");
+    const barkingSummary = document.getElementById("barking-summary");
+    const barkingDownloadButton = document.getElementById("barking-download-btn");
     const dashboardLastUpdated = document.getElementById("dashboard-last-updated");
     const refreshDashboardButton = document.getElementById("refresh-dashboard-btn");
 
@@ -117,6 +123,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let statusChartInstance = null;
     let barkingChartInstance = null;
+    let latestStatusData = [];
+    let latestBarkingData = [];
 
     const setButtonLoading = (button, isLoading, loadingText) => {
         if (!button) {
@@ -150,12 +158,23 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderStatusChart = (data, errorMessage) => {
+        const resetStatusMeta = () => {
+            if (statusSummaryInfo) {
+                statusSummaryInfo.innerHTML = "";
+            }
+            if (statusDownloadSelect) {
+                statusDownloadSelect.innerHTML = '<option value="" disabled selected>Chọn trạng thái</option>';
+            }
+            latestStatusData = [];
+        };
+
         if (errorMessage) {
             statusChartEmpty.textContent = errorMessage;
             statusChartEmpty.classList.remove("alert-info");
             statusChartEmpty.classList.add("alert-danger");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
+            resetStatusMeta();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -169,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
             statusChartEmpty.classList.add("alert-info");
             statusChartEmpty.classList.remove("d-none");
             statusChartCanvas.classList.add("d-none");
+            resetStatusMeta();
             if (statusChartInstance) {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
@@ -181,6 +201,41 @@ document.addEventListener("DOMContentLoaded", () => {
             count: item.count ?? 0,
             statusName: item.statusName ?? STATUS_TEXT[item.status] ?? item.status
         }));
+
+        latestStatusData = enrichedData;
+
+        if (statusDownloadSelect) {
+            const currentValue = statusDownloadSelect.value;
+            statusDownloadSelect.innerHTML = '<option value="" disabled selected>Chọn trạng thái</option>';
+            enrichedData.forEach(item => {
+                const option = document.createElement("option");
+                option.value = item.status;
+                option.textContent = `${item.status} - ${item.statusName}`;
+                statusDownloadSelect.appendChild(option);
+            });
+            if (currentValue && enrichedData.some(item => `${item.status}` === currentValue)) {
+                statusDownloadSelect.value = currentValue;
+            }
+        }
+
+        if (statusSummaryInfo) {
+            const total = enrichedData.reduce((sum, item) => sum + (item.count ?? 0), 0);
+            const top = enrichedData.reduce((prev, current) => {
+                if (!prev) {
+                    return current;
+                }
+                return (current.count ?? 0) > (prev.count ?? 0) ? current : prev;
+            }, null);
+            const topLabel = top ? `${top.status} - ${top.statusName}` : "Không xác định";
+            const topCount = top?.count ?? 0;
+            statusSummaryInfo.innerHTML = `
+                <div class="alert alert-secondary mb-0 small">
+                    <div><strong>Tổng số SN:</strong> ${total}</div>
+                    <div><strong>Trạng thái nhiều SN nhất:</strong> ${topLabel} (${topCount})</div>
+                </div>
+            `;
+        }
+
         const labels = enrichedData.map(item => `${item.status} - ${item.statusName}`);
         const values = enrichedData.map(item => item.count);
         const statusDetails = enrichedData.map(item => ({
@@ -278,12 +333,20 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderBarkingChart = (data, errorMessage) => {
+        const resetBarkingMeta = () => {
+            if (barkingSummary) {
+                barkingSummary.innerHTML = "";
+            }
+            latestBarkingData = [];
+        };
+
         if (errorMessage) {
             barkingChartEmpty.textContent = errorMessage;
             barkingChartEmpty.classList.remove("alert-info");
             barkingChartEmpty.classList.add("alert-danger");
             barkingChartEmpty.classList.remove("d-none");
             barkingChartCanvas.classList.add("d-none");
+            resetBarkingMeta();
             if (barkingChartInstance) {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
@@ -297,6 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
             barkingChartEmpty.classList.add("alert-info");
             barkingChartEmpty.classList.remove("d-none");
             barkingChartCanvas.classList.add("d-none");
+            resetBarkingMeta();
             if (barkingChartInstance) {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
@@ -315,6 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
             barkingChartEmpty.classList.add("alert-info");
             barkingChartEmpty.classList.remove("d-none");
             barkingChartCanvas.classList.add("d-none");
+            resetBarkingMeta();
             if (barkingChartInstance) {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
@@ -347,6 +412,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (barkingChartInstance) {
             barkingChartInstance.destroy();
+        }
+
+        latestBarkingData = validData;
+        if (barkingSummary) {
+            const total = validData.length;
+            const totalHours = validData.reduce((sum, item) => sum + (item.hours ?? 0), 0);
+            const averageHours = total ? Math.round((totalHours / total) * 10) / 10 : 0;
+            const longest = validData.reduce((prev, current) => (prev.hours ?? 0) > (current.hours ?? 0) ? prev : current, validData[0]);
+            const shortest = validData.reduce((prev, current) => (prev.hours ?? Infinity) < (current.hours ?? Infinity) ? prev : current, validData[0]);
+            const formatRecord = (record) => {
+                if (!record) {
+                    return "Không xác định";
+                }
+                const hours = record.hours ?? 0;
+                const minutes = typeof record.minutes === "number" && !Number.isNaN(record.minutes)
+                    ? record.minutes
+                    : Math.round(hours * 60);
+                return `${record.sn ?? "N/A"} (~${hours} giờ | ${minutes} phút)`;
+            };
+            const missingInfo = missingCount > 0 ? `<div><strong>Thiếu Apply Time:</strong> ${missingCount} SN</div>` : "";
+            barkingSummary.innerHTML = `
+                <div class="alert alert-secondary mb-0 small">
+                    <div><strong>Tổng số SN:</strong> ${total}</div>
+                    <div><strong>Thời gian trung bình:</strong> ${averageHours} giờ</div>
+                    <div><strong>Chờ lâu nhất:</strong> ${formatRecord(longest)}</div>
+                    <div><strong>Chờ ít nhất:</strong> ${formatRecord(shortest)}</div>
+                    ${missingInfo}
+                </div>
+            `;
         }
 
         barkingChartInstance = new Chart(barkingChartCanvas, {
@@ -447,6 +541,93 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
         }
     };
+
+    const downloadCsv = (rows, headers, filename) => {
+        if (!Array.isArray(rows) || !rows.length) {
+            return;
+        }
+
+        const csv = [headers.join(",")]
+            .concat(rows.map(row => headers.map(key => {
+                const value = row[key] ?? "";
+                const escaped = `${value}`.replace(/"/g, '""');
+                return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
+            }).join(",")))
+            .join("\n");
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    statusDownloadButton?.addEventListener("click", async () => {
+        if (!statusDownloadSelect) {
+            return;
+        }
+
+        const selectedValue = statusDownloadSelect.value;
+        if (!selectedValue) {
+            alert("Vui lòng chọn trạng thái cần tải.");
+            return;
+        }
+
+        const statusNumber = parseInt(selectedValue, 10);
+        if (Number.isNaN(statusNumber)) {
+            alert("Trạng thái không hợp lệ.");
+            return;
+        }
+
+        try {
+            statusDownloadButton.disabled = true;
+            statusDownloadButton.dataset.originalText = statusDownloadButton.dataset.originalText || statusDownloadButton.innerHTML;
+            statusDownloadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tải...';
+
+            const response = await fetch(`${API_BASE_URL}/status?status=${statusNumber}`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Không thể tải danh sách SN.");
+            }
+
+            const rows = data.map(item => ({
+                SN: item.sn ?? item.SN ?? "",
+                Status: `${item.status ?? item.applyTaskStatus ?? statusNumber}`,
+                StatusName: item.statusName ?? STATUS_TEXT[item.status ?? item.applyTaskStatus] ?? "",
+                InternalTask: item.internalTask ?? "",
+                ApplyTime: item.applyTime ?? ""
+            }));
+
+            downloadCsv(rows, ["SN", "Status", "StatusName", "InternalTask", "ApplyTime"], `bga-status-${statusNumber}.csv`);
+        } catch (error) {
+            alert(error.message || "Không thể tải dữ liệu.");
+        } finally {
+            if (statusDownloadButton.dataset.originalText) {
+                statusDownloadButton.innerHTML = statusDownloadButton.dataset.originalText;
+            }
+            statusDownloadButton.disabled = false;
+        }
+    });
+
+    barkingDownloadButton?.addEventListener("click", () => {
+        if (!latestBarkingData.length) {
+            alert("Không có dữ liệu để tải.");
+            return;
+        }
+
+        const rows = latestBarkingData.map(item => ({
+            SN: item.sn ?? "",
+            ApplyTime: item.applyTime ?? "",
+            Hours: item.hours ?? "",
+            Minutes: item.minutes ?? ""
+        }));
+
+        downloadCsv(rows, ["SN", "ApplyTime", "Hours", "Minutes"], "bga-barking-status-11.csv");
+    });
 
     const refreshDashboard = async () => {
         showStatusLoading();

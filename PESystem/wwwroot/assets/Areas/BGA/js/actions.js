@@ -10,7 +10,8 @@ const STATUS_MAP = {
     15: "Replace BGA",
     16: "Xray",
     17: "ICT, FT",
-    18: "Replaced BGA ok"
+    18: "Waiting return PD line",
+    19: "Return PD line ok"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -168,6 +169,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateFeedback.classList.add("d-none");
         updateFeedback.textContent = "";
         updateFeedback.classList.remove("alert-success", "alert-danger");
+
+        if (currentStatus === 19) {
+            showUpdateFeedback("Trạng thái 19 - Return PD line ok là trạng thái cuối cùng và không cần xác nhận thêm.", false);
+            return;
+        }
 
         const sns = parseSNs(snRaw);
         if (!sns.length) {
