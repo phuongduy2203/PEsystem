@@ -1,6 +1,6 @@
 const API_BASE_URL = "http://10.220.130.119:9090/api/bga-replace";
 const STATUS_TEXT = {
-    3: "Replaced BGA ok",
+    3: "Return PD line ok",
     4: "Waiting approve replace BGA",
     10: "Check in barking",
     11: "Check out barking",
@@ -10,7 +10,8 @@ const STATUS_TEXT = {
     15: "Replace BGA",
     16: "Xray",
     17: "ICT, FT",
-    18: "Replaced BGA ok"
+    18: "Waiting return PD line ok",
+    19: "Return PD line ok"
 };
 
 const AXIS_TICK_COLOR = "#f8f9fa";
@@ -110,6 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const barkingChartEmpty = document.getElementById("barking-age-empty");
     const dashboardLastUpdated = document.getElementById("dashboard-last-updated");
     const refreshDashboardButton = document.getElementById("refresh-dashboard-btn");
+    const statusDownloadSelect = document.getElementById("status-download-select");
+    const statusDownloadButton = document.getElementById("status-download-btn");
+    const statusDownloadFeedback = document.getElementById("status-download-feedback");
+    const barkingDownloadButton = document.getElementById("barking-download-btn");
+    const barkingDetailsContainer = document.getElementById("barking-details");
 
     if (!statusChartCanvas || !statusChartEmpty || !barkingChartCanvas || !barkingChartEmpty) {
         return;
@@ -117,6 +123,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let statusChartInstance = null;
     let barkingChartInstance = null;
+    let statusSummaryState = [];
+    let barkingAgingState = [];
 
     const setButtonLoading = (button, isLoading, loadingText) => {
         if (!button) {
@@ -135,11 +143,220 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const setStatusDownloadFeedback = (message, type = "muted") => {
+        if (!statusDownloadFeedback) {
+            return;
+        }
+
+        const classMap = {
+            muted: "text-muted",
+            success: "text-success",
+            warning: "text-warning",
+            danger: "text-danger"
+        };
+
+        statusDownloadFeedback.textContent = message || "";
+        statusDownloadFeedback.className = "mt-3 small";
+        if (message && classMap[type]) {
+            statusDownloadFeedback.classList.add(classMap[type]);
+        }
+    };
+
+    const toCsvValue = (value) => {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        const stringValue = String(value).replace(/"/g, '""');
+        if (/[",\n]/.test(stringValue)) {
+            return `"${stringValue}"`;
+        }
+        return stringValue;
+    };
+
+    const buildCsvContent = (rows, columns) => {
+        const headerLine = columns.map(column => toCsvValue(column.label)).join(",");
+        const dataLines = rows.map(row => columns.map(column => {
+            const rawValue = typeof column.value === "function"
+                ? column.value(row)
+                : row[column.key];
+            return toCsvValue(rawValue);
+        }).join(","));
+
+        return [headerLine, ...dataLines].join("\n");
+    };
+
+    const triggerCsvDownload = (csvContent, filename) => {
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const populateStatusDownloadOptions = (data) => {
+        if (!statusDownloadSelect || !statusDownloadButton) {
+            return;
+        }
+
+        statusDownloadSelect.innerHTML = "";
+        const placeholderOption = document.createElement("option");
+        placeholderOption.value = "";
+        placeholderOption.textContent = "Chọn trạng thái để tải danh sách SN";
+        statusDownloadSelect.appendChild(placeholderOption);
+        statusDownloadSelect.value = "";
+
+        if (!Array.isArray(data) || !data.length) {
+            statusDownloadSelect.disabled = true;
+            statusDownloadButton.disabled = true;
+            return;
+        }
+
+        data.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.status;
+            option.textContent = `${item.status} - ${item.statusName} (${item.count ?? 0} SN)`;
+            statusDownloadSelect.appendChild(option);
+        });
+
+        statusDownloadSelect.disabled = false;
+        statusDownloadButton.disabled = true;
+    };
+
+    const renderBarkingDetails = (data) => {
+        if (!barkingDetailsContainer) {
+            return;
+        }
+
+        if (!Array.isArray(data) || !data.length) {
+            barkingDetailsContainer.innerHTML = `<p class="text-muted small mb-0">Không có dữ liệu chi tiết để hiển thị.</p>`;
+            return;
+        }
+
+        const topItems = data.slice(0, Math.min(10, data.length));
+        const rows = topItems.map(item => {
+            const applyTimeText = item.applyTime
+                ? new Date(item.applyTime).toLocaleString()
+                : "Không xác định";
+            const hoursText = typeof item.hours === "number"
+                ? `${Math.round(item.hours * 10) / 10} giờ`
+                : "N/A";
+            const minutesText = typeof item.minutes === "number"
+                ? `${Math.round(item.minutes)} phút`
+                : "-";
+            return `
+                <tr>
+                    <td>${item.sn ?? ""}</td>
+                    <td>${applyTimeText}</td>
+                    <td>${hoursText}</td>
+                    <td>${minutesText}</td>
+                </tr>
+            `;
+        }).join("");
+
+        barkingDetailsContainer.innerHTML = `
+            <div class="table-responsive small">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>SN</th>
+                            <th>Apply time</th>
+                            <th>Số giờ</th>
+                            <th>Số phút (xấp xỉ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <p class="text-muted fst-italic mt-2 mb-0">Hiển thị tối đa 10 SN mới nhất ở trạng thái 11.</p>
+            </div>
+        `;
+    };
+
+    const downloadStatusDetails = async () => {
+        if (!statusDownloadSelect || !statusDownloadButton) {
+            return;
+        }
+
+        const selectedValue = statusDownloadSelect.value;
+        if (!selectedValue) {
+            setStatusDownloadFeedback("Vui lòng chọn trạng thái trước khi tải.", "warning");
+            return;
+        }
+
+        const status = parseInt(selectedValue, 10);
+        if (Number.isNaN(status)) {
+            setStatusDownloadFeedback("Giá trị trạng thái không hợp lệ.", "danger");
+            return;
+        }
+
+        setStatusDownloadFeedback("Đang chuẩn bị dữ liệu...", "muted");
+        setButtonLoading(statusDownloadButton, true, "Đang tải...");
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/status?status=${status}`);
+            const data = await response.json();
+            if (!response.ok) {
+                const message = data?.message || "Không thể tải danh sách SN.";
+                throw new Error(message);
+            }
+
+            if (!Array.isArray(data) || !data.length) {
+                setStatusDownloadFeedback("Không có dữ liệu SN cho trạng thái đã chọn.", "warning");
+                return;
+            }
+
+            const csvColumns = [
+                { label: "SN", key: "sn" },
+                { label: "Internal Task", key: "internalTask" },
+                { label: "Task Number", key: "taskNumber" },
+                { label: "Description", key: "desc" },
+                { label: "Status", key: "applyTaskStatus" },
+                { label: "Status name", value: row => row.statusName ?? STATUS_TEXT[row.applyTaskStatus] ?? "" },
+                { label: "Remark", key: "findBoardStatus" },
+                { label: "Approve person", key: "approveScrapperson" },
+                { label: "Apply time", value: row => row.applyTime ? new Date(row.applyTime).toLocaleString() : "" }
+            ];
+
+            const csvContent = buildCsvContent(data, csvColumns);
+            const statusName = STATUS_TEXT[status] || statusSummaryState.find(item => item.status === status)?.statusName || status;
+            const filename = `replace-bga-status-${status}-${(statusName || "").toString().replace(/[^a-z0-9-_]+/gi, "-")}.csv`;
+            triggerCsvDownload(csvContent, filename);
+            setStatusDownloadFeedback("Đã tải xuống danh sách SN thành công.", "success");
+        } catch (error) {
+            setStatusDownloadFeedback(error.message || "Đã xảy ra lỗi khi tải dữ liệu.", "danger");
+        } finally {
+            setButtonLoading(statusDownloadButton, false);
+        }
+    };
+
+    const downloadBarkingDetails = () => {
+        if (!Array.isArray(barkingAgingState) || !barkingAgingState.length) {
+            return;
+        }
+
+        const csvColumns = [
+            { label: "SN", key: "sn" },
+            { label: "Apply time", value: row => row.applyTime ? new Date(row.applyTime).toLocaleString() : "" },
+            { label: "Giờ kể từ Barking", key: "hours" },
+            { label: "Phút kể từ Barking", key: "minutes" }
+        ];
+
+        const csvContent = buildCsvContent(barkingAgingState, csvColumns);
+        const filename = `replace-bga-barking-aging-${new Date().toISOString().slice(0, 10)}.csv`;
+        triggerCsvDownload(csvContent, filename);
+    };
+
     const showStatusLoading = () => {
         statusChartEmpty.textContent = "Đang tải dữ liệu...";
         statusChartEmpty.classList.remove("d-none", "alert-danger");
         statusChartEmpty.classList.add("alert-info");
         statusChartCanvas.classList.add("d-none");
+        statusSummaryState = [];
+        populateStatusDownloadOptions([]);
+        setStatusDownloadFeedback("");
     };
 
     const showBarkingLoading = () => {
@@ -147,6 +364,11 @@ document.addEventListener("DOMContentLoaded", () => {
         barkingChartEmpty.classList.remove("d-none", "alert-danger");
         barkingChartEmpty.classList.add("alert-info");
         barkingChartCanvas.classList.add("d-none");
+        barkingAgingState = [];
+        renderBarkingDetails([]);
+        if (barkingDownloadButton) {
+            barkingDownloadButton.disabled = true;
+        }
     };
 
     const renderStatusChart = (data, errorMessage) => {
@@ -160,6 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
             }
+            statusSummaryState = [];
+            populateStatusDownloadOptions([]);
             return;
         }
 
@@ -173,6 +397,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 statusChartInstance.destroy();
                 statusChartInstance = null;
             }
+            statusSummaryState = [];
+            populateStatusDownloadOptions([]);
             return;
         }
 
@@ -181,6 +407,9 @@ document.addEventListener("DOMContentLoaded", () => {
             count: item.count ?? 0,
             statusName: item.statusName ?? STATUS_TEXT[item.status] ?? item.status
         }));
+        statusSummaryState = enrichedData;
+        populateStatusDownloadOptions(enrichedData);
+        setStatusDownloadFeedback("");
         const labels = enrichedData.map(item => `${item.status} - ${item.statusName}`);
         const values = enrichedData.map(item => item.count);
         const statusDetails = enrichedData.map(item => ({
@@ -288,6 +517,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
             }
+            barkingAgingState = [];
+            renderBarkingDetails([]);
+            if (barkingDownloadButton) {
+                barkingDownloadButton.disabled = true;
+            }
             return;
         }
 
@@ -300,6 +534,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (barkingChartInstance) {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
+            }
+            barkingAgingState = [];
+            renderBarkingDetails([]);
+            if (barkingDownloadButton) {
+                barkingDownloadButton.disabled = true;
             }
             return;
         }
@@ -318,6 +557,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (barkingChartInstance) {
                 barkingChartInstance.destroy();
                 barkingChartInstance = null;
+            }
+            barkingAgingState = [];
+            renderBarkingDetails([]);
+            if (barkingDownloadButton) {
+                barkingDownloadButton.disabled = true;
             }
             return;
         }
@@ -343,6 +587,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!barkingChartEmpty.classList.contains("alert-info")) {
                 barkingChartEmpty.classList.add("alert-info");
             }
+        }
+
+        barkingAgingState = validData;
+        renderBarkingDetails(validData);
+        if (barkingDownloadButton) {
+            barkingDownloadButton.disabled = false;
         }
 
         if (barkingChartInstance) {
@@ -462,6 +712,21 @@ document.addEventListener("DOMContentLoaded", () => {
             dashboardLastUpdated.textContent = `${new Date().toLocaleString()}${suffix}`;
         }
     };
+
+    statusDownloadSelect?.addEventListener("change", () => {
+        if (statusDownloadButton) {
+            statusDownloadButton.disabled = !statusDownloadSelect.value;
+        }
+        setStatusDownloadFeedback("");
+    });
+
+    statusDownloadButton?.addEventListener("click", async () => {
+        await downloadStatusDetails();
+    });
+
+    barkingDownloadButton?.addEventListener("click", () => {
+        downloadBarkingDetails();
+    });
 
     refreshDashboardButton?.addEventListener("click", async () => {
         setButtonLoading(refreshDashboardButton, true, "Đang tải...");
