@@ -2217,6 +2217,7 @@ namespace API_WEB.Controllers.Repositories
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
         [HttpGet("GetSearchList")]
         public async Task<IActionResult> GetSearchList()
         {

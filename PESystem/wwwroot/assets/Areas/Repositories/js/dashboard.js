@@ -949,7 +949,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 warehouseTable.clear();
 
                 if (data.success) {
-                    const borrowedSerials = [];
                     const noPositionSerials = [];
 
                     data.data.forEach(d => {
@@ -960,12 +959,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             d.productLine || '',
                             d.modelName || ''
                         ]);
-                        if (d.borrowStatus === 'Borrowed') borrowedSerials.push(d.serialNumber);
-                        if (!d.location) noPositionSerials.push(d.serialNumber);
+
+                        if (!d.location || d.location === 'Borrowed') noPositionSerials.push(d.serialNumber);
                     });
 
                     warehouseNotFound = data.notFoundSerialNumbers || [];
-                    warehouseListItems = [...warehouseNotFound, ...borrowedSerials, ...noPositionSerials];
+                    warehouseListItems = [...warehouseNotFound, ...noPositionSerials];
 
                     if (warehouseNotFound.length) {
                         warehouseNotFound.forEach(sn => {

@@ -72,6 +72,23 @@ namespace API_WEB.Controllers.MaterialSystem
             public string Type { get; set; }
         }
 
+        public class BorrowingSummaryResponse
+        {
+            public string Task { get; set; }
+            public string MaLieu { get; set; }
+            public string NhaCungUng { get; set; }
+            public string DateCode { get; set; }
+            public string LotCode { get; set; }
+            public string Op1 { get; set; }
+            public string Op2 { get; set; }
+            public int Qty1 { get; set; }
+            public int Qty2 { get; set; }
+            public int Qty3 { get; set; }
+            public int Qty4 { get; set; }
+            public DateTime? ReturnTime { get; set; }
+            public DateTime? BorrowedTime { get; set; }
+        }
+
         public class SearchByMaLieuRequest
         {
             [Required] public string MaLieu { get; set; }
@@ -389,18 +406,29 @@ namespace API_WEB.Controllers.MaterialSystem
             {
                 var query = _sqlContext.HistoryMaterials.AsQueryable();
 
-                // Lọc theo TYPE nếu có
-                if (!string.IsNullOrEmpty(type?.Type))
+                //If type is "Borrow" -> exclude MA_LIEU starting with RES, CAP, 1, or 032
+                if (!string.IsNullOrEmpty(type?.Type) && type.Type.Equals("Borrow", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(t =>
+                        t.TYPE == "Borrow" &&
+                        !(t.MA_LIEU != null && (
+                            t.MA_LIEU.ToUpper().StartsWith("RES") ||
+                            t.MA_LIEU.ToUpper().StartsWith("CAP") ||
+                            t.MA_LIEU.StartsWith("1") ||
+                            t.MA_LIEU.StartsWith("032")
+                        ))
+                    );
+                }
+                // 3️⃣ If another type is specified -> filter by that type
+                else if (!string.IsNullOrEmpty(type?.Type))
+                {
                     query = query.Where(t => t.TYPE == type.Type);
-
-                // ✅ Loại bỏ những MA_LIEU bắt đầu bằng 'RES', 'CAP', '1', '032'
-                query = query.Where(t =>
-                    !(t.MA_LIEU.StartsWith("RES") ||
-                      t.MA_LIEU.StartsWith("CAP") ||
-                      t.MA_LIEU.StartsWith("1") ||
-                      t.MA_LIEU.StartsWith("032"))
-                );
-
+                }
+                // If type is "" -> return all records
+                else
+                {
+                    // No filtering
+                }
                 var transactions = await query.ToListAsync();
                 return Ok(transactions);
             }
@@ -413,6 +441,48 @@ namespace API_WEB.Controllers.MaterialSystem
                 });
             }
         }
+
+        [HttpGet("GetBorrowingSummary")]
+        public async Task<IActionResult> GetBorrowingSummary()
+        {
+            try
+            {
+                var borrowingSummary = await _sqlContext.HistoryMaterials
+                    .AsNoTracking()
+                    .Where(hm => hm.TYPE == "Borrow")
+                    .Where(hm => (hm.QTY1 ?? 0) + (hm.QTY2 ?? 0) > (hm.QTY3 ?? 0) + (hm.QTY4 ?? 0))
+                    // ❗ Loại bỏ MA_LIEU bắt đầu bằng RES / CAP / 1 / 032
+                    .Where(hm => !(EF.Functions.Like(hm.MA_LIEU!, "RES%")
+                                || EF.Functions.Like(hm.MA_LIEU!, "CAP%")
+                                || EF.Functions.Like(hm.MA_LIEU!, "1%")
+                                || EF.Functions.Like(hm.MA_LIEU!, "032%")))
+                    .Select(hm => new BorrowingSummaryResponse
+                    {
+                        Task = hm.TASK,
+                        MaLieu = hm.MA_LIEU,
+                        NhaCungUng = hm.NHA_CUNG_UNG,
+                        DateCode = hm.DATE_CODE,
+                        LotCode = hm.LOT_CODE,
+                        Op1 = hm.OP1 ?? string.Empty,
+                        Op2 = hm.OP2 ?? string.Empty,
+                        Qty1 = hm.QTY1 ?? 0,
+                        Qty2 = hm.QTY2 ?? 0,
+                        Qty3 = hm.QTY3 ?? 0,
+                        Qty4 = hm.QTY4 ?? 0,
+                        ReturnTime = hm.RETURN_TIME,   // đảm bảo map đúng kiểu DateTime? trong entity
+                        BorrowedTime = hm.BORROWED_TIME
+                    })
+                    .OrderByDescending(x => x.BorrowedTime)
+                    .ToListAsync();
+
+                return Ok(borrowingSummary);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving borrowing summary.", error = ex.Message });
+            }
+        }
+
 
 
         [HttpPost("SearchByMaLieu")]

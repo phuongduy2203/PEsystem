@@ -262,13 +262,13 @@
                         { data: 'nhA_CUNG_UNG', defaultContent: '', render: createTooltipCell },
                         { data: 'datE_CODE', defaultContent: '', render: createTooltipCell },
                         { data: 'loT_CODE', defaultContent: '', render: createTooltipCell },
-                        { data: 'sO_LUONG_OK', defaultContent: '', render: createTooltipCell },
-                        { data: 'sO_LUONG_NG', defaultContent: '', render: createTooltipCell },
+                        { data: 'sO_LUONG_OK', defaultContent: 0, render: createTooltipCell },
+                        { data: 'sO_LUONG_NG', defaultContent: 0, render: createTooltipCell },
                         { data: 'location', defaultContent: '', render: createTooltipCell },
                         { data: 'esd', defaultContent: '', render: createTooltipCell },
-                        { data: 'chO_MUON', defaultContent: '', render: createTooltipCell },
-                        { data: 'dA_BAO_PHE', defaultContent: '', render: createTooltipCell },
-                        { data: 'tonG_LINH', defaultContent: '', render: createTooltipCell },
+                        { data: 'chO_MUON', defaultContent: 0, render: createTooltipCell },
+                        { data: 'dA_BAO_PHE', defaultContent: 0, render: createTooltipCell },
+                        { data: 'tonG_LINH', defaultContent: 0, render: createTooltipCell },
                         { data: 'remark', defaultContent: '', render: createTooltipCell }
                     ],
                     pageLength: 10,
@@ -276,7 +276,7 @@
                     language: {
                         url: '/lib/datatable/i18n/vi.json' // Sử dụng file local
                     },
-                    order: [[5, 'desc']], // Sắp xếp mặc định theo cột thứ 2 (maAll) thay vì cột đầu tiên
+                    order: [[5, 'desc']],
                     drawCallback: function () {
                         attachTooltipEvents();
                     }
@@ -407,7 +407,7 @@
                             Swal.showValidationMessage('Vui lòng nhập mã All Part!');
                             return false;
                         }
-                        return { qtyOK, qtyNG, opBorrow };
+                        return { qtyOK, qtyNG, opBorrow, codeAllPart };
                     },
                     showCancelButton: true,
                     confirmButtonText: 'Xác nhận',

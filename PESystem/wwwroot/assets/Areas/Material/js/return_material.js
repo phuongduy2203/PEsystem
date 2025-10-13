@@ -1,9 +1,7 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
     const exportExcelBtn = document.getElementById('export-excel-btn');
-    const returnBtn = document.getElementById('return-btn');
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const selectTypeBtn = document.getElementById('select-type-btn');
-    const currentUser = document.getElementById('entryPerson').value;
     let selectedRows = [];
     let table = null;
 
@@ -92,8 +90,8 @@
                     { data: 'datE_CODE', defaultContent: '', render: createTooltipCell },
                     { data: 'loT_CODE', defaultContent: '', render: createTooltipCell },
                     { data: 'type', defaultContent: '', render: createTooltipCell },
-                    { data: 'qtY1', defaultContent: '', render: createTooltipCell },
-                    { data: 'qtY2', defaultContent: '', render: createTooltipCell },
+                    { data: 'qtY1', defaultContent: 0, render: createTooltipCell },
+                    { data: 'qtY2', defaultContent: 0, render: createTooltipCell },
                     { data: 'borroweD_TIME', defaultContent: '', render: createTooltipCell },
                     { data: 'oP1', defaultContent: '', render: createTooltipCell },
                     { data: 'returN_TIME', defaultContent: '', render: createTooltipCell },
@@ -101,14 +99,11 @@
                     { data: 'esd', defaultContent: '', render: createTooltipCell },
                     { data: 'location', defaultContent: '', render: createTooltipCell },
                     { data: 'remark', defaultContent: '', render: createTooltipCell },
-                    { data: 'qtY3', defaultContent: '', render: createTooltipCell },
-                    { data: 'qtY4', defaultContent: '', render: createTooltipCell }
+                    { data: 'qtY3', defaultContent: 0, render: createTooltipCell },
+                    { data: 'qtY4', defaultContent: 0, render: createTooltipCell }
                 ],
-                pageLength: 10,
+                pageLength: 15,
                 responsive: true,
-                language: {
-                    url: '/lib/datatable/i18n/vi.json'
-                },
                 order: [[10, 'desc']], // Sắp xếp mặc định theo cột TIME (giảm dần)
                 drawCallback: function () {
                     attachTooltipEvents();
@@ -152,39 +147,49 @@
         }
     }
 
+    let lastSelectedType = ""; // nhớ type đã chọn gần nhất
+
     // Hàm hiển thị dropdown chọn type
     async function showTypeSelection() {
         const { value: type } = await Swal.fire({
             title: "Chọn Type",
             input: "select",
             inputOptions: {
-                "": "Tất cả(All)",
+                "": "Tất cả",
                 Input: "Nhập Kho",
                 Borrow: "Phát Liệu",
                 DefectiveExport: "Xuất Kho"
             },
+            inputValue: lastSelectedType, // giữ lựa chọn trước đó
             inputPlaceholder: "Chọn...",
             showCancelButton: true,
+            confirmButtonText: "OK",
+            cancelButtonText: "Hủy",
             inputValidator: (value) => {
-                return new Promise((resolve) => {
-                    if (value !== undefined) {
-                        resolve();
-                    } else {
-                        resolve("Vui lòng chọn Type!");
-                    }
-                });
+                if (value === undefined) {
+                    return "Vui lòng chọn Type!";
+                }
+                return null;
             }
         });
 
         if (type !== undefined) {
-            Swal.fire(`Bạn đã chọn: ${type || 'Tất cả'}`);
+            lastSelectedType = type; // lưu lại type đã chọn
+            Swal.fire({
+                icon: "success",
+                title: "Đã chọn",
+                text: `Bạn đã chọn: ${type || "Tất cả"}`,
+                timer: 1000,
+                showConfirmButton: false
+            });
             loadHistoryTable(type);
         }
     }
 
+
     // Sự kiện cho nút "Chọn Loại Giao Dịch"
     if (selectTypeBtn) {
-        selectTypeBtn.addEventListener('click', function () {
+        selectTypeBtn.addEventListener('click', async function () {
             showTypeSelection();
         });
     }
@@ -211,112 +216,6 @@
         });
     }
 
-    // Sự kiện cho nút TRẢ
-    if (returnBtn) {
-        returnBtn.addEventListener('click', async function () {
-            if (selectedRows.length === 0) {
-                showWarning("Vui lòng chọn ít nhất 1 hàng!");
-                return;
-            }
-            try {
-                const { value: formValues } = await Swal.fire({
-                    title: 'Nhập thông tin thu liệu',
-                    html: `
-                    <style>
-                      .swal-form-row {
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        gap: 8px;
-                        margin-bottom: 6px;
-                      }
-                      .swal-form-row label {
-                        flex: 0 0 120px;
-                        font-weight: 500;
-                        text-align: left;
-                      }
-                      .swal-form-row input {
-                        flex: 1;
-                      }
-                    </style>
-
-                    <div class="swal-form-row">
-                      <label for="qtyOK">Số lượng OK:</label>
-                      <input type="number" id="swal-qtyOK" class="swal2-input" placeholder="Nhập số lượng OK" min="0" value="0">
-                    </div>
-
-                    <div class="swal-form-row">
-                      <label for="qtyNG">Số lượng NG:</label>
-                      <input type="number" id="swal-qtyNG" class="swal2-input" placeholder="Nhập số lượng NG" min="0" value="0">
-                    </div>
-
-                    <div class="swal-form-row">
-                      <label for="remark">Remark (Note):</label>
-                      <input type="text" id="swal-remark" class="swal2-input" placeholder="Nhập ...">
-                    </div>
-
-                    <div class="swal-form-row">
-                      <label for="opReturn">Người trả (OP):</label>
-                      <input type="text" id="swal-opReturn" class="swal2-input" placeholder="Nhập mã người trả">
-                    </div>
-                    `,
-                    focusConfirm: false,
-                    preConfirm: () => {
-                        const qtyOK = parseInt(document.getElementById('swal-qtyOK').value || 0);
-                        const qtyNG = parseInt(document.getElementById('swal-qtyNG').value || 0);
-                        const remark = document.getElementById('swal-remark').value.trim();
-                        const opReturn = document.getElementById('swal-opReturn').value.trim();
-
-                        if (!opReturn) {
-                            Swal.showValidationMessage('Vui lòng nhập mã người trả.');
-                            return false;
-                        }
-                        return { qtyOK, qtyNG, remark, opReturn };
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: 'Xác nhận',
-                    cancelButtonText: 'Hủy',
-                    showLoaderOnConfirm: true,
-                    allowOutsideClick: () => !Swal.isLoading()
-                });
-
-                if (!formValues) return;
-
-                // Gửi từng hàng được chọn đến API ReturnMaterial
-                for (const row of selectedRows) {
-                    const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/ReturnMaterial', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            task: row.task || '',
-                            maLieu: row.mA_LIEU || '',
-                            nhaCungUng: row.nhA_CUNG_UNG || '',
-                            dateCode: row.datE_CODE || '',
-                            lotCode: row.loT_CODE || '',
-                            qtyOK: formValues.qtyOK,
-                            qtyNG: formValues.qtyNG,
-                            remark: formValues.remark || '',
-                            op: formValues.opReturn, // Người trả
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Lỗi khi gọi API ReturnMaterial:${response.status} ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('Kết quả thu liệu:', result);
-                }
-                showSuccess("Nhận liệu thành công!");
-                loadHistoryTable('Borrow'); // Tải lại bảng với type "Return"
-            } catch (error) {
-                console.error('Lỗi khi trả liệu:', error.message);
-                showError("Tổng liệu OK + NG (thu lại) phải bằng số lượng phát!");
-            }
-        });
-    }
     // Tải toàn bộ dữ liệu ngay khi trang được tải
     loadHistoryTable("");
 });
