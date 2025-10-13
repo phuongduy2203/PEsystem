@@ -1409,7 +1409,7 @@ namespace API_WEB.Controllers.Scrap
                     {
                         rejectedSNs.Add($"{sn.SN} (Đã chuyển kho phế thành công)");
                     }
-                    else if (sn.ApplyTaskStatus == 3 || sn.ApplyTaskStatus == 8)
+                    else if (sn.ApplyTaskStatus == 16 || sn.ApplyTaskStatus == 17 || sn.ApplyTaskStatus == 8)
                     {
                         updateSNs.Add(sn); // SN hợp lệ để cập nhật
                         insertSNs.Remove(sn.SN); // Loại bỏ SN khỏi danh sách insert
