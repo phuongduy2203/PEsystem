@@ -37,8 +37,7 @@ namespace API_WEB.Controllers.BGA
             { 16, "Xray" },
             { 17, "ICT, FT" },
             { 18, "Waiting return PD line ok" },
-            { 19, "Return PD line ok" },
-            { 3, "Return PD line ok" }
+            { 19, "Return PD line ok" }
         };
 
         private static string GetStatusName(int status)

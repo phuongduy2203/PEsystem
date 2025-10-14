@@ -1164,7 +1164,11 @@ namespace API_WEB.Controllers.SmartFA
                 string query = @"
             SELECT 
                 a.SERIAL_NUMBER,
-                a.SHIPPING_SN2,
+                CASE
+                      WHEN a.SHIPPING_SN2 = 'N/A' 
+                      THEN COALESCE(a.SERIAL_NUMBER, a.SHIPPING_SN2)
+                      ELSE a.SHIPPING_SN2
+                    END AS SHIPPING_SN2,
                 a.GROUP_NAME,
                 a.IN_STATION_TIME,
                 a.MO_NUMBER,
