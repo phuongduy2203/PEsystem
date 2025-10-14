@@ -13,12 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const foundScanBtn = document.getElementById('view-found-scan');
     const searchBtn = document.getElementById('search-btn');
     const textarea = document.getElementById('serialNumber');
+    const scanInput = document.getElementById('scanSerialInput');
+    const scanHint = document.getElementById('scanSerialHint');
     const modal = new bootstrap.Modal(document.getElementById('serialModal'));
 
     let listsTable;
     let itemsTable;
     let summaryTable;
     let activeSummaryFilter = 'total';
+    let currentListData = null;
+    let currentListItems = [];
+    let lastMatchedSerial = null;
+    let highlightTimerId = null;
+    let isProcessingScan = false;
     const detailModal = detailModalEl && typeof bootstrap !== 'undefined'
         ? new bootstrap.Modal(detailModalEl)
         : null;
@@ -29,9 +36,119 @@ document.addEventListener('DOMContentLoaded', () => {
     let summaryCache = { key: '', items: [], total: 0, found: 0, loaded: false };
     let summaryPromise = null;
 
+    async function fetchSerialInfo(serialNumber) {
+        if (!serialNumber) return null;
+        const encoded = encodeURIComponent(serialNumber);
+        const url = `http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber=${encoded}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            const json = await response.json();
+
+            if (json && json.success && json.data) {
+                return {
+                    modelName: json.data.modelName || '',
+                    productLine: json.data.productLine || '',
+                    wipGroup: json.data.wipGroup || ''
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Lỗi khi gọi GetSNInfo:', error);
+            return null;
+        }
+    }
+    function extractWipGroup(info) {
+        if (!info || typeof info !== 'object') return '';
+        if (info.wipGroup) return info.wipGroup.trim();
+        if (info.data && typeof info.data === 'object' && info.data.wipGroup)
+            return info.data.wipGroup.trim();
+        return '';
+    }
+
     function toggleSpinner(show) {
         if (!spinner) return;
         spinner.style.display = show ? 'flex' : 'none';
+    }
+
+
+    function normalizeSerial(value) {
+        return (value ?? '').toString().trim().toLowerCase();
+    }
+
+    function getListId(list) {
+        if (!list || typeof list !== 'object') {
+            return null;
+        }
+        const candidate = list.searchListId ?? list.searchListID ?? list.id ?? list.Id ?? list.SearchListId;
+        if (candidate === undefined || candidate === null) {
+            return null;
+        }
+        const numeric = Number(candidate);
+        return Number.isNaN(numeric) ? candidate : numeric;
+    }
+
+    function updateScanHint(listData) {
+        if (!scanHint) {
+            return;
+        }
+        if (!listData) {
+            scanHint.textContent = 'Chọn danh sách cần tra cứu và quét Serial Number để kiểm tra.';
+            return;
+        }
+        const total = listData.totalItems ?? listData.TotalItems ?? currentListItems.length;
+        const found = listData.foundItems ?? listData.FoundItems ?? currentListItems.filter(item => isFoundValue(item?.isFound)).length;
+        const name = listData.listName ?? listData.ListName ?? '';
+        const parts = [];
+        if (name) {
+            parts.push(`Danh sách "${name}"`);
+        }
+        if (total || total === 0) {
+            parts.push(`(${found}/${total} đã tìm thấy)`);
+        }
+        parts.push('Quét Serial Number để kiểm tra và cập nhật trạng thái.');
+        scanHint.textContent = parts.join(' ');
+    }
+
+    function syncCurrentListItem(updatedItem) {
+        if (!updatedItem) {
+            return;
+        }
+        const normalized = normalizeSerial(updatedItem.serialNumber ?? updatedItem.SerialNumber);
+        currentListItems = currentListItems.map(item => {
+            const itemSerial = normalizeSerial(item?.serialNumber ?? item?.SerialNumber);
+            if (normalized && normalized === itemSerial) {
+                return { ...item, ...updatedItem };
+            }
+            return item;
+        });
+    }
+
+    function incrementFoundCount(listData) {
+        if (!listData || typeof listData !== 'object') {
+            return;
+        }
+        const rawValue = listData.foundItems ?? listData.FoundItems ?? 0;
+        const currentValue = Number(rawValue);
+        const nextValue = Number.isNaN(currentValue) ? 1 : currentValue + 1;
+        if ('foundItems' in listData) {
+            listData.foundItems = nextValue;
+        } else if ('FoundItems' in listData) {
+            listData.FoundItems = nextValue;
+        } else {
+            listData.foundItems = nextValue;
+        }
+    }
+
+    function clearHighlight() {
+        lastMatchedSerial = null;
+        if (highlightTimerId) {
+            clearTimeout(highlightTimerId);
+            highlightTimerId = null;
+        }
+        if (itemsTable) {
+            itemsTable.rows().invalidate().draw(false);
+        }
     }
 
 
@@ -361,7 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderListItems(items) {
-        const data = Array.isArray(items) ? items : [];
+        currentListItems = Array.isArray(items)
+            ? items.map(item => ({ ...item }))
+            : [];
+        const data = currentListItems;
         if (!itemsTable) {
             itemsTable = $('#listItemsTable').DataTable({
                 data,
@@ -408,6 +528,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         row.classList.remove('table-success');
                     }
+                    const serial = normalizeSerial(rowData?.serialNumber ?? rowData?.SerialNumber);
+                    if (lastMatchedSerial && serial === lastMatchedSerial) {
+                        row.classList.add('sn-match-highlight');
+                    } else {
+                        row.classList.remove('sn-match-highlight');
+                    }
                 }
             });
         } else {
@@ -419,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showListItems(listData) {
         if (!listData) return;
+        currentListData = listData;
+        lastMatchedSerial = null;
         if (listTitle) {
             const name = listData.listName ?? '';
             listTitle.textContent = name ? `Danh sách SerialNumber - ${name}` : 'Danh sách SerialNumber';
@@ -431,6 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? listData.serialNumbers
                     : [];
         renderListItems(items);
+        updateScanHint(listData);
+        if (scanInput) {
+            scanInput.value = '';
+        }
         if (detailModal) {
             detailModal.show();
         }
@@ -556,6 +688,182 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    async function updateScannedStatusOnServer(listId, serialNumber, isFound = true) {
+        if (!listId && listId !== 0) {
+            throw new Error('Không xác định được danh sách cần cập nhật.');
+        }
+        if (!serialNumber) {
+            throw new Error('Serial Number không hợp lệ.');
+        }
+        const payload = {
+            searchListId: listId,
+            serialNumber,
+            isFound
+        };
+        const response = await fetch('http://10.220.130.119:9090/api/Search/UpdateScannedStatus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        let data;
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
+        if (!response.ok || (data && data.success === false)) {
+            const message = data?.message || `Không thể cập nhật trạng thái (HTTP ${response.status}).`;
+            throw new Error(message);
+        }
+        return data;
+    }
+
+    async function handleSerialLookup(serialValue) {
+        const trimmed = serialValue?.trim();
+        if (!trimmed) {
+            return;
+        }
+        if (!currentListData) {
+            const message = 'Vui lòng chọn danh sách Serial Number trước khi quét.';
+            if (window.Swal) {
+                Swal.fire({ icon: 'warning', title: 'Chưa chọn danh sách', text: message });
+            } else {
+                alert(message);
+            }
+            return;
+        }
+        if (!itemsTable) {
+            const message = 'Danh sách Serial Number chưa được tải.';
+            if (window.Swal) {
+                Swal.fire({ icon: 'warning', title: 'Không có dữ liệu', text: message });
+            } else {
+                alert(message);
+            }
+            return;
+        }
+
+        const normalized = normalizeSerial(trimmed);
+        let serialInfoPromise = fetchSerialInfo(trimmed);
+        let matchedRowApi = null;
+        itemsTable.rows().every(function () {
+            const data = this.data();
+            const serial = normalizeSerial(data?.serialNumber ?? data?.SerialNumber);
+            if (serial && serial === normalized) {
+                matchedRowApi = this;
+                return false;
+            }
+            return undefined;
+        });
+
+        if (!matchedRowApi) {
+            clearHighlight();
+            const serialInfo = await serialInfoPromise.catch(() => null);
+            const wipGroup = extractWipGroup(serialInfo);
+            const notFoundWithWip = `WIP GROUP: ${wipGroup}`;
+            if (window.Swal) {
+                Swal.fire({ icon: 'error', title: 'Không tìm thấy', text: notFoundWithWip });
+            } else {
+                alert(notFoundWithWip);
+            }
+            return;
+        }
+
+        const rowData = { ...matchedRowApi.data() };
+        const serialDisplay = rowData.serialNumber ?? rowData.SerialNumber ?? trimmed;
+        if (serialDisplay && normalizeSerial(serialDisplay) !== normalized) {
+            serialInfoPromise = fetchSerialInfo(serialDisplay);
+        }
+        const alreadyFound = isFoundValue(rowData.isFound ?? rowData.IsFound);
+        const listId = getListId(currentListData);
+
+        try {
+            if (!alreadyFound) {
+                await updateScannedStatusOnServer(listId, serialDisplay, true);
+                rowData.isFound = true;
+                if (!rowData.scanTime && !rowData.ScanTime) {
+                    rowData.scanTime = new Date().toISOString();
+                }
+                matchedRowApi.data(rowData).draw(false);
+                syncCurrentListItem(rowData);
+                if (Array.isArray(currentListData.items)) {
+                    currentListData.items = currentListItems;
+                } else if (Array.isArray(currentListData.serials)) {
+                    currentListData.serials = currentListItems;
+                } else if (Array.isArray(currentListData.serialNumbers)) {
+                    currentListData.serialNumbers = currentListItems;
+                }
+                incrementFoundCount(currentListData);
+                updateScanHint(currentListData);
+                updateCounts(true).catch(() => { /* ignore errors */ });
+            } else {
+                matchedRowApi.data(rowData).draw(false);
+            }
+
+            lastMatchedSerial = normalized;
+            itemsTable.rows().invalidate().draw(false);
+            if (highlightTimerId) {
+                clearTimeout(highlightTimerId);
+            }
+            highlightTimerId = setTimeout(() => {
+                if (lastMatchedSerial === normalized) {
+                    clearHighlight();
+                }
+            }, 5000);
+
+            const serialInfo = await serialInfoPromise.catch(() => null);
+            const wipGroup = extractWipGroup(serialInfo);
+            const successMessage = alreadyFound
+                ? `Serial Number ${serialDisplay} đã được tìm thấy trước đó.`
+                : `Đã tìm thấy Serial Number ${serialDisplay} trong danh sách.`;
+            const messageWithWip = wipGroup
+                ? `${successMessage}\nWIP Group: ${wipGroup}`
+                : successMessage;
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Tìm thấy',
+                    text: messageWithWip,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(messageWithWip);
+            }
+        } catch (error) {
+            clearHighlight();
+            const errorMessage = error?.message || 'Không thể cập nhật trạng thái quét.';
+            if (window.Swal) {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: errorMessage });
+            } else {
+                alert(errorMessage);
+            }
+        }
+    }
+
+    async function processScanField() {
+        if (!scanInput || isProcessingScan) {
+            return;
+        }
+        isProcessingScan = true;
+        try {
+            const value = scanInput.value?.trim();
+            if (!value) {
+                clearHighlight();
+                return;
+            }
+            await handleSerialLookup(value);
+        } finally {
+            requestAnimationFrame(() => {
+                if (scanInput) {
+                    scanInput.focus();
+                    scanInput.select();
+                }
+            });
+            isProcessingScan = false;
+        }
+    }
+
+
     async function searchSerials() {
         const lines = textarea.value
             .split(/\r?\n/)
@@ -588,10 +896,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-searchBtn?.addEventListener('click', e => {
-    e.preventDefault();
-    searchSerials();
-});
+    searchBtn?.addEventListener('click', e => {
+        e.preventDefault();
+        searchSerials();
+    });
+
+    scanInput?.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            processScanField();
+        }
+    });
+
+    scanInput?.addEventListener('focus', () => {
+        requestAnimationFrame(() => {
+            scanInput.select();
+        });
+    });
+
+    scanInput?.addEventListener('input', () => {
+        if (highlightTimerId) {
+            clearTimeout(highlightTimerId);
+            highlightTimerId = null;
+        }
+        clearHighlight();
+    });
 
     applyBtn?.addEventListener('click', e => {
         e.preventDefault();
@@ -612,6 +941,21 @@ searchBtn?.addEventListener('click', e => {
         if (itemsTable) {
             itemsTable.columns.adjust();
         }
+        if (scanInput) {
+            requestAnimationFrame(() => {
+                scanInput.focus();
+                scanInput.select();
+            });
+        }
+    });
+
+    detailModalEl?.addEventListener('hidden.bs.modal', () => {
+        currentListData = null;
+        clearHighlight();
+        if (scanInput) {
+            scanInput.value = '';
+        }
+        updateScanHint(null);
     });
 
     summaryModalEl?.addEventListener('shown.bs.modal', () => {
@@ -620,6 +964,7 @@ searchBtn?.addEventListener('click', e => {
         }
     });
 
+    updateScanHint(null);
     setDefaultRange();
     updateCounts(true);
     loadSearchLists();

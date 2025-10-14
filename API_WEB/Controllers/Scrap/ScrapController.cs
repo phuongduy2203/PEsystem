@@ -1409,7 +1409,7 @@ namespace API_WEB.Controllers.Scrap
                     {
                         rejectedSNs.Add($"{sn.SN} (Đã chuyển kho phế thành công)");
                     }
-                    else if (sn.ApplyTaskStatus == 16 || sn.ApplyTaskStatus == 17 || sn.ApplyTaskStatus == 8)
+                    else if (sn.ApplyTaskStatus == 16 || sn.ApplyTaskStatus == 17 || sn.ApplyTaskStatus == 8 || sn.ApplyTaskStatus == 19)
                     {
                         updateSNs.Add(sn); // SN hợp lệ để cập nhật
                         insertSNs.Remove(sn.SN); // Loại bỏ SN khỏi danh sách insert
@@ -1554,6 +1554,7 @@ namespace API_WEB.Controllers.Scrap
                 // Tạo biến ApproveTag
                 int approveTag = request.Approve == "2" ? 2 : 4;
                 var updateTime = DateTime.Now;
+                string updateCategory = request.Approve == "2" ? "Scrap" : "BGA";
 
                 // Tạo danh sách ScrapList để lưu vào bảng (cho các SN mới)
                 var scrapListEntries = new List<ScrapList>();
@@ -1577,7 +1578,7 @@ namespace API_WEB.Controllers.Scrap
                         FindBoardStatus = "N/A",
                         InternalTask = "N/A",
                         Purpose = "N/A",
-                        Category = "N/A"
+                        Category = updateCategory
                     };
 
                     scrapListEntries.Add(scrapEntry);
@@ -1604,7 +1605,7 @@ namespace API_WEB.Controllers.Scrap
                     sn.FindBoardStatus = "N/A";
                     sn.InternalTask = "N/A";
                     sn.Purpose = "N/A";
-                    sn.Category = "N/A";
+                    sn.Category = updateCategory;
                 }
 
                 // Lưu vào bảng ScrapList (thêm mới và cập nhật)

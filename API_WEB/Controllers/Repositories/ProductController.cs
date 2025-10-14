@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 using static API_WEB.Controllers.Repositories.KhoScrapController;
+using static API_WEB.Controllers.SmartFA.CheckInOutController;
 
 namespace API_WEB.Controllers
 {
@@ -682,61 +683,62 @@ namespace API_WEB.Controllers
         [HttpGet("GetSNInfo")]
         public async Task<IActionResult> GetSNInfo(string serialNumber)
         {
+            if (string.IsNullOrWhiteSpace(serialNumber))
+                return BadRequest(new { success = false, message = "serialNumber là bắt buộc." });
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+
             try
             {
-                Console.WriteLine($"Fetching info for SerialNumber: {serialNumber}");
+                await connection.OpenAsync();
 
-                // Lấy ModelName từ bảng SFISM4.R107
-                string modelNameQuery = @"
-                    SELECT SERIAL_NUMBER, MODEL_NAME, MO_NUMBER, WIP_GROUP, WORK_FLAG, ERROR_FLAG 
-                    FROM SFISM4.R107 
-                    WHERE SERIAL_NUMBER = :serialNumber AND ROWNUM = 1";
-                var modelNameParam = new OracleParameter("serialNumber", OracleDbType.Varchar2) { Value = serialNumber };
-                var modelNameResult = await _oracleContext.OracleDataR107
-                    .FromSqlRaw(modelNameQuery, modelNameParam)
-                    .AsNoTracking()
-                    .ToListAsync();
+                string query = @"
+            SELECT 
+                a.SERIAL_NUMBER,
+                a.MODEL_NAME,
+                b.PRODUCT_LINE,
+                a.WIP_GROUP
+            FROM sfism4.r107 a
+            INNER JOIN sfis1.c_model_desc_t b
+                ON a.MODEL_NAME = b.MODEL_NAME
+            WHERE a.SERIAL_NUMBER = :serialNumber
+            AND ROWNUM = 1";
 
-                if (modelNameResult == null || !modelNameResult.Any())
+                var checkInList = new List<InforSN>();
+
+                await using var cmd = new OracleCommand(query, connection);
+                cmd.Parameters.Add(new OracleParameter("serialNumber", OracleDbType.Varchar2)
                 {
-                    return NotFound(new { success = false, message = $"Không tìm thấy ModelName cho SerialNumber {serialNumber}" });
+                    Value = serialNumber.Trim().ToUpperInvariant()
+                });
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    checkInList.Add(new InforSN
+                    {
+                        modelName = reader["MODEL_NAME"]?.ToString() ?? "",
+                        productLine = reader["PRODUCT_LINE"]?.ToString() ?? "",
+                        wipGroup = reader["WIP_GROUP"]?.ToString() ?? ""
+                    });
                 }
 
-                string modelName = modelNameResult.First().MODEL_NAME;
+                if (!checkInList.Any())
+                    return NotFound(new { success = false, message = $"Không tìm thấy dữ liệu cho SN: {serialNumber}" });
 
-                // Lấy ProductLine từ bảng SFIS1.C_MODEL_DESC_T
-                string productLineQuery = @"
-            SELECT MODEL_NAME, PRODUCT_LINE 
-            FROM SFIS1.C_MODEL_DESC_T 
-            WHERE MODEL_NAME = :modelName AND ROWNUM = 1";
-
-                var productLineParam = new OracleParameter("modelName", OracleDbType.Varchar2) { Value = modelName };
-
-                var productLineResult = await _oracleContext.OracleDataCModelDesc
-                    .FromSqlRaw(productLineQuery, productLineParam)
-                    .AsNoTracking().Select(pl => new
-                    {
-                        MODEL_NAME = pl.MODEL_NAME,
-                        PRODUCT_LINE = pl.PRODUCT_LINE ?? ""
-                    }).ToListAsync();
-
-                // Kiểm tra nếu ProductLine không tồn tại
-                string productLine = productLineResult.FirstOrDefault()?.PRODUCT_LINE ?? "";
-
-                // Trả về kết quả
-                return Ok(new { success = true, modelName, productLine });
+                return Ok(new { success = true, data = checkInList.First() });
             }
             catch (OracleException ex)
             {
-                Console.WriteLine($"Oracle Error: {ex.Message}");
                 return StatusCode(500, new { success = false, message = $"Lỗi Oracle: {ex.Message}" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"System Error: {ex.Message}");
                 return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
+
 
         //Add Action
         [HttpPut("UpdateAction")]
@@ -1081,6 +1083,12 @@ namespace API_WEB.Controllers
             }
         }
 
+        public class InforSN
+        {
+            public string wipGroup { get; set; } = string.Empty;
+            public string productLine { get; set; } = string.Empty;
+            public string modelName { get; set; } = string.Empty;
 
+        }
     }
 }

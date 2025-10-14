@@ -78,11 +78,6 @@ namespace API_WEB.Services.Bonepile
                     status = "WaitingApprovalScrap";
                     statusV2 = "Scrap";
                 }
-                else if (applyTaskStatus == 3)
-                {
-                    status = "ApprovedBGA";
-                    statusV2 = DetermineStatusV2(item.TEST_CODE);
-                }
                 else if (applyTaskStatus == 4)
                 {
                     status = "WaitingApprovalBGA";
@@ -95,7 +90,7 @@ namespace API_WEB.Services.Bonepile
                 }
                 else
                 {
-                    status = "RepairInRE";
+                    status = "ApprovedBGA";
                     statusV2 = DetermineStatusV2(item.TEST_CODE);
                 }
             }

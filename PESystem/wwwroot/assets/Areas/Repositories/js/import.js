@@ -108,9 +108,9 @@
             try {
                 const response = await fetch(`${apiBaseUrl}/GetSNInfo?serialNumber=${serial}`);
                 const data = await response.json();
-                if (data.success) {
-                    modelNames.push(data.modelName || "");
-                    productLines.push(data.productLine || "");
+                if (data.success && data.data) {
+                    modelNames.push(data.data.modelName || "");
+                    productLines.push(data.data.productLine || "");
                 } else {
                     modelNames.push("");
                     productLines.push("");

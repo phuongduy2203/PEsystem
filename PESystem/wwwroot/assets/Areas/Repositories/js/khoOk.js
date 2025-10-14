@@ -366,9 +366,9 @@ const KhoScrapManager = (function () {
                 try {
                     const response = await fetch(`http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber=${serial}`);
                     const data = await response.json();
-                    if (data.success) {
-                        modelNames.push(data.modelName || "");
-                        productLines.push(data.productLine || "");
+                    if (data.success && data.data) {
+                        modelNames.push(data.data.modelName || "");
+                        productLines.push(data.data.productLine || "");
                     } else {
                         modelNames.push("");
                         productLines.push("");

@@ -92,6 +92,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="scan-sn-panel mb-3">
+                    <label for="scanSerialInput" class="form-label fw-semibold">Quét Serial Number</label>
+                    <input type="text"
+                           id="scanSerialInput"
+                           class="form-control"
+                           placeholder="Scan hoặc nhập Serial Number"
+                           autocomplete="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           inputmode="text" />
+                    <div class="form-text" id="scanSerialHint">Chọn danh sách cần tra cứu và quét Serial Number để kiểm tra.</div>
+                </div>
                 <div class="table-responsive">
                     <table id="listItemsTable" class="display table table-bordered table-striped datatable-table">
                         <thead>
@@ -210,6 +222,27 @@
         .detail-link {
             font-weight: 600;
             text-transform: uppercase;
+        }
+
+        .scan-sn-panel input {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .sn-match-highlight td {
+            outline: 2px solid #ffc107;
+            outline-offset: -2px;
+        }
+
+        .sn-match-highlight td:first-child {
+            background-color: #fff8e1 !important;
+        }
+
+        @@media (max-width: 576px) {
+            .scan-sn-panel input {
+                font-size: 1rem;
+            }
         }
     </style>
     <script src="~/assets/areas/searchdata/js/searchData.js?v=@DateTime.Now.Ticks"></script>

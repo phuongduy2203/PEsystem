@@ -532,10 +532,9 @@ namespace API_WEB.Controllers.Repositories
                             status = applyTaskStatus switch
                             {
                                 2 => "WaitingApprovalScrap",
-                                3 => "ApprovedBGA",
                                 4 => "WaitingApprovalBGA",
                                 8 => "Can'tRepairProcess",
-                                _ => "RepairInPD"
+                                _ => "ApprovedBGA"
                             };
                     }
                     else if (b.MO_NUMBER?.Trim().StartsWith("4") == true)
@@ -640,10 +639,9 @@ namespace API_WEB.Controllers.Repositories
                         return applyTaskStatus switch
                         {
                             2 => "WaitingApprovalScrap",
-                            3 => "ApprovedBGA",
                             4 => "WaitingApprovalBGA",
                             8 => "Can'tRepairProcess",
-                            _ => "RepairInPD"
+                            _ => "ApprovedBGA"
                         };
 
                     }
@@ -725,10 +723,9 @@ namespace API_WEB.Controllers.Repositories
                             status = applyTaskStatus switch
                             {
                                 2 => "WaitingApprovalScrap",
-                                3 => "ApprovedBGA",
                                 4 => "WaitingApprovalBGA",
                                 8 => "Can'tRepairProcess",
-                                _ => "RepairInPD"
+                                _ => "ApprovedBGA"
                             };
                     }
                     else if (b.MO_NUMBER?.Trim().StartsWith("4") == true)
@@ -1177,11 +1174,6 @@ namespace API_WEB.Controllers.Repositories
                             status = "WaitingApprovalScrap";
                             statusV2 = "Scrap";
                         }
-                        else if (applyTaskStatus == 3)
-                        {
-                            status = "ApprovedBGA";
-                            statusV2 = DetermineStatusV2(b.TEST_CODE);
-                        }
                         else if (applyTaskStatus == 4)
                         {
                             status = "WaitingApprovalBGA";
@@ -1194,7 +1186,7 @@ namespace API_WEB.Controllers.Repositories
                         }
                         else
                         {
-                            status = "RepairInRE";
+                            status = "ApprovedBGA";
                             statusV2 = DetermineStatusV2(b.TEST_CODE);
                         }
                     }
