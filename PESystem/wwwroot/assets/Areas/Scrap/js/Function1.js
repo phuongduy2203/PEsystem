@@ -32,6 +32,16 @@ function hideAllElements() {
 // Ẩn tất cả các form và khu vực kết quả ngay lập tức khi trang tải
 hideAllElements();
 
+function setResultContent(resultDiv, html) {
+    if (!resultDiv) return;
+    const container = resultDiv.querySelector('.table-container');
+    if (container) {
+        container.innerHTML = html;
+    } else {
+        resultDiv.innerHTML = html;
+    }
+}
+
 /** 🔥 Lấy currentUsername từ thẻ HTML */
 function getCurrentUsername() {
     const usernameElement = document.querySelector(".d-none.d-md-block.ps-2");
@@ -41,11 +51,11 @@ function getCurrentUsername() {
 // Hàm hiển thị bảng với phân trang
 function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
     if (!data || data.length === 0) {
-        resultDiv.innerHTML = `
+        setResultContent(resultDiv, `
             <div class="alert alert-warning">
-                <strong>Cảnh báo:</strong> Không tìm thấy dữ liệu với ApplyTaskStatus = 2.
+                <strong>Cảnh báo:</strong> Không tìm thấy dữ liệu chờ SPE approve.
             </div>
-        `;
+        `);
         return;
     }
 
@@ -107,7 +117,7 @@ function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
             `;
         }
 
-        resultDiv.innerHTML = tableHTML;
+        setResultContent(resultDiv, tableHTML);
 
         // Gắn sự kiện cho nút Previous và Next
         if (totalPages > 1) {
@@ -133,11 +143,11 @@ function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
 
 // Hàm tải dữ liệu từ API và hiển thị
 async function loadScrapStatusTwo(resultDiv) {
-    resultDiv.innerHTML = `
+    setResultContent(resultDiv, `
         <div class="alert alert-info">
             <strong>Thông báo:</strong> Đang tải danh sách SN chờ SPE approve...
         </div>
-    `;
+    `);
 
     try {
         const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-scrap-status-two-and-four", {
@@ -152,18 +162,18 @@ async function loadScrapStatusTwo(resultDiv) {
         if (response.ok) {
             displayTableWithPagination(result, resultDiv);
         } else {
-            resultDiv.innerHTML = `
+            setResultContent(resultDiv, `
                 <div class="alert alert-danger">
                     <strong>Lỗi:</strong> ${result.message}
                 </div>
-            `;
+            `);
         }
     } catch (error) {
-        resultDiv.innerHTML = `
+        setResultContent(resultDiv, `
             <div class="alert alert-danger">
                 <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
             </div>
-        `;
+        `);
         console.error("Error:", error);
     }
 }
@@ -235,47 +245,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Kiểm tra dữ liệu đầu vào
         if (!sNs.length) {
-            resultDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một Serial Number hợp lệ!
-            </div>
-        `;
+            setResultContent(resultDiv, `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một Serial Number hợp lệ!
+                </div>
+            `);
             return;
         }
 
         if (!description) {
-            resultDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <strong>Cảnh báo:</strong> Vui lòng nhập mô tả!
-            </div>
-        `;
+            setResultContent(resultDiv, `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng nhập mô tả!
+                </div>
+            `);
             return;
         }
 
         if (!["BP-10", "BP-20", "B36R"].includes(typeBonepile)) {
-            resultDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <strong>Cảnh báo:</strong> Vui lòng chọn loại BonePile!
-            </div>
-        `;
+            setResultContent(resultDiv, `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn loại BonePile!
+                </div>
+            `);
             return;
         }
 
         if (!["2", "4"].includes(typeApprove)) {
-            resultDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <strong>Cảnh báo:</strong> Vui lòng chọn loại Approve!
-            </div>
-        `;
+            setResultContent(resultDiv, `
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Vui lòng chọn loại Approve!
+                </div>
+            `);
             return;
         }
 
         // Hiển thị thông báo "đang xử lý"
-        resultDiv.innerHTML = `
-        <div class="alert alert-info">
-            <strong>Thông báo:</strong> Đang lưu danh sách SN...
-        </div>
-    `;
+        setResultContent(resultDiv, `
+            <div class="alert alert-info">
+                <strong>Thông báo:</strong> Đang lưu danh sách SN...
+            </div>
+        `);
 
         // Định dạng sn_list thành chuỗi cách nhau bởi dấu phẩy
         const snListString = sNs.join(",");
@@ -349,40 +359,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     if (updateResponse.ok) {
                         // Nếu cả hai bước đều thành công hoặc được bỏ qua theo yêu cầu
-                        resultDiv.innerHTML = `
-                        <div class="alert alert-success">
-                            <strong>Thành công:</strong> ${inputSnResult.message}${shouldCallRepairScrap ? "" : "<br><small class=\"text-muted\">" + repairScrapResult + "</small>"}
-                        </div>
-                    `;
+                        setResultContent(resultDiv, `
+                            <div class="alert alert-success">
+                                <strong>Thành công:</strong> ${inputSnResult.message}${shouldCallRepairScrap ? "" : "<br><small class=\"text-muted\">" + repairScrapResult + "</small>"}
+                            </div>
+                        `);
                     } else {
                         console.warn("UpdateProduct API failed:", updateResult.message);
-                        resultDiv.innerHTML = `
-                        <div class="alert alert-warning">
-                            <strong>Cảnh báo:</strong> Lưu SN thành công nhưng cập nhật sản phẩm trong kho thất bại: ${updateResult.message}
-                        </div>
-                    `;
+                        setResultContent(resultDiv, `
+                            <div class="alert alert-warning">
+                                <strong>Cảnh báo:</strong> Lưu SN thành công nhưng cập nhật sản phẩm trong kho thất bại: ${updateResult.message}
+                            </div>
+                        `);
                     }
                 } else {
-                    resultDiv.innerHTML = `
-                    <div class="alert alert-warning">
-                        <strong>Cảnh báo:</strong> Gọi API repair_scrap thất bại: ${repairScrapResult}
-                    </div>
-                `;
+                    setResultContent(resultDiv, `
+                        <div class="alert alert-warning">
+                            <strong>Cảnh báo:</strong> Gọi API repair_scrap thất bại: ${repairScrapResult}
+                        </div>
+                    `);
                 }
             } else {
                 console.warn("input-sn-wait-spe-approve API failed:", inputSnResult.message);
-                resultDiv.innerHTML = `
-                <div class="alert alert-warning">
-                    <strong>Cảnh báo:</strong> Gọi API input-sn-wait-spe-approve thất bại: ${inputSnResult.message}
-                </div>
-            `;
+                setResultContent(resultDiv, `
+                    <div class="alert alert-warning">
+                        <strong>Cảnh báo:</strong> Gọi API input-sn-wait-spe-approve thất bại: ${inputSnResult.message}
+                    </div>
+                `);
             }
         } catch (error) {
-            resultDiv.innerHTML = `
-            <div class="alert alert-danger">
-                <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
-            </div>
-        `;
+            setResultContent(resultDiv, `
+                <div class="alert alert-danger">
+                    <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
+                </div>
+            `);
             console.error("Error:", error);
         }
     });
@@ -401,23 +411,22 @@ document.addEventListener("DOMContentLoaded", function () {
             const result = await response.json();
 
             if (response.ok && result && result.length > 0) {
-                // Tải file Excel
                 downloadExcel(result);
             } else {
                 const resultDiv = document.getElementById("sn-wait-approve-result");
-                resultDiv.innerHTML = `
+                setResultContent(resultDiv, `
                     <div class="alert alert-warning">
                         <strong>Cảnh báo:</strong> Không có dữ liệu để tải xuống.
                     </div>
-                `;
+                `);
             }
         } catch (error) {
             const resultDiv = document.getElementById("sn-wait-approve-result");
-            resultDiv.innerHTML = `
+            setResultContent(resultDiv, `
                 <div class="alert alert-danger">
                     <strong>Lỗi:</strong> Không thể tải dữ liệu để tạo file Excel.
                 </div>
-            `;
+            `);
             console.error("Error:", error);
         }
     });

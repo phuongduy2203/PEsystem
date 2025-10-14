@@ -32,6 +32,16 @@ function hideAllElements() {
 // Ẩn tất cả các form và khu vực kết quả ngay lập tức khi trang tải
 hideAllElements();
 
+function setResultContent(resultDiv, html) {
+    if (!resultDiv) return;
+    const container = resultDiv.querySelector('.table-container');
+    if (container) {
+        container.innerHTML = html;
+    } else {
+        resultDiv.innerHTML = html;
+    }
+}
+
 /** 🔥 Lấy currentUsername từ thẻ HTML */
 function getCurrentUsername() {
     const usernameElement = document.querySelector(".d-none.d-md-block.ps-2");
@@ -41,11 +51,11 @@ function getCurrentUsername() {
 // Hàm hiển thị bảng với phân trang
 function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
     if (!data || data.length === 0) {
-        resultDiv.innerHTML = `
+        setResultContent(resultDiv, `
             <div class="alert alert-warning">
                 <strong>Cảnh báo:</strong> Không tìm thấy dữ liệu với ApplyTaskStatus = 8.
             </div>
-        `;
+        `);
         return;
     }
 
@@ -105,7 +115,7 @@ function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
             `;
         }
 
-        resultDiv.innerHTML = tableHTML;
+        setResultContent(resultDiv, tableHTML);
 
         // Gắn sự kiện cho nút Previous và Next
         if (totalPages > 1) {
@@ -133,11 +143,11 @@ function displayTableWithPagination(data, resultDiv, itemsPerPage = 10) {
 
 // Hàm tải dữ liệu từ API và hiển thị
 async function loadScrapStatusTwo(resultDiv) {
-    resultDiv.innerHTML = `
+    setResultContent(resultDiv, `
         <div class="alert alert-info">
             <strong>Thông báo:</strong> Đang tải danh sách SN lỗi process không thể sửa chữa...
         </div>
-    `;
+    `);
 
     try {
         const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-scrap-status-eight", {
@@ -152,18 +162,18 @@ async function loadScrapStatusTwo(resultDiv) {
         if (response.ok) {
             displayTableWithPagination(result, resultDiv);
         } else {
-            resultDiv.innerHTML = `
+            setResultContent(resultDiv, `
                 <div class="alert alert-danger">
                     <strong>Lỗi:</strong> ${result.message || 'Không thể tải dữ liệu.'}
                 </div>
-            `;
+            `);
         }
     } catch (error) {
-        resultDiv.innerHTML = `
+        setResultContent(resultDiv, `
             <div class="alert alert-danger">
                 <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
             </div>
-        `;
+        `);
         console.error("Error:", error);
     }
 }
@@ -235,29 +245,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Kiểm tra dữ liệu đầu vào
             if (!sNs.length) {
-                resultDiv.innerHTML = `
+                setResultContent(resultDiv, `
                     <div class="alert alert-warning">
                         <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một Serial Number hợp lệ!
                     </div>
-                `;
+                `);
                 return;
             }
 
             if (!createdBy) {
-                resultDiv.innerHTML = `
+                setResultContent(resultDiv, `
                     <div class="alert alert-warning">
                         <strong>Cảnh báo:</strong> Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.
                     </div>
-                `;
+                `);
                 return;
             }
 
             // Hiển thị thông báo "đang xử lý"
-            resultDiv.innerHTML = `
+            setResultContent(resultDiv, `
                 <div class="alert alert-info">
                     <strong>Thông báo:</strong> Đang lưu danh sách SN...
                 </div>
-            `;
+            `);
 
             try {
                 // Gọi API process-can-not-repair
@@ -295,40 +305,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     if (updateResponse.ok) {
                         // Cả hai thành công
-                        resultDiv.innerHTML = `
+                        setResultContent(resultDiv, `
                             <div class="alert alert-success">
                                 <strong>Thành công:</strong> ${inputSnResult.message}
                             </div>
-                        `;
+                        `);
                     } else {
                         console.warn("UpdateScrap API failed:", updateResult);
-                        resultDiv.innerHTML = `
+                        setResultContent(resultDiv, `
                             <div class="alert alert-warning">
                                 <strong>Cảnh báo:</strong> Gọi API UpdateScrap thất bại: ${updateResult.message || 'Lỗi không xác định'}
                             </div>
-                        `;
+                        `);
                     }
 
                     // Chỉ process-can-not-repair thành công
-                    resultDiv.innerHTML = `
+                    setResultContent(resultDiv, `
                         <div class="alert alert-success">
                             <strong>Thành công:</strong> ${inputSnResult.message}
                         </div>
-                    `;
+                    `);
                 } else {
                     console.warn("process-can-not-repair API failed:", inputSnResult);
-                    resultDiv.innerHTML = `
+                    setResultContent(resultDiv, `
                         <div class="alert alert-warning">
                             <strong>Cảnh báo:</strong> Gọi API process-can-not-repair thất bại: ${inputSnResult.message || 'Lỗi không xác định'}
                         </div>
-                    `;
+                    `);
                 }
             } catch (error) {
-                resultDiv.innerHTML = `
+                setResultContent(resultDiv, `
                     <div class="alert alert-danger">
                         <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
                     </div>
-                `;
+                `);
                 console.error("Error:", error);
             }
         });
@@ -355,18 +365,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Tải file Excel
                     downloadExcel(result);
                 } else {
-                    resultDiv.innerHTML = `
+                    setResultContent(resultDiv, `
                         <div class="alert alert-warning">
                             <strong>Cảnh báo:</strong> Không có dữ liệu để tải xuống.
                         </div>
-                    `;
+                    `);
                 }
             } catch (error) {
-                resultDiv.innerHTML = `
+                setResultContent(resultDiv, `
                     <div class="alert alert-danger">
                         <strong>Lỗi:</strong> Không thể tải dữ liệu để tạo file Excel.
                     </div>
-                `;
+                `);
                 console.error("Error:", error);
             }
         });
