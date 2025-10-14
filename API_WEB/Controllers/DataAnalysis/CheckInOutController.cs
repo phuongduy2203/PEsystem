@@ -94,6 +94,24 @@ namespace API_WEB.Controllers.SmartFA
             public string MO_NUMBER { get; set; } = string.Empty;
         }
 
+
+        public class SAPRecord
+        {
+            public string SERIAL_NUMBER { get; set; }
+            public string SHIPPING_SN2 { get; set; }
+            public string GROUP_NAME { get; set; }
+            public DateTime? IN_STATION_TIME { get; set; }
+            public string MO_NUMBER { get; set; }
+            public string MODEL_NAME { get; set; }
+            public string KEY_PART_NO { get; set; }
+            public string PRODUCT_LINE { get; set; }
+            public string MSN { get; set; }
+            public string ATE_STATION_NO { get; set; }
+            public string EMP_NO { get; set; }
+            public string WIP_GROUP { get; set; }
+        }
+
+
         [HttpGet("GetCheckInOutBeforeKanban")]
         public async Task<IActionResult> GetCheckInOutBeforeKanban(DateTime? startDate, DateTime? endDate)
         {
@@ -1125,6 +1143,98 @@ namespace API_WEB.Controllers.SmartFA
                 .ToList();
 
             return tonKhoAfter;
+        }
+
+
+
+        [HttpGet("GetSAPInOut")]
+        public async Task<IActionResult> GetSAPInOut(DateTime? startDate, DateTime? endDate)
+        {
+            if (!startDate.HasValue || !endDate.HasValue)
+            {
+                return BadRequest(new { success = false, message = "startDate và endDate là bắt buộc." });
+            }
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+
+            try
+            {
+                await connection.OpenAsync();
+
+                string query = @"
+            SELECT 
+                a.SERIAL_NUMBER,
+                a.SHIPPING_SN2,
+                a.GROUP_NAME,
+                a.IN_STATION_TIME,
+                a.MO_NUMBER,
+                a.MODEL_NAME,
+                a.KEY_PART_NO,
+                b.PRODUCT_LINE,
+                a.MSN,
+                a.ATE_STATION_NO,
+                a.EMP_NO,
+                a.WIP_GROUP
+            FROM SFISM4.R_SN_TRANSFER_SAP_T a
+            INNER JOIN SFIS1.C_MODEL_DESC_T b
+                ON a.MODEL_NAME = b.MODEL_NAME
+            WHERE b.MODEL_SERIAL = 'ADAPTER'
+              AND a.IN_STATION_TIME BETWEEN :startDate AND :endDate
+              AND a.FINISH_FLAG = '0'
+              AND REGEXP_LIKE(a.GROUP_NAME, 'B30M|B28M|B36R')";
+
+                var cmd = new OracleCommand(query, connection);
+                cmd.Parameters.Add(new OracleParameter("startDate", OracleDbType.Date) { Value = startDate });
+                cmd.Parameters.Add(new OracleParameter("endDate", OracleDbType.Date) { Value = endDate });
+
+                var groupDetails = new List<SAPRecord>();
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    groupDetails.Add(new SAPRecord
+                    {
+                        SERIAL_NUMBER = reader["SERIAL_NUMBER"]?.ToString() ?? "",
+                        SHIPPING_SN2 = reader["SHIPPING_SN2"]?.ToString() ?? "",
+                        GROUP_NAME = reader["GROUP_NAME"]?.ToString() ?? "",
+                        IN_STATION_TIME = reader["IN_STATION_TIME"] == DBNull.Value ? null : Convert.ToDateTime(reader["IN_STATION_TIME"]),
+                        MO_NUMBER = reader["MO_NUMBER"]?.ToString() ?? "",
+                        MODEL_NAME = reader["MODEL_NAME"]?.ToString() ?? "",
+                        KEY_PART_NO = reader["KEY_PART_NO"]?.ToString() ?? "",
+                        PRODUCT_LINE = reader["PRODUCT_LINE"]?.ToString() ?? "",
+                        MSN = reader["MSN"]?.ToString() ?? "",
+                        ATE_STATION_NO = reader["ATE_STATION_NO"]?.ToString() ?? "",
+                        EMP_NO = reader["EMP_NO"]?.ToString() ?? "",
+                        WIP_GROUP = reader["WIP_GROUP"]?.ToString() ?? ""
+                    });
+                }
+
+                // ✅ Tạo thống kê tổng hợp theo GROUP_NAME
+                var summary = groupDetails
+                    .GroupBy(x => x.GROUP_NAME)
+                    .Select(g => new
+                    {
+                        GroupName = g.Key,
+                        Count = g.Count(),
+                        Details = g.ToList()
+                    })
+                    .ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    total = groupDetails.Count,
+                    groups = summary
+                });
+            }
+            catch (OracleException ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi Oracle: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
+            }
         }
 
     }

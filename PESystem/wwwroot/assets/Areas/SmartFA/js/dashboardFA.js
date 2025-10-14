@@ -9,6 +9,9 @@ let cioNoLocationData = []; // Dữ liệu tồn kho chưa có vị trí
 let cioNoLocationTableInstance = null; // Tham chiếu DataTable tồn kho chưa có vị trí
 let noLocationTrendDetails = []; // Dữ liệu biểu đồ tồn kho chưa có vị trí 3 ngày gần nhất
 let previousDayNoLocationRecords = []; // Danh sách SN chưa có vị trí của ngày hôm trước
+let sapInOutRecords = []; // Dữ liệu chi tiết SAP In/Out
+let sapChartInstance = null; // Biểu đồ SAP In/Out
+let cioModalExportType = 'default'; // Loại dữ liệu đang hiển thị trong modal
 
 const RECEIVING_STATUS_URL = 'http://10.220.130.119:9090/api/RepairStatus/receiving-status';
 
@@ -335,79 +338,130 @@ async function updateNoLocationInventory(items = []) {
     }
 }
 
-// Hiển thị bảng chi tiết Check In/Out BEFORE/AFTER KANBAN
+// 🟦 Hàm hiển thị bảng chi tiết Check In/Out, SAP, Tồn kho...
 async function showCioModal(data, title, options = {}) {
     try {
-        const tableBody = document.querySelector('#cio-modal-table tbody');
-        if (!tableBody) {
-            console.error('Không tìm thấy tbody của bảng CheckInOut!');
-            return;
+        const tableElement = document.getElementById('cio-modal-table');
+        if (!tableElement) return console.error('Không tìm thấy bảng CheckInOut!');
+        const tableHead = tableElement.querySelector('thead');
+        const tableBody = tableElement.querySelector('tbody');
+        if (!tableHead || !tableBody) return console.error('Không tìm thấy cấu trúc bảng CheckInOut!');
+
+        // 🔹 1. Hủy DataTable cũ (nếu có) trước khi render lại
+        if ($.fn.DataTable.isDataTable('#cio-modal-table')) {
+            const dt = $('#cio-modal-table').DataTable();
+            dt.clear().destroy();
         }
 
+        // 🔹 2. Dọn sạch hoàn toàn header/body
+        tableHead.innerHTML = '';
         tableBody.innerHTML = '';
 
+        // 🔹 3. Chuẩn bị dữ liệu
+        const type = (options?.type || '').toString().toLowerCase();
+        cioModalExportType = type || 'default';
         const normalizedData = Array.isArray(data) ? data.map(item => ({ ...item })) : [];
         const { items: enrichedData } = await attachLocationInfo(normalizedData, { silent: true });
         cioModalData = enrichedData;
 
-        const shouldShowNoLocation = (options?.type || '').toString().toLowerCase() === 'tonkho';
-        const noLocationItems = shouldShowNoLocation ? enrichedData.filter(item => !item.location) : [];
+        // 🔹 4. Cấu hình các cột
+        const defaultColumns = [
+            { header: 'SFG', render: i => getValueIgnoreCase(i, 'SFG') || getValueIgnoreCase(i, 'SERIAL_NUMBER') || '' },
+            { header: 'FG', render: i => getValueIgnoreCase(i, 'FG') || '' },
+            { header: 'MO_NUMBER', render: i => getValueIgnoreCase(i, 'MO_NUMBER') || '' },
+            { header: 'MODEL_NAME', render: i => getValueIgnoreCase(i, 'MODEL_NAME') || '' },
+            { header: 'PRODUCT_LINE', render: i => getValueIgnoreCase(i, 'PRODUCT_LINE') || '' },
+            { header: 'WORK_FLAG', render: i => getValueIgnoreCase(i, 'WORK_FLAG') || '' },
+            { header: 'ERROR_FLAG', render: i => getValueIgnoreCase(i, 'ERROR_FLAG') || '' },
+            { header: 'LOCATION', render: i => i.location || getValueIgnoreCase(i, 'DATA18') || getValueIgnoreCase(i, 'LOCATION') || '' },
+            { header: 'AGING_HOURS', render: i => getValueIgnoreCase(i, 'AGING_HOURS') || '' },
+            { header: 'P_SENDER', render: i => getValueIgnoreCase(i, 'P_SENDER') || '' },
+            { header: 'IN_DATETIME', render: i => formatDateTimeDisplay(getValueIgnoreCase(i, 'IN_DATETIME')) },
+            { header: 'OUT_DATETIME', render: i => formatDateTimeDisplay(getValueIgnoreCase(i, 'OUT_DATETIME')) },
+            { header: 'REPAIRER', render: i => getValueIgnoreCase(i, 'REPAIRER') || '' },
+            { header: 'STATION_NAME', render: i => getValueIgnoreCase(i, 'STATION_NAME') || '' },
+            { header: 'ERROR_CODE', render: i => getValueIgnoreCase(i, 'ERROR_CODE') || '' },
+            { header: 'ERROR_DESC', render: i => getValueIgnoreCase(i, 'ERROR_DESC') || '' },
+            { header: 'TYPE', render: i => getValueIgnoreCase(i, 'CHECKIN_STATUS') || getValueIgnoreCase(i, 'TYPE') || '' }
+        ];
 
-        if ($.fn.DataTable.isDataTable('#cio-modal-table')) {
-            $('#cio-modal-table').DataTable().clear().destroy();
+        const sapColumns = [
+            { header: 'SERIAL_NUMBER', render: i => getValueIgnoreCase(i, 'SERIAL_NUMBER') || '' },
+            { header: 'GROUP_NAME', render: i => getValueIgnoreCase(i, 'GROUP_NAME') || '' },
+            { header: 'MODEL_NAME', render: i => getValueIgnoreCase(i, 'MODEL_NAME') || '' },
+            { header: 'PRODUCT_LINE', render: i => getValueIgnoreCase(i, 'PRODUCT_LINE') || '' },
+            { header: 'MO_NUMBER', render: i => getValueIgnoreCase(i, 'MO_NUMBER') || '' },
+            { header: 'IN_STATION_TIME', render: i => formatDateTimeDisplay(getValueIgnoreCase(i, 'IN_STATION_TIME')) },
+            { header: 'KEY_PART_NO', render: i => getValueIgnoreCase(i, 'KEY_PART_NO') || '' },
+            { header: 'SHIPPING_SN2', render: i => getValueIgnoreCase(i, 'SHIPPING_SN2') || '' },
+            { header: 'MSN', render: i => getValueIgnoreCase(i, 'MSN') || '' },
+            { header: 'ATE_STATION_NO', render: i => getValueIgnoreCase(i, 'ATE_STATION_NO') || '' },
+            { header: 'EMP_NO', render: i => getValueIgnoreCase(i, 'EMP_NO') || '' },
+            { header: 'WIP_GROUP', render: i => getValueIgnoreCase(i, 'WIP_GROUP') || '' },
+            { header: 'LOCATION', render: i => i.location || getValueIgnoreCase(i, 'LOCATION') || '' }
+        ];
+
+        const columns = type === 'sap' ? sapColumns : defaultColumns;
+
+        // 🔹 5. Render header
+        tableHead.innerHTML = `<tr>${columns.map(c => `<th>${c.header}</th>`).join('')}</tr>`;
+
+        // 🔹 6. Render body
+        if (enrichedData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center">Không có dữ liệu</td></tr>`;
+        } else {
+            const frag = document.createDocumentFragment();
+            enrichedData.forEach(item => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    const value = col.render(item) || '';
+                    td.textContent = truncateText(value.toString(), 60);
+                    td.title = value;
+                    tr.appendChild(td);
+                });
+                frag.appendChild(tr);
+            });
+            tableBody.appendChild(frag);
         }
 
-        enrichedData.forEach(item => {
-            const locationText = item.location || '';
-            const row = document.createElement('tr');
-            const sn = getValueIgnoreCase(item, 'SFG') || getValueIgnoreCase(item, 'SERIAL_NUMBER') || '';
-            row.innerHTML = `
-                <td>${sn || ''}</td>
-                <td>${getValueIgnoreCase(item, 'FG') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'MO_NUMBER') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'MODEL_NAME') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'PRODUCT_LINE') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'WORK_FLAG') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'ERROR_FLAG') || ''}</td>
-                <td>${locationText}</td>
-                <td>${getValueIgnoreCase(item, 'AGING_HOURS') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'P_SENDER') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'IN_DATETIME') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'OUT_DATETIME') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'REPAIRER') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'STATION_NAME') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'ERROR_CODE') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'ERROR_DESC') || ''}</td>
-                <td>${getValueIgnoreCase(item, 'CHECKIN_STATUS') || getValueIgnoreCase(item, 'TYPE') }</td>`;
-            tableBody.appendChild(row);
-        });
-
-        if (normalizedData.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = "<td colspan='17'>Không có dữ liệu</td>";
-            tableBody.appendChild(emptyRow);
-        }
-
-        if (shouldShowNoLocation) {
-            renderNoLocationTable(noLocationItems);
-        }
-
+        // 🔹 7. Khởi tạo DataTable (sau khi DOM ổn định)
+        tableElement.offsetHeight; // Force reflow
         $('#cio-modal-table').DataTable({
             paging: true,
             searching: true,
             ordering: false,
             scrollX: true,
-            autoWidth: false,
-            destroy: true
+            autoWidth: false
         });
 
+        // 🔹 8. Cập nhật tiêu đề và hiển thị modal
+        if (document.activeElement) document.activeElement.blur(); // tránh lỗi aria-hidden
         const titleEl = document.getElementById('cioModalLabel');
         if (titleEl) titleEl.textContent = title;
-        if (cioModalInstance) cioModalInstance.show();
+        setTimeout(() => {
+            if (cioModalInstance) cioModalInstance.show();
+        }, 100);
+
     } catch (error) {
         console.error('Lỗi hiển thị bảng CheckInOut:', error);
     }
 }
+
+// 🟩 Dọn sạch DataTable mỗi khi modal đóng (fix triệt để lỗi chuyển loại)
+document.addEventListener('DOMContentLoaded', () => {
+    const cioModal = document.getElementById('cioModal');
+    if (cioModal) {
+        cioModal.addEventListener('hidden.bs.modal', () => {
+            if ($.fn.DataTable.isDataTable('#cio-modal-table')) {
+                const dt = $('#cio-modal-table').DataTable();
+                dt.clear().destroy();
+            }
+            $('#cio-modal-table thead').empty();
+            $('#cio-modal-table tbody').empty();
+        });
+    }
+});
 
 // Hàm gọi API và vẽ biểu đồ trạng thái
 async function loadStatusChart() {
@@ -570,92 +624,172 @@ async function loadStatusChart() {
     }
 }
 
-// Hàm gọi API và vẽ biểu đồ TOP MODEL
-async function fetchChartData() {
-    try {
-        const response = await fetch("http://10.220.130.119:9090/api/DataChart/getCountModelName");
-        if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
-
-        const data = await response.json();
-        console.log("Dữ liệu API (Model):", data);
-
-        if (!data || !data.models || !Array.isArray(data.models)) {
-            console.error("API không trả về dữ liệu hợp lệ", data);
-            return;
-        }
-
-        const categories = data.models.map(item => item.modelName);
-        const seriesData = data.models.map(item => item.totalCount);
-        const totalAllModels = data.totalAllModels || 1;
-        const lineData = seriesData.map(value => parseFloat(((value / totalAllModels) * 100).toFixed(2)));
-
-        Highcharts.chart('container', {
-            chart: { zoomType: 'xy', height: null, backgroundColor: '#ffffff' },
-            xAxis: {
-                categories: categories,
-                labels: {
-                    style: { color: '#000000', fontSize: '10px' },
-                    formatter: function () {
-                        return this.value.length > 6 ? this.value.substring(0, 6) + '...' : this.value;
-                    }
-                }
-            },
-            yAxis: [{
-                title: { text: 'Số lượng', style: { color: '#000000' } },
-                labels: { style: { color: '#000000' } },
-                tickInterval: 500
-            }, {
-                title: { text: 'Tỷ lệ (%)', style: { color: '#000000' } },
-                labels: { style: { color: '#000000' }, format: '{value}%' },
-                opposite: true,
-                min: 0,
-                max: 100,
-                tickInterval: 10
-            }],
-            tooltip: { shared: true, backgroundColor: 'rgba(0, 0, 0, 0.8)', style: { color: '#FFFFFF' } },
-            legend: { enabled: false },
-            plotOptions: {
-                column: {
-                    borderRadius: 5,
-                    pointWidth: 25,
-                    dataLabels: { enabled: true, style: { color: '#000000' } },
-                    pointPadding: 0.1,
-                    groupPadding: 0.1,
-                    borderRadiusBottomLeft: 10,
-                    borderRadiusBottomRight: 10
-                },
-                spline: {
-                    dataLabels: {
-                        enabled: true,
-                        style: { color: '#000000' },
-                        formatter: function () { return this.y.toFixed(2) + "%"; }
-                    },
-                    marker: { enabled: true, symbol: 'circle', radius: 4 },
-                    lineWidth: 2,
-                    color: '#00E5FF'
-                }
-            },
-            series: [{
-                name: "Số lượng",
-                type: 'column',
-                data: seriesData,
-                color: '#FF9800'
-            }, {
-                name: "Tỷ lệ (%)",
-                type: 'spline',
-                data: lineData,
-                yAxis: 1
-            }]
-        });
-    } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-    }
-}
-
 // Format datetime cho input type="datetime-local"
 function formatDateTime(dt) {
     const pad = (n) => n.toString().padStart(2, "0");
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+function safeParseDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) {
+        return isNaN(value) ? null : value;
+    }
+
+    const parsed = new Date(value);
+    return isNaN(parsed) ? null : parsed;
+}
+
+function formatDateTimeDisplay(value) {
+    const date = safeParseDate(value);
+    if (!date) {
+        return value || '';
+    }
+
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function aggregateSapRecordsByDate(records = []) {
+    const pad = (n) => n.toString().padStart(2, '0');
+    const map = new Map();
+
+    (records || []).forEach(item => {
+        const groupName = (getValueIgnoreCase(item, 'GROUP_NAME') || '').toString().toUpperCase();
+        if (!['B28M', 'B30M', 'B36R'].includes(groupName)) {
+            return;
+        }
+
+        const date = safeParseDate(getValueIgnoreCase(item, 'IN_STATION_TIME'));
+        if (!date) {
+            return;
+        }
+
+        const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+        if (!map.has(key)) {
+            map.set(key, { date, B28M: 0, B30M: 0, B36R: 0 });
+        }
+
+        const entry = map.get(key);
+        entry[groupName] = (entry[groupName] || 0) + 1;
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.date - b.date);
+}
+
+function renderSapInOutChart(records = [], options = {}) {
+    const chartElement = document.getElementById('sapInOutChart');
+    if (!chartElement) {
+        return;
+    }
+
+    if (sapChartInstance) {
+        sapChartInstance.destroy();
+        sapChartInstance = null;
+    }
+
+    const { startDate, endDate } = options;
+    const start = safeParseDate(startDate);
+    const end = safeParseDate(endDate);
+
+    if (!Array.isArray(records) || records.length === 0) {
+        chartElement.innerHTML = "<div class='text-center text-muted py-5'>Không có dữ liệu</div>";
+        return;
+    }
+
+    const aggregated = aggregateSapRecordsByDate(records);
+    if (!aggregated.length) {
+        chartElement.innerHTML = "<div class='text-center text-muted py-5'>Không có dữ liệu</div>";
+        return;
+    }
+
+    chartElement.innerHTML = '';
+
+    const pad = (n) => n.toString().padStart(2, '0');
+    const categories = aggregated.map(item => `${pad(item.date.getDate())}/${pad(item.date.getMonth() + 1)}`);
+
+    sapChartInstance = Highcharts.chart('sapInOutChart', {
+        chart: { type: 'column', backgroundColor: '#ffffff' },
+        title: { text: null },
+        subtitle: { text: start && end ? formatDisplayRange(start, end) : null },
+        xAxis: {
+            categories,
+            crosshair: true,
+            labels: { style: { color: '#000000' } }
+        },
+        yAxis: {
+            min: 0,
+            title: { text: 'Số lượng' }
+        },
+        tooltip: {
+            shared: true,
+            formatter: function () {
+                let tooltip = `<b>${this.x}</b><br/>`;
+                this.points.forEach(point => {
+                    tooltip += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br/>`;
+                });
+                return tooltip;
+            }
+        },
+        legend: { enabled: true },
+        plotOptions: {
+            column: {
+                pointPadding: 0.1,
+                groupPadding: 0.15,
+                borderRadius: 4,
+                dataLabels: {
+                    enabled: true,
+                    style: { color: '#000000', fontWeight: 'bold' }
+                }
+            }
+        },
+        series: [
+            { name: 'B28M', data: aggregated.map(item => item.B28M || 0), color: '#0288D1' },
+            { name: 'B30M', data: aggregated.map(item => item.B30M || 0), color: '#FF7043' },
+            { name: 'B36R', data: aggregated.map(item => item.B36R || 0), color: '#7B1FA2' }
+        ]
+    });
+}
+
+async function fetchSapInOutData(startDate, endDate) {
+    const result = { records: [], total: 0 };
+    if (!startDate || !endDate) {
+        return result;
+    }
+
+    try {
+        const url = new URL('http://10.220.130.119:9090/api/CheckInOut/GetSAPInOut');
+        url.searchParams.append('startDate', startDate);
+        url.searchParams.append('endDate', endDate);
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`GetSAPInOut error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const groups = data?.groups || data?.Groups || [];
+        const records = [];
+
+        groups.forEach(group => {
+            const groupName = group?.GroupName || group?.groupName || '';
+            const details = group?.Details || group?.details || [];
+
+            (details || []).forEach(detail => {
+                records.push({
+                    ...detail,
+                    GROUP_NAME: getValueIgnoreCase(detail, 'GROUP_NAME') || groupName
+                });
+            });
+        });
+
+        result.records = records;
+        result.total = typeof data?.total === 'number' ? data.total : records.length;
+    } catch (error) {
+        console.error('fetchSapInOutData error:', error);
+    }
+
+    return result;
 }
 
 // Hàm vẽ biểu đồ CHECK IN/ CHECKOUT BEFORE/AFTER
@@ -717,11 +851,16 @@ async function loadCheckInOutChart() {
         const tonKhoCombined = [...tonKhoSummaryBefore, ...tonKhoSummaryAfter];
         await updateNoLocationInventory(tonKhoCombined);
 
+        const sapResult = await fetchSapInOutData(startDate, endDate);
+        sapInOutRecords = Array.isArray(sapResult.records) ? [...sapResult.records] : [];
+        renderSapInOutChart(sapInOutRecords, { startDate, endDate });
+        const sapTotal = typeof sapResult.total === 'number' ? sapResult.total : sapInOutRecords.length;
+
         // === Chart Before vs After ===
         Highcharts.chart('checkInBeforeAfer', {
             chart: { type: 'column', backgroundColor: '#ffffff' },
             title: { text: null },
-            xAxis: { categories: ['CheckIn Before', 'CheckIn After', 'Tồn kho'] },
+            xAxis: { categories: ['CheckIn Before', 'CheckIn After', 'Tồn kho', 'SAP In'] },
             yAxis: { title: { text: 'Số lượng' } },
             plotOptions: {
                 column: {
@@ -741,9 +880,10 @@ async function loadCheckInOutChart() {
             series: [{
                 name: 'Số lượng',
                 data: [
-                    { y: checkInBefore.length, color: '#00E5FF', custom: { records: checkInBefore, title: 'Danh sách Check In Before', type: 'before' } },
-                    { y: checkInAfter.length, color: '#FF5722', custom: { records: checkInAfter, title: 'Danh sách Check In After', type: 'after' } },
-                    { y: tonKhoCombined.length, color: '#4CAF50', custom: { records: tonKhoCombined, title: 'Danh sách tồn kho', type: 'tonKho' } }
+                    { y: checkInBefore.length, color: '#00E5FF', custom: { records: checkInBefore, title: 'Danh sách Check In Before', type: 'default' } },
+                    { y: checkInAfter.length, color: '#FF5722', custom: { records: checkInAfter, title: 'Danh sách Check In After', type: 'default' } },
+                    { y: tonKhoCombined.length, color: '#4CAF50', custom: { records: tonKhoCombined, title: 'Danh sách tồn kho', type: 'default' } },
+                    { y: sapTotal, color: '#673AB7', custom: { records: sapInOutRecords, title: 'Danh sách SN vào SAP', type: 'sap' } }
                 ]
             }]
         });
@@ -1007,7 +1147,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Gọi API và vẽ biểu đồ
     loadStatusChart().catch(error => console.error("Error loading status chart:", error));
-    fetchChartData().catch(error => console.error("Error loading model chart:", error));
     loadNoLocationTrendChart().catch(error => console.error('Error loading no-location trend chart:', error));
     loadPreviousDayReport().catch(error => console.error('Error loading previous day report:', error));
 
@@ -1095,29 +1234,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const worksheetData = cioModalData.map(item => ({
-                "SERIAL_NUMBER": getValueIgnoreCase(item, 'SERIAL_NUMBER') || getValueIgnoreCase(item, 'SFG'),
-                "MODEL_NAME": getValueIgnoreCase(item, 'MODEL_NAME'),
-                "PRODUCT_LINE": getValueIgnoreCase(item, 'PRODUCT_LINE'),
-                "LOCATION": getValueIgnoreCase(item, 'LOCATION'),
-                "PERSON_IN": getValueIgnoreCase(item, 'P_SENDER'),
-                "IN_DATE": getValueIgnoreCase(item, 'IN_DATETIME'),
-                "WIP_GROUP": getValueIgnoreCase(item, 'WIP_GROUP'),
-                "ERROR_FLAG": getValueIgnoreCase(item, 'ERROR_FLAG'),
-                "WORK_FLAG": getValueIgnoreCase(item, 'WORK_FLAG'),
-                "OUT_DATE": getValueIgnoreCase(item, 'OUT_DATETIME'),
-                "REPAIRER": getValueIgnoreCase(item, 'REPAIRER'),
-                "STATION": getValueIgnoreCase(item, 'STATION_NAME'),
-                "ERROR_CODE": getValueIgnoreCase(item, 'ERROR_CODE'),
-                "ERROR_DESC": getValueIgnoreCase(item, 'ERROR_DESC'),
-                "TYPE": getValueIgnoreCase(item, 'CHECKIN_STATUS') || item.__sourceType || ''
-            }));
+            let worksheetData = [];
+            let sheetName = 'CheckInOut';
+            let filePrefix = 'CheckInOut';
+
+            if (cioModalExportType === 'sap') {
+                worksheetData = cioModalData.map(item => ({
+                    "SERIAL_NUMBER": getValueIgnoreCase(item, 'SERIAL_NUMBER') || '',
+                    "GROUP_NAME": getValueIgnoreCase(item, 'GROUP_NAME') || '',
+                    "MODEL_NAME": getValueIgnoreCase(item, 'MODEL_NAME') || '',
+                    "PRODUCT_LINE": getValueIgnoreCase(item, 'PRODUCT_LINE') || '',
+                    "MO_NUMBER": getValueIgnoreCase(item, 'MO_NUMBER') || '',
+                    "IN_STATION_TIME": formatDateTimeDisplay(getValueIgnoreCase(item, 'IN_STATION_TIME')),
+                    "KEY_PART_NO": getValueIgnoreCase(item, 'KEY_PART_NO') || '',
+                    "SHIPPING_SN2": getValueIgnoreCase(item, 'SHIPPING_SN2') || '',
+                    "MSN": getValueIgnoreCase(item, 'MSN') || '',
+                    "ATE_STATION_NO": getValueIgnoreCase(item, 'ATE_STATION_NO') || '',
+                    "EMP_NO": getValueIgnoreCase(item, 'EMP_NO') || '',
+                    "WIP_GROUP": getValueIgnoreCase(item, 'WIP_GROUP') || '',
+                    "LOCATION": getValueIgnoreCase(item, 'LOCATION') || ''
+                }));
+                sheetName = 'SAPInOut';
+                filePrefix = 'SAPInOut';
+            } else {
+                worksheetData = cioModalData.map(item => ({
+                    "SERIAL_NUMBER": getValueIgnoreCase(item, 'SERIAL_NUMBER') || getValueIgnoreCase(item, 'SFG'),
+                    "MODEL_NAME": getValueIgnoreCase(item, 'MODEL_NAME'),
+                    "PRODUCT_LINE": getValueIgnoreCase(item, 'PRODUCT_LINE'),
+                    "LOCATION": getValueIgnoreCase(item, 'LOCATION'),
+                    "PERSON_IN": getValueIgnoreCase(item, 'P_SENDER'),
+                    "IN_DATE": formatDateTimeDisplay(getValueIgnoreCase(item, 'IN_DATETIME')),
+                    "WIP_GROUP": getValueIgnoreCase(item, 'WIP_GROUP'),
+                    "ERROR_FLAG": getValueIgnoreCase(item, 'ERROR_FLAG'),
+                    "WORK_FLAG": getValueIgnoreCase(item, 'WORK_FLAG'),
+                    "OUT_DATE": formatDateTimeDisplay(getValueIgnoreCase(item, 'OUT_DATETIME')),
+                    "REPAIRER": getValueIgnoreCase(item, 'REPAIRER'),
+                    "STATION": getValueIgnoreCase(item, 'STATION_NAME'),
+                    "ERROR_CODE": getValueIgnoreCase(item, 'ERROR_CODE'),
+                    "ERROR_DESC": getValueIgnoreCase(item, 'ERROR_DESC'),
+                    "TYPE": getValueIgnoreCase(item, 'CHECKIN_STATUS') || item.__sourceType || ''
+                }));
+            }
 
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-            XLSX.utils.book_append_sheet(workbook, worksheet, "CheckInOut");
-            XLSX.writeFile(workbook, `CheckInOut_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            console.log("Excel exported successfully with Check In/Out data");
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+            XLSX.writeFile(workbook, `${filePrefix}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            console.log(`Excel exported successfully with ${sheetName} data`);
         });
     }
 
