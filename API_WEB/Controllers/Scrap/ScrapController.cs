@@ -651,7 +651,7 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = $"Các SN sau không tồn tại trong bảng ScrapList: {string.Join(", ", nonExistingSNs)}" });
                 }
 
-                // Kiểm tra trạng thái ApplyTaskStatus của các SN
+                // Kiểm tra trạng thái ApplyTaskStatus của các SN: chỉ chấp nhận các giá trị khác 2, 4, 8
                 var rejectedSNs = new List<string>();
                 var validSNs = new List<ScrapList>();
 
@@ -664,16 +664,6 @@ namespace API_WEB.Controllers.Scrap
                             2 => "đang chờ SPE approve scrap",
                             4 => "đang chờ approved thay BGA",
                             8 => "lỗi process, không thể sửa chữa",
-                            _ => $"trạng thái không hợp lệ ({sn.ApplyTaskStatus})"
-                        };
-                        rejectedSNs.Add($"{sn.SN} ({reason})");
-                    }
-                    else if (sn.ApplyTaskStatus != 0 && sn.ApplyTaskStatus != 3)
-                    {
-                        string reason = sn.ApplyTaskStatus switch
-                        {
-                            1 => "đã có task",
-                            2 => "đang chờ SPE approve scrap",
                             _ => $"trạng thái không hợp lệ ({sn.ApplyTaskStatus})"
                         };
                         rejectedSNs.Add($"{sn.SN} ({reason})");
@@ -691,7 +681,7 @@ namespace API_WEB.Controllers.Scrap
 
                 if (!validSNs.Any())
                 {
-                    return BadRequest(new { message = "Không có SN nào hợp lệ để tạo task (yêu cầu ApplyTaskStatus = 0 hoặc 3)." });
+                    return BadRequest(new { message = "Không có SN nào hợp lệ để tạo task." });
                 }
 
                 // Tạo danh sách SN để gửi đến API bên thứ ba
