@@ -1,5 +1,26 @@
-﻿let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
+let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
 let selectedHistoryInternalTasks = new Set(); // Cho HISTORY_APPLY
+
+function formatPurpose(purpose) {
+    if (purpose === null || purpose === undefined) {
+        return "N/A";
+    }
+
+    const normalized = String(purpose).trim();
+    if (!normalized) {
+        return "N/A";
+    }
+
+    const purposeMap = {
+        "0": "SPE approve to scrap",
+        "1": "Scrap to quarterly",
+        "2": "Approved to engineer sample",
+        "3": "Approved to master board",
+        "4": "Approved to BGA"
+    };
+
+    return purposeMap[normalized] ?? normalized;
+}
 
 // Hàm ẩn tất cả form và khu vực kết quả
 function hideAllElements() {
@@ -197,6 +218,17 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
 
     data.forEach(item => {
         const isChecked = currentSelectedSet.has(item.internalTask) ? 'checked' : '';
+        const isHistory = checkboxName === "history-task-checkbox";
+        const purposeText = formatPurpose(item.purpose);
+        const timelineValue = isHistory ? (item.applyTime || "N/A") : (item.applyTaskStatus || "N/A");
+        const statusOrQty = isHistory ? (item.applyTaskStatus || "N/A") : (item.totalQty || "N/A");
+        const purposeColumn = isHistory
+            ? ""
+            : `<td data-bs-toggle="tooltip" data-bs-title="${purposeText}">${purposeText}</td>`;
+        const extraQtyColumn = isHistory
+            ? `<td data-bs-toggle="tooltip" data-bs-title="${item.totalQty || 'N/A'}">${item.totalQty || "N/A"}</td>`
+            : "";
+
         const row = `
             <tr>
                 <td class="checkbox-column"><input type="checkbox" name="${checkboxName}" value="${item.internalTask}" ${isChecked}></td>
@@ -206,11 +238,12 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
                 <td data-bs-toggle="tooltip" data-bs-title="${item.kanBanStatus || 'N/A'}">${item.kanBanStatus || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.category || 'N/A'}">${item.category || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.remark || 'N/A'}">${item.remark || "N/A"}</td>
+                ${purposeColumn}
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createTime || 'N/A'}">${item.createTime || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createBy || 'N/A'}">${item.createBy || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTime || 'N/A') : (item.applyTaskStatus || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTime || "N/A") : (item.applyTaskStatus || "N/A")}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTaskStatus || 'N/A') : (item.totalQty || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTaskStatus || "N/A") : (item.totalQty || "N/A")}</td>
-                ${checkboxName === "history-task-checkbox" ? `<td data-bs-toggle="tooltip" data-bs-title="${item.totalQty || 'N/A'}">${item.totalQty || "N/A"}</td>` : ""}
+                <td data-bs-toggle="tooltip" data-bs-title="${timelineValue}">${timelineValue}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${statusOrQty}">${statusOrQty}</td>
+                ${extraQtyColumn}
             </tr>
         `;
         tableBody.insertAdjacentHTML('beforeend', row);
