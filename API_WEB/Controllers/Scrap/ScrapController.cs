@@ -447,27 +447,32 @@ namespace API_WEB.Controllers.Scrap
             {
                 var threeMonthsAgo = DateTime.Now.AddMonths(-3);
 
-                var scrapData = await _sqlContext.ScrapLists
+                var recentScrapRecords = await _sqlContext.ScrapLists
                     .Where(s => !string.IsNullOrWhiteSpace(s.InternalTask) && s.InternalTask != "N/A")
                     .Where(s => s.CreateTime >= threeMonthsAgo)
+                    .ToListAsync();
+
+                var scrapData = recentScrapRecords
                     .GroupBy(s => s.InternalTask)
                     .Select(g =>
                     {
-                        var latestRecord = g.OrderByDescending(x => x.CreateTime).FirstOrDefault();
+                        var latestRecord = g
+                            .OrderByDescending(x => x.CreateTime)
+                            .FirstOrDefault();
 
                         return new
                         {
                             InternalTask = g.Key,
-                            Description = latestRecord != null ? latestRecord.Desc : null,
-                            ApproveScrapPerson = latestRecord != null ? latestRecord.ApproveScrapperson : null,
-                            KanBanStatus = latestRecord != null ? latestRecord.KanBanStatus : null,
-                            Category = latestRecord != null ? latestRecord.Category : null,
-                            Remark = latestRecord != null ? latestRecord.Remark : null,
-                            Purpose = latestRecord != null ? latestRecord.Purpose : null,
-                            LatestCreateTime = latestRecord != null ? latestRecord.CreateTime : DateTime.MinValue,
-                            CreateTime = latestRecord != null ? latestRecord.CreateTime.ToString("yyyy-MM-dd") : null,
-                            CreateBy = latestRecord != null ? latestRecord.CreatedBy : null,
-                            ApplyTaskStatus = latestRecord != null ? latestRecord.ApplyTaskStatus : 0,
+                            Description = latestRecord?.Desc,
+                            ApproveScrapPerson = latestRecord?.ApproveScrapperson,
+                            KanBanStatus = latestRecord?.KanBanStatus,
+                            Category = latestRecord?.Category,
+                            Remark = latestRecord?.Remark,
+                            Purpose = latestRecord?.Purpose,
+                            LatestCreateTime = latestRecord?.CreateTime ?? DateTime.MinValue,
+                            CreateTime = latestRecord?.CreateTime.ToString("yyyy-MM-dd"),
+                            CreateBy = latestRecord?.CreatedBy,
+                            ApplyTaskStatus = latestRecord?.ApplyTaskStatus ?? 0,
                             TotalQty = g.Count()
                         };
                     })
@@ -486,7 +491,7 @@ namespace API_WEB.Controllers.Scrap
                         item.ApplyTaskStatus,
                         item.TotalQty
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 if (!scrapData.Any())
                 {
