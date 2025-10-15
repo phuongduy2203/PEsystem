@@ -1,83 +1,184 @@
-﻿@* File: Areas/Allpart/Views/ScanATestB/Index.cshtml *@
+@* File: Areas/Allpart/Views/ScanATestB/Index.cshtml *@
 @{
     ViewData["Title"] = "Check ULT data";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/YRDCLC.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin ULT</h1>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">Kiểm tra dữ liệu ULT</h1>
+        <p class="text-muted mb-0">Theo dõi kết quả ULT với giao diện sáng, hài hòa sắc xanh NVIDIA.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <!-- Ô nhập danh sách SN/ULT -->
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber/ULT"></textarea>
-            </div>
 
-            <!-- Chọn kiểu tra cứu -->
-            <div class="col-md-2">
-                <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
-                <select id="type-options" class="form-select">
+    <div class="nvidia-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label fw-semibold" for="serialNumber">SerialNumber / ULT</label>
+                <textarea id="serialNumber" class="form-control nvidia-control" rows="3" placeholder="Nhập SerialNumber/ULT"></textarea>
+            </div>
+            <div class="col-lg-2">
+                <label for="type-options" class="form-label fw-semibold">Chọn kiểu tra cứu</label>
+                <select id="type-options" class="form-select nvidia-control">
                     <option selected disabled>SELECT TYPE</option>
                     <option value="SN">Tra cứu theo SN</option>
                     <option value="ULT">Tra cứu theo ULT</option>
                 </select>
             </div>
-
-            <!-- Chế độ hiển thị: ALL vs NEWEST -->
-            <div class="col-md-2">
-                <label for="view-mode" class="form-label">Chế độ hiển thị</label>
-                <select id="view-mode" class="form-select" title="Chọn dữ liệu cho bảng và xuất Excel">
+            <div class="col-lg-2">
+                <label for="view-mode" class="form-label fw-semibold">Chế độ hiển thị</label>
+                <select id="view-mode" class="form-select nvidia-control" title="Chọn dữ liệu cho bảng và xuất Excel">
                     <option value="all" selected>Tất cả dữ liệu</option>
                     <option value="latest">Kết quả mới nhất (mỗi SN)</option>
                 </select>
             </div>
-
-            <!-- Nút hành động -->
-            <div class="col-md-2 d-flex flex-column gap-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-lg-3 d-flex gap-2 align-items-end">
+                <button onclick="search()" class="btn btn-nvidia flex-fill">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia flex-fill">
+                    <i class="fas fa-file-excel me-2"></i>Tải Excel
+                </button>
             </div>
         </div>
 
-        <div class="mt-4">
-            <div class="table-responsive align-items-center">
-                <table id="ULTDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>GROUP_NAME</th>
-                            <th>TEST_TIME</th>
-                            <th>ULT</th>
-                            <th>STATION_NAME</th>
-                            <th>TEST_ON</th>
-                            <th>TEST_OFF</th>
-                            <th>TEST_RESULT</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ULTDataTableBody"></tbody>
-                </table>
-            </div>
+        <div class="nvidia-table-wrapper mt-4">
+            <table id="ULTDataTable" class="table table-hover align-middle nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>GROUP_NAME</th>
+                        <th>TEST_TIME</th>
+                        <th>ULT</th>
+                        <th>STATION_NAME</th>
+                        <th>TEST_ON</th>
+                        <th>TEST_OFF</th>
+                        <th>TEST_RESULT</th>
+                    </tr>
+                </thead>
+                <tbody id="ULTDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        // === State ===
-        let rawResults = [];   // Dữ liệu gốc từ API
-        let tableData = [];   // Dữ liệu đang hiển thị / export
-        let dataTable;         // Tham chiếu DataTable
+    <style>
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-dark: #0f2410;
+        }
 
-        // === Tooltip helpers ===
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f2f9ee 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(15, 36, 16, 0.08);
+        }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(15, 36, 16, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.18);
+        }
+
+        .nvidia-control {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-control:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.2rem;
+            border: none;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .btn-outline-nvidia {
+            background: #fff;
+            border: 1px solid var(--nvidia-green);
+            color: var(--nvidia-green);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-nvidia:hover {
+            background: var(--nvidia-green);
+            color: #fff;
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.25);
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            max-width: 220px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <script>
+        let rawResults = [];
+        let tableData = [];
+        let dataTable;
+
         function createTooltipCell(data) {
             const v = data ?? '';
             return `<span class="tooltip-trigger" data-tooltip="${escapeHtml(String(v))}">${escapeHtml(String(v))}</span>`;
         }
+
         function attachTooltipEvents() {
             document.querySelectorAll('.tooltip-trigger').forEach(el => {
                 if (el.dataset.tooltipBound) return;
@@ -108,7 +209,6 @@
             });
         }
 
-        // Tránh XSS trong tooltip/cell
         function escapeHtml(s) {
             return s
                 .replaceAll('&', '&amp;')
@@ -118,7 +218,6 @@
                 .replaceAll("'", '&#39;');
         }
 
-        // === Date helpers ===
         function formatDateTime(dateTime) {
             if (!dateTime) return '';
             const d = new Date(dateTime);
@@ -128,6 +227,7 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${y}/${m}/${day}`;
         }
+
         function toTime(row) {
             const t = Date.parse(row?.TEST_TIME);
             return !Number.isNaN(t) ? t : -Infinity;
@@ -148,7 +248,6 @@
             return Array.from(bySn.values());
         }
 
-        // === Render ===
         function renderTable(rows) {
             if (!dataTable) return;
             dataTable.clear();
@@ -160,111 +259,104 @@
                     createTooltipCell(r.TEST_TIME ?? ''),
                     createTooltipCell(r.ULT ?? ''),
                     createTooltipCell(r.STATION_NAME ?? ''),
-                    createTooltipCell(r.TEST_ON ?? ''),
-                    createTooltipCell(r.TEST_OFF ?? ''),
+                    createTooltipCell(formatDateTime(r.TEST_ON)),
+                    createTooltipCell(formatDateTime(r.TEST_OFF)),
                     createTooltipCell(r.TEST_RESULT ?? '')
                 ]);
             });
             dataTable.draw();
             attachTooltipEvents();
         }
-        function applyViewAndRender() {
-            const mode = document.getElementById('view-mode').value;
-            if (mode === 'latest') {
-                tableData = getLatestPerSN(rawResults);
-            } else {
-                tableData = [...rawResults];
+
+        function applyViewMode(mode) {
+            if (!rawResults || rawResults.length === 0) {
+                tableData = [];
+                renderTable(tableData);
+                return;
             }
+
+            tableData = mode === 'latest' ? getLatestPerSN(rawResults) : [...rawResults];
             renderTable(tableData);
         }
 
-        // === Search ===
         async function search() {
-            const inputRaw = document.getElementById('serialNumber').value.trim();
-            const typeOption = document.getElementById('type-options').value;
+            const snText = document.getElementById('serialNumber').value.trim();
+            const type = document.getElementById('type-options').value;
+            const viewMode = document.getElementById('view-mode').value;
 
-            if (!inputRaw) { alert('Vui lòng nhập ít nhất một giá trị.'); return; }
-            if (!typeOption || typeOption === 'SELECT TYPE') { alert('Vui lòng chọn kiểu tra cứu.'); return; }
-
-            const inputList = inputRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-            if (inputList.length === 0) { alert('Danh sách trống.'); return; }
-
-            // Loading overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'loading-overlay';
-            overlay.innerHTML = `<div class="spinner"></div><div>Đang tải dữ liệu, vui lòng chờ...</div>`;
-            document.body.appendChild(overlay);
-
-            try {
-                let allResults = [];
-                const batchSize = 100;
-                const url = 'http://10.220.130.119:9090/api/SFC/search-ult-data';
-
-                for (let i = 0; i < inputList.length; i += batchSize) {
-                    const batch = inputList.slice(i, i + batchSize);
-                    const body = {
-                        type: typeOption,
-                        data: batch
-                    };
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    if (!res.ok) throw new Error(`Lỗi API: ${res.status} - ${await res.text()}`);
-                    const json = await res.json();
-                    if (!Array.isArray(json)) throw new Error('Dữ liệu trả về không hợp lệ.');
-                    allResults = allResults.concat(json);
-                }
-
-                rawResults = allResults;
-                if (rawResults.length === 0) {
-                    alert('Không tìm thấy dữ liệu cho các thông tin đã nhập.');
-                }
-                applyViewAndRender();
-            } catch (err) {
-                alert(`Đã xảy ra lỗi: ${err.message}`);
-            } finally {
-                overlay.remove();
-            }
-        }
-
-        // === Export ===
-        function downloadExcel() {
-            if (!tableData || tableData.length === 0) {
-                alert('Không có dữ liệu để xuất Excel.');
+            if (!snText || !type || type === 'SELECT TYPE') {
+                Swal.fire('Thông báo', 'Vui lòng nhập SerialNumber/ULT và chọn kiểu tra cứu.', 'warning');
                 return;
             }
-            const ws = XLSX.utils.json_to_sheet(tableData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'ULTData');
 
-            // Widths (tham khảo theo thứ tự cột)
-            ws['!cols'] = [
-                { wch: 22 }, // SERIAL_NUMBER
-                { wch: 15 }, // MODEL_NAME
-                { wch: 12 }, // GROUP_NAME
-                { wch: 20 }, // TEST_TIME
-                { wch: 20 }, // ULT
-                { wch: 30 }, // STATION_NAME
-                { wch: 12 }, // TEST_ON
-                { wch: 12 }, // TEST_OFF
-                { wch: 18 }  // TEST_RESULT
-            ];
-            XLSX.writeFile(wb, 'ULTData.xlsx');
+            const serialNumbers = snText.split('\n').map(s => s.trim()).filter(Boolean);
+            const requestBody = {
+                type,
+                serialNumbers
+            };
+
+            try {
+                Swal.fire({
+                    title: 'Đang tải dữ liệu...',
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false,
+                    showConfirmButton: false
+                });
+
+                const response = await fetch('http://10.220.130.119:9090/api/CheckInOut/get-ult', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error('API trả về lỗi: ' + response.status);
+                }
+
+                const result = await response.json();
+                Swal.close();
+
+                if (!result.success || !result.data || result.data.length === 0) {
+                    Swal.fire('Không có dữ liệu', 'Không tìm thấy dữ liệu phù hợp.', 'info');
+                    rawResults = [];
+                    applyViewMode(viewMode);
+                    return;
+                }
+
+                rawResults = result.data;
+                applyViewMode(viewMode);
+            } catch (error) {
+                Swal.close();
+                console.error(error);
+                Swal.fire('Lỗi', error.message, 'error');
+            }
         }
 
-        // === Init ===
-        $(document).ready(function () {
+        function downloadExcel() {
+            if (!tableData || tableData.length === 0) {
+                Swal.fire('Thông báo', 'Không có dữ liệu để tải xuống.', 'info');
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(tableData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'ULT');
+            XLSX.writeFile(workbook, `ULT_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
             dataTable = $('#ULTDataTable').DataTable({
-                pageLength: 10,
+                pageLength: 25,
                 scrollX: true,
                 responsive: true,
-                fixedHeader: true
+                destroy: true
             });
 
-            // Thay đổi chế độ hiển thị -> render lại từ rawResults
-            $('#view-mode').on('change', applyViewAndRender);
+            document.getElementById('view-mode').addEventListener('change', (event) => {
+                applyViewMode(event.target.value);
+            });
         });
     </script>
 }

@@ -1,32 +1,37 @@
-﻿@{
-    ViewData["Title"] = "History Error";
-}
 @{
+    ViewData["Title"] = "History Error";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin lịch sử lỗi</h1>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">Lịch sử lỗi</h1>
+        <p class="text-muted mb-0">Tra cứu lỗi sản phẩm nhanh chóng với giao diện sáng, nổi bật sắc xanh NVIDIA.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
+
+    <div class="nvidia-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label fw-semibold" for="serialNumber">Serial Number</label>
+                <textarea id="serialNumber" class="form-control nvidia-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
             </div>
-            <div class="col-md-2">
-                <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
-                <select id="type-options" class="form-select">
+            <div class="col-lg-3">
+                <label for="type-options" class="form-label fw-semibold">Kiểu tra cứu</label>
+                <select id="type-options" class="form-select nvidia-control">
                     <option selected disabled>SELECT TYPE</option>
                     <option value="1">Tra cứu theo SN-SFG</option>
                     <option value="2">Tra cứu theo SN-FG</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="search()" class="btn btn-nvidia w-100">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
             </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia w-100">
+                    <i class="fas fa-file-excel me-2"></i>Tải Excel
+                </button>
             </div>
         </div>
 
@@ -34,46 +39,119 @@
             <div class="loading-message">Đang tải dữ liệu...</div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>KEY_PART_SN</th>
-                            <th>MO_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>TEST_TIME</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_CODE</th>
-                            <th>DATA1</th>
-                            <th>REASON_CODE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
-            </div>
+        <div class="nvidia-table-wrapper mt-4">
+            <table id="historyDataTable" class="table table-hover align-middle nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>KEY_PART_SN</th>
+                        <th>MO_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>TEST_TIME</th>
+                        <th>TEST_GROUP</th>
+                        <th>TEST_CODE</th>
+                        <th>DATA1</th>
+                        <th>REASON_CODE</th>
+                    </tr>
+                </thead>
+                <tbody id="historyDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-dark: #102412;
         }
 
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f3faef 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(16, 36, 18, 0.08);
+        }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(16, 36, 18, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.18);
+        }
+
+        .nvidia-control {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-control:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
             color: #fff;
-            height: 100%;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            border: none;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
-            }
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .btn-outline-nvidia {
+            background: #fff;
+            border: 1px solid var(--nvidia-green);
+            color: var(--nvidia-green);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-nvidia:hover {
+            background: var(--nvidia-green);
+            color: #fff;
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.25);
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
 
         .custom-tooltip {
             position: absolute;
@@ -87,49 +165,6 @@
             max-width: 200px;
             word-wrap: break-word;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
-        }
-
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
-        }
-
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
-            resize: vertical;
-        }
-
-        .datatable-table th, .datatable-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
         }
 
         .loading-overlay {
@@ -155,181 +190,99 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
     </style>
-
     <script>
-        let tableData = []; // Lưu dữ liệu để xuất Excel
-        let dataTable; // Lưu tham chiếu đến DataTable
+        let tableData = [];
+        let historyTable = null;
 
-        // Hàm tạo nội dung cho ô với tooltip
-        function createTooltipCell(data) {
-            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = show ? 'flex' : 'none';
         }
 
-        // Hàm gắn sự kiện tooltip cho các phần tử
-        function attachTooltipEvents() {
-            $('.tooltip-trigger').each(function () {
-                const $this = $(this);
-                if (!$this.data('tooltip-initialized')) {
-                    $this.on('mouseover', function (e) {
-                        const tooltipText = $this.data('tooltip');
-                        if (tooltipText) {
-                            let tooltip = document.querySelector('.custom-tooltip');
-                            if (!tooltip) {
-                                tooltip = document.createElement('div');
-                                tooltip.className = 'custom-tooltip';
-                                document.body.appendChild(tooltip);
-                            }
-                            tooltip.textContent = tooltipText;
-                            tooltip.style.display = 'block';
-                            tooltip.style.left = (e.pageX + 10) + 'px';
-                            tooltip.style.top = (e.pageY - 20) + 'px';
-                        }
-                    }).on('mousemove', function (e) {
-                        const tooltip = document.querySelector('.custom-tooltip');
-                        if (tooltip && tooltip.style.display === 'block') {
-                            tooltip.style.left = (e.pageX + 10) + 'px';
-                            tooltip.style.top = (e.pageY - 20) + 'px';
-                        }
-                    }).on('mouseout', function () {
-                        const tooltip = document.querySelector('.custom-tooltip');
-                        if (tooltip) {
-                            tooltip.style.display = 'none';
-                        }
-                    });
-                    $this.data('tooltip-initialized', true);
-                }
-            });
-        }
+        function renderTable(data) {
+            tableData = data;
+            if (historyTable) {
+                historyTable.clear().rows.add(tableData).draw();
+                return;
+            }
 
-        $(document).ready(function () {
-            // Khởi tạo DataTable một lần duy nhất
-            dataTable = $('#historyDataTable').DataTable({
-                pageLength: 10,
+            historyTable = $('#historyDataTable').DataTable({
+                data: tableData,
+                columns: [
+                    { data: 'serial_Number' },
+                    { data: 'key_Part_Sn' },
+                    { data: 'mo_Number' },
+                    { data: 'model_Name' },
+                    { data: 'test_Time' },
+                    { data: 'test_Group' },
+                    { data: 'test_Code' },
+                    { data: 'data1' },
+                    { data: 'reason_Code' }
+                ],
+                pageLength: 25,
                 scrollX: true,
                 responsive: true,
-                fixedHeader: true
+                destroy: true
             });
-        });
+        }
 
         async function search() {
-            const serialNumbersText = document.getElementById('serialNumber').value.trim();
-            const typeValue = document.getElementById('type-options').value;
-            const loadingOverlay = document.getElementById('loading-overlay');
+            const serialNumberText = document.getElementById('serialNumber').value.trim();
+            const type = document.getElementById('type-options').value;
 
-            if (!serialNumbersText) {
-                alert('Vui lòng nhập ít nhất một Serial Number.');
+            if (!serialNumberText || type === 'SELECT TYPE') {
+                Swal.fire('Thông báo', 'Vui lòng nhập Serial Number và chọn kiểu tra cứu.', 'warning');
                 return;
             }
 
-            if (typeValue === 'SELECT TYPE') {
-                alert('Vui lòng chọn kiểu tra cứu.');
-                return;
-            }
-
-            const serialNumbers = serialNumbersText.split('\n').map(sn => sn.trim()).filter(sn => sn);
-            if (serialNumbers.length === 0) {
-                alert('Danh sách Serial Number không hợp lệ.');
-                return;
-            }
-
-            // Hiển thị thông báo tải
-            loadingOverlay.style.display = 'flex';
+            const serialNumbers = serialNumberText.split('\n').filter(s => s);
+            showLoading(true);
 
             try {
-                const response = await fetch('http://10.220.130.119:9090/api/SFC/history-error-by-sn', {
+                const response = await fetch('http://10.220.130.119:9090/api/CheckInOut/get-history-error', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        serialNumbers: serialNumbers,
-                        typeValue: parseInt(typeValue)
+                        type,
+                        serialNumbers
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${response.statusText}`);
+                    throw new Error('Không thể truy cập API.');
                 }
 
-                const data = await response.json();
-                tableData = data; // Lưu dữ liệu để xuất Excel
+                const result = await response.json();
 
-                // Xóa dữ liệu cũ trong DataTable
-                dataTable.clear();
-
-                if (data.length === 0) {
-                    alert('Không tìm thấy dữ liệu cho các Serial Number đã nhập.');
-                    dataTable.draw();
+                if (!result.success || !result.data || result.data.length === 0) {
+                    Swal.fire('Không có dữ liệu', 'Không tìm thấy lịch sử lỗi phù hợp.', 'info');
+                    if (historyTable) {
+                        historyTable.clear().draw();
+                    }
                     return;
                 }
 
-                // Thêm dữ liệu mới vào DataTable
-                data.forEach(row => {
-                    dataTable.row.add([
-                        createTooltipCell(row.SERIAL_NUMBER || ''),
-                        createTooltipCell(row.KEY_PART_SN || ''),
-                        createTooltipCell(row.MO_NUMBER || ''),
-                        createTooltipCell(row.MODEL_NAME || ''),
-                        createTooltipCell(row.TEST_TIME || ''),
-                        createTooltipCell(row.TEST_GROUP || ''),
-                        createTooltipCell(row.TEST_CODE || ''),
-                        createTooltipCell(row.DATA1 || ''),
-                        createTooltipCell(row.REASON_CODE || '')
-                    ]);
-                });
-
-                // Vẽ lại bảng
-                dataTable.draw();
-
-                // Gắn lại sự kiện tooltip
-                attachTooltipEvents();
-
+                renderTable(result.data);
             } catch (error) {
-                console.error('Error:', error);
-                alert(`Đã xảy ra lỗi: ${error.message}`);
+                console.error(error);
+                Swal.fire('Lỗi', error.message, 'error');
             } finally {
-                // Ẩn thông báo tải
-                loadingOverlay.style.display = 'none';
+                showLoading(false);
             }
         }
 
         function downloadExcel() {
-            if (tableData.length === 0) {
-                alert('Không có dữ liệu để xuất Excel.');
+            if (!tableData || tableData.length === 0) {
+                Swal.fire('Thông báo', 'Không có dữ liệu để tải xuống.', 'info');
                 return;
             }
 
-            // Lọc dữ liệu để chỉ xuất các cột hiển thị trong bảng
-            const filteredData = tableData.map(row => ({
-                SERIAL_NUMBER: row.SERIAL_NUMBER || '',
-                KEY_PART_SN: row.KEY_PART_SN || '',
-                MO_NUMBER: row.MO_NUMBER || '',
-                MODEL_NAME: row.MODEL_NAME || '',
-                TEST_TIME: row.TEST_TIME || '',
-                TEST_GROUP: row.TEST_GROUP || '',
-                TEST_CODE: row.TEST_CODE || '',
-                DATA1: row.DATA1 || '',
-                REASON_CODE: row.REASON_CODE || ''
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(filteredData);
+            const worksheet = XLSX.utils.json_to_sheet(tableData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'HistoryError');
-
-            // Đặt tiêu đề cột
-            worksheet['!cols'] = [
-                { wch: 20 }, // SERIAL_NUMBER
-                { wch: 20 }, // KEY_PART_SN
-                { wch: 15 }, // MO_NUMBER
-                { wch: 15 }, // MODEL_NAME
-                { wch: 20 }, // TEST_TIME
-                { wch: 10 }, // TEST_GROUP
-                { wch: 30 }, // TEST_CODE
-                { wch: 50 }, // DATA1
-                { wch: 15 }  // REASON_CODE
-            ];
-
-            XLSX.writeFile(workbook, 'HistoryError.xlsx');
+            XLSX.writeFile(workbook, `HistoryError_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
     </script>
 }

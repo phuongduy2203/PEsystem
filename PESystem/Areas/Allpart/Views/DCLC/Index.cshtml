@@ -1,60 +1,196 @@
-﻿@{
-    ViewData["Title"] = "Allpart DC-LC";
-}
 @{
+    ViewData["Title"] = "Allpart DC-LC";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/dclc.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin Linh Kiện</h1>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">Tra cứu DC-LC</h1>
+        <p class="text-muted mb-0">Theo dõi thông tin linh kiện với giao diện sáng và nhịp màu xanh NVIDIA.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
+
+    <div class="nvidia-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold" for="serialNumber">Serial Number</label>
+                <textarea id="serialNumber" class="form-control nvidia-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
             </div>
-            <div class="col-md-4">
-                <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold" for="refDes">Vị trí</label>
+                <textarea id="refDes" class="form-control nvidia-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="search()" class="btn btn-nvidia w-100">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
             </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia w-100">
+                    <i class="fas fa-file-excel me-2"></i>Tải Excel
+                </button>
             </div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="dcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>P_SN</th>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>VENDOR_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>REF_DES</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>PROCESS_FLAG</th>
-                            <th>STATION</th>
-                            <th>GROUP_NAME</th>
-                            <th>WORK_TIME</th>
-                            <th>WO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dcLcTableBody"></tbody>
-                </table>
-            </div>
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-message">Đang tải dữ liệu, vui lòng chờ...</div>
+        </div>
+
+        <div class="nvidia-table-wrapper mt-4">
+            <table id="dcLcTable" class="table table-hover align-middle nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>P_SN</th>
+                        <th>MODEL_NAME</th>
+                        <th>MÃ_LIỆU</th>
+                        <th>VENDOR_CODE</th>
+                        <th>VENDOR_NAME</th>
+                        <th>REF_DES</th>
+                        <th>DATE_CODE</th>
+                        <th>LOT_CODE</th>
+                        <th>PROCESS_FLAG</th>
+                        <th>STATION</th>
+                        <th>GROUP_NAME</th>
+                        <th>WORK_TIME</th>
+                        <th>WO</th>
+                    </tr>
+                </thead>
+                <tbody id="dcLcTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <style>
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-dark: #0f2410;
+        }
+
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f2f9ee 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(15, 36, 16, 0.08);
+        }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(15, 36, 16, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.18);
+        }
+
+        .nvidia-control {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-control:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            border: none;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .btn-outline-nvidia {
+            background: #fff;
+            border: 1px solid var(--nvidia-green);
+            color: var(--nvidia-green);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-nvidia:hover {
+            background: var(--nvidia-green);
+            color: #fff;
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.25);
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-message {
+            background: #fff;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            max-width: 220px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
     <script>
         let dcLcTable;
 
@@ -121,13 +257,8 @@
 
             dcLcTable.clear();
 
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                        <div class="spinner"></div>
-                        <div>Đang tải dữ liệu, vui lòng chờ...</div>
-                    `;
-            document.body.appendChild(loadingOverlay);
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
 
             try {
                 const batchSize = 50;
@@ -158,74 +289,64 @@
                     const dcLcData = await dcLcResponse.json();
 
                     if (dcLcData && dcLcData.result && dcLcData.result.length > 0) {
-                        allResults = allResults.concat(dcLcData.result);
+                        const formattedData = dcLcData.result.map(item => ({
+                            p_sn: createTooltipCell(item.p_sn),
+                            model_name: createTooltipCell(item.model_name),
+                            material_code: createTooltipCell(item.material_code),
+                            vendor_code: createTooltipCell(item.vendor_code),
+                            vendor_name: createTooltipCell(item.vendor_name),
+                            ref_des: createTooltipCell(item.ref_des),
+                            date_code: createTooltipCell(item.date_code),
+                            lot_code: createTooltipCell(item.lot_code),
+                            process_flag: createTooltipCell(item.process_flag),
+                            station: createTooltipCell(item.station),
+                            group_name: createTooltipCell(item.group_name),
+                            work_time: createTooltipCell(item.work_time),
+                            wo: createTooltipCell(item.wo)
+                        }));
+                        allResults = allResults.concat(formattedData);
                     }
                 }
 
                 if (allResults.length === 0) {
-                    alert('Không tìm thấy dữ liệu hợp lệ từ API!');
-                    document.body.removeChild(loadingOverlay);
-                    return;
+                    Swal.fire('Thông báo', 'Không tìm thấy dữ liệu phù hợp.', 'info');
                 }
 
-                allResults.forEach(item => {
-                    dcLcTable.row.add([
-                        createTooltipCell(item.p_sn),
-                        createTooltipCell(item.p_no),
-                        createTooltipCell(item.kp_no),
-                        createTooltipCell(item.mfr_kp_no),
-                        createTooltipCell(item.mfr_name),
-                        createTooltipCell(item.ref_des),
-                        createTooltipCell(item.date_code),
-                        createTooltipCell(item.lot_code),
-                        createTooltipCell(item.process_flag),
-                        createTooltipCell(item.station),
-                        createTooltipCell(item.group_name),
-                        createTooltipCell(item.work_time),
-                        createTooltipCell(item.wo)
-                    ]).draw();
-                });
-
-                attachTooltipEvents();
-
+                dcLcTable.rows.add(allResults).draw();
             } catch (error) {
-                alert(`Đã xảy ra lỗi: ${error.message}`);
+                console.error(error);
+                Swal.fire('Lỗi', error.message, 'error');
             } finally {
-                document.body.removeChild(loadingOverlay);
+                loadingOverlay.style.display = 'none';
             }
         }
 
         function downloadExcel() {
-            const allData = dcLcTable.rows().data().toArray();
+            if (!dcLcTable || dcLcTable.rows().count() === 0) {
+                Swal.fire('Thông báo', 'Không có dữ liệu để tải xuống.', 'info');
+                return;
+            }
 
-            const excelData = [
-                ['P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME', 'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'WO']
-            ];
+            const data = dcLcTable.rows().data().toArray().map(row => ({
+                P_SN: $(row.p_sn).text(),
+                MODEL_NAME: $(row.model_name).text(),
+                MA_LIEU: $(row.material_code).text(),
+                VENDOR_CODE: $(row.vendor_code).text(),
+                VENDOR_NAME: $(row.vendor_name).text(),
+                REF_DES: $(row.ref_des).text(),
+                DATE_CODE: $(row.date_code).text(),
+                LOT_CODE: $(row.lot_code).text(),
+                PROCESS_FLAG: $(row.process_flag).text(),
+                STATION: $(row.station).text(),
+                GROUP_NAME: $(row.group_name).text(),
+                WORK_TIME: $(row.work_time).text(),
+                WO: $(row.wo).text()
+            }));
 
-            allData.forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                excelData.push(rowData);
-            });
-
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'data_dclc_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'DC_LC');
+            XLSX.writeFile(workbook, `DC_LC_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
     </script>
 }

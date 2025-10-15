@@ -39,6 +39,23 @@ function exportToExcel(data, filename) {
     XLSX.writeFile(workbook, filename);
 }
 
+function formatPurpose(purpose) {
+    switch ((purpose ?? "").toString()) {
+        case "0":
+            return "SPE approve to scrap";
+        case "1":
+            return "Scrap to quarterly";
+        case "2":
+            return "Approved to engineer sample";
+        case "3":
+            return "Approved to master board";
+        case "4":
+            return "Approved to BGA";
+        default:
+            return purpose && purpose.toString().trim().length > 0 ? purpose : "N/A";
+    }
+}
+
 // Xử lý tạo task
 async function processCreateTask(internalTasks, saveApplyStatus, resultDivId) {
     const resultDiv = document.getElementById(resultDivId);
@@ -197,6 +214,7 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
 
     data.forEach(item => {
         const isChecked = currentSelectedSet.has(item.internalTask) ? 'checked' : '';
+        const purposeText = formatPurpose(item.purpose);
         const row = `
             <tr>
                 <td class="checkbox-column"><input type="checkbox" name="${checkboxName}" value="${item.internalTask}" ${isChecked}></td>
@@ -205,6 +223,7 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
                 <td data-bs-toggle="tooltip" data-bs-title="${item.approveScrapPerson || 'N/A'}">${item.approveScrapPerson || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.kanBanStatus || 'N/A'}">${item.kanBanStatus || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.category || 'N/A'}">${item.category || "N/A"}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${purposeText}">${purposeText}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.remark || 'N/A'}">${item.remark || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createTime || 'N/A'}">${item.createTime || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createBy || 'N/A'}">${item.createBy || "N/A"}</td>

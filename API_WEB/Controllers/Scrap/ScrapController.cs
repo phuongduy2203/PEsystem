@@ -439,34 +439,58 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 10
+        // API: Lấy dữ liệu ScrapList có InternalTask hợp lệ trong 3 tháng gần nhất
         [HttpGet("get-scrap-status-zero")]
         public async Task<IActionResult> GetScrapStatusZero()
         {
             try
             {
-                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 10
+                var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
                 var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 10) // Lọc theo ApplyTaskStatus = 0 hoặc 10
-                    .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
-                    .Select(g => new
+                    .Where(s => !string.IsNullOrWhiteSpace(s.InternalTask) && s.InternalTask != "N/A")
+                    .Where(s => s.CreateTime >= threeMonthsAgo)
+                    .GroupBy(s => s.InternalTask)
+                    .Select(g =>
                     {
-                        InternalTask = g.Key,
-                        Description = g.First().Desc, // Lấy giá trị đầu tiên của Description
-                        ApproveScrapPerson = g.First().ApproveScrapperson, // Lấy giá trị đầu tiên
-                        KanBanStatus = g.First().KanBanStatus, // Lấy giá trị đầu tiên
-                        Category = g.First().Category,
-                        Remark = g.First().Remark,
-                        CreateTime = g.First().CreateTime.ToString("yyyy-MM-dd"), // Chỉ lấy ngày tháng năm
-                        CreateBy = g.First().CreatedBy, // Lấy giá trị đầu tiên
-                        ApplyTaskStatus = g.First().ApplyTaskStatus, // Lấy giá trị đầu tiên
-                        TotalQty = g.Count() // Đếm số lượng SN trong mỗi InternalTask
+                        var latestRecord = g.OrderByDescending(x => x.CreateTime).FirstOrDefault();
+
+                        return new
+                        {
+                            InternalTask = g.Key,
+                            Description = latestRecord != null ? latestRecord.Desc : null,
+                            ApproveScrapPerson = latestRecord != null ? latestRecord.ApproveScrapperson : null,
+                            KanBanStatus = latestRecord != null ? latestRecord.KanBanStatus : null,
+                            Category = latestRecord != null ? latestRecord.Category : null,
+                            Remark = latestRecord != null ? latestRecord.Remark : null,
+                            Purpose = latestRecord != null ? latestRecord.Purpose : null,
+                            LatestCreateTime = latestRecord != null ? latestRecord.CreateTime : DateTime.MinValue,
+                            CreateTime = latestRecord != null ? latestRecord.CreateTime.ToString("yyyy-MM-dd") : null,
+                            CreateBy = latestRecord != null ? latestRecord.CreatedBy : null,
+                            ApplyTaskStatus = latestRecord != null ? latestRecord.ApplyTaskStatus : 0,
+                            TotalQty = g.Count()
+                        };
+                    })
+                    .OrderByDescending(item => item.LatestCreateTime)
+                    .Select(item => new
+                    {
+                        item.InternalTask,
+                        item.Description,
+                        item.ApproveScrapPerson,
+                        item.KanBanStatus,
+                        item.Category,
+                        item.Remark,
+                        item.Purpose,
+                        item.CreateTime,
+                        item.CreateBy,
+                        item.ApplyTaskStatus,
+                        item.TotalQty
                     })
                     .ToListAsync();
 
                 if (!scrapData.Any())
                 {
-                    return NotFound(new { message = "Không tìm thấy dữ liệu với ApplyTaskStatus = 0 hoặc 3." });
+                    return NotFound(new { message = "Không tìm thấy dữ liệu InternalTask hợp lệ trong 3 tháng gần nhất." });
                 }
 
                 return Ok(scrapData);

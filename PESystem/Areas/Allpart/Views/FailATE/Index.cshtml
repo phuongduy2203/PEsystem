@@ -1,73 +1,154 @@
-﻿@{
-    ViewData["Title"] = "History Error";
-}
 @{
+    ViewData["Title"] = "History Error";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">FAIL ATE</h1>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">FAIL ATE Dashboard</h1>
+        <p class="text-muted mb-0">Tra cứu lịch sử lỗi ATE trong giao diện sáng, mang sắc xanh NVIDIA hiện đại.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="1" placeholder="Nhập SerialNumber..."></textarea>
+
+    <div class="nvidia-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <label class="form-label fw-semibold" for="serialNumber">Serial Number</label>
+                <textarea id="serialNumber" class="form-control nvidia-control" rows="1" placeholder="Nhập SerialNumber..."></textarea>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+            <div class="col-lg-3 d-flex align-items-end">
+                <button onclick="search()" class="btn btn-nvidia w-100">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+            </div>
+            <div class="col-lg-3 d-flex align-items-end">
+                <button id="downloadExcel" class="btn btn-outline-nvidia w-100" type="button">
+                    <i class="fas fa-file-excel me-2"></i>Tải Excel
+                </button>
             </div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>LINE_NAME</th>
-                            <th>SECTION_NAME</th>
-                            <th>GROUP_NAME</th>
-                            <th>STATION_NAME</th>
-                            <th>ERROR_CODE</th>
-                            <th>ERROR_DESC</th>
-                            <th>DATA6</th>
-                            <th>DATA12</th>
-                            <th>PASS_COUNT</th>
-                            <th>RETEST_COUNT</th>
-                            <th>TEST_VALUE</th>
-                            <th>IN_STATION_TIME</th>
-                            <th>RESULT</th>
-                            <th>DATA2</th>
-                            <th>TEST_MODE</th>
-                            <th>SCOF_MIN</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
-            </div>
+        <div class="nvidia-table-wrapper mt-4">
+            <table id="historyDataTable" class="table table-hover align-middle nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>LINE_NAME</th>
+                        <th>SECTION_NAME</th>
+                        <th>GROUP_NAME</th>
+                        <th>STATION_NAME</th>
+                        <th>ERROR_CODE</th>
+                        <th>ERROR_DESC</th>
+                        <th>DATA6</th>
+                        <th>DATA12</th>
+                        <th>PASS_COUNT</th>
+                        <th>RETEST_COUNT</th>
+                        <th>TEST_VALUE</th>
+                        <th>IN_STATION_TIME</th>
+                        <th>RESULT</th>
+                        <th>DATA2</th>
+                        <th>TEST_MODE</th>
+                        <th>SCOF_MIN</th>
+                    </tr>
+                </thead>
+                <tbody id="historyDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-dark: #112611;
         }
 
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f2f9ee 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(17, 38, 17, 0.08);
+        }
+
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(17, 38, 17, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.18);
+        }
+
+        .nvidia-control {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-control:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
+            border: none;
             color: #fff;
-            height: 100%;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
-            }
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .btn-outline-nvidia {
+            background: #fff;
+            border: 1px solid var(--nvidia-green);
+            color: var(--nvidia-green);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-nvidia:hover {
+            background: var(--nvidia-green);
+            color: #fff;
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.25);
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
 
         .custom-tooltip {
             position: absolute;
@@ -78,52 +159,9 @@
             font-size: 12px;
             z-index: 1000;
             display: none;
-            max-width: 200px;
+            max-width: 220px;
             word-wrap: break-word;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
-        }
-
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
-        }
-
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
-            resize: vertical;
-        }
-
-        .datatable-table th, .datatable-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
         }
 
         .loading-overlay {
@@ -151,6 +189,39 @@
     </style>
     <script>
         let historyTable = null;
+
+        document.getElementById('downloadExcel').addEventListener('click', () => {
+            if (!historyTable || historyTable.rows().count() === 0) {
+                Swal.fire("Thông báo", "Không có dữ liệu để tải xuống!", "info");
+                return;
+            }
+
+            const data = historyTable.rows().data().toArray();
+            const worksheet = XLSX.utils.json_to_sheet(data.map(row => ({
+                SERIAL_NUMBER: row.serialNumber,
+                MODEL_NAME: row.modelName,
+                LINE_NAME: row.lineName,
+                SECTION_NAME: row.sectionName,
+                GROUP_NAME: row.groupName,
+                STATION_NAME: row.stationName,
+                ERROR_CODE: row.errorCode,
+                ERROR_DESC: row.errorDesc,
+                DATA6: row.data6,
+                DATA12: row.data12,
+                PASS_COUNT: row.passCount,
+                RETEST_COUNT: row.retestCount,
+                TEST_VALUE: row.testValue,
+                IN_STATION_TIME: row.inStationTime,
+                RESULT: row.result,
+                DATA2: row.data2,
+                TEST_MODE: row.testMode,
+                SCOF_MIN: row.scofMin
+            })));
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "FailATE");
+            XLSX.writeFile(workbook, `FailATE_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        });
 
         async function search() {
             const sn = $("#serialNumber").val().trim().toUpperCase();
@@ -200,31 +271,34 @@
         }
 
         function renderTable(data) {
+            const transformedData = data.map(item => ({
+                serialNumber: item.serial_Number,
+                modelName: item.model_Name,
+                lineName: item.line_Name,
+                sectionName: item.section_Name,
+                groupName: item.group_Name,
+                stationName: item.station_Name,
+                errorCode: item.error_Code,
+                errorDesc: item.error_Desc,
+                data6: item.data6,
+                data12: item.data12,
+                passCount: item.pass_Count,
+                retestCount: item.retest_Count,
+                testValue: item.test_Value,
+                inStationTime: item.in_Station_Time,
+                result: item.result,
+                data2: item.data2,
+                testMode: item.test_Mode,
+                scofMin: item.scof_Min
+            }));
+
             if (historyTable) {
-                historyTable.clear().rows.add(data).draw();
+                historyTable.clear().rows.add(transformedData).draw();
                 return;
             }
 
-            historyTable = $('#historyDataTable').DataTable({
-                destroy: true,
-                data: data,
-                pageLength: 10,
-                order: [[0, "desc"]],
-                scrollX: true,
-                autoWidth: false,
-                dom: '<"top d-flex justify-content-between align-items-center"lfB>rt<"bottom"ip>',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        text: '<i class="fa fa-file-excel"></i>',
-                        className: 'btn btn-success btn-sm',
-                        title:null,
-                        filename: 'FAIL_ATE_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-'),
-                        exportOptions: {
-                            columns: ':visible'
-                        }
-                    }
-                ],
+            historyTable = $("#historyDataTable").DataTable({
+                data: transformedData,
                 columns: [
                     { data: "serialNumber" },
                     { data: "modelName" },
@@ -233,70 +307,23 @@
                     { data: "groupName" },
                     { data: "stationName" },
                     { data: "errorCode" },
-                    {
-                        data: "errorDesc",
-                        render: function (data) {
-                            if (!data) return "";
-                            const text = data.toString().replace(/"/g, '&quot;');
-                            return `<span title="${text}">${text}</span>`;
-                        }
-                    },
+                    { data: "errorDesc" },
                     { data: "data6" },
                     { data: "data12" },
                     { data: "passCount" },
                     { data: "retestCount" },
                     { data: "testValue" },
-                    {
-                        data: "inStationTime",
-                        render: function (data) {
-                            return data ? new Date(data).toLocaleString() : "";
-                        }
-                    },
+                    { data: "inStationTime" },
                     { data: "result" },
                     { data: "data2" },
                     { data: "testMode" },
                     { data: "scofMin" }
                 ],
-                language: {
-                    search: "Tìm kiếm:",
-                    lengthMenu: "Hiển thị _MENU_ dòng",
-                    info: "Hiển thị _START_ - _END_ / _TOTAL_ dòng",
-                    paginate: {
-                        first: "Đầu",
-                        last: "Cuối",
-                        next: "→",
-                        previous: "←"
-                    },
-                    emptyTable: "Không có dữ liệu để hiển thị"
-                },
-                createdRow: function (row, data, dataIndex) {
-                    $('td', row).each(function () {
-                        const text = $(this).text().trim();
-                        if (text.length > 0) {
-                            $(this).attr('title', text);
-                        }
-                    });
-                }
+                scrollX: true,
+                pageLength: 25,
+                responsive: true,
+                destroy: true
             });
         }
-
-
-        // ✅ CSS thêm tooltip đẹp + cắt nội dung dài
-        $(document).ready(function () {
-            const style = `
-            <style>
-                table.dataTable td {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 220px;
-                    vertical-align: middle;
-                }
-                table.dataTable td:hover {
-                    background-color: #fff9d6 !important;
-                }
-            </style>`;
-            $('head').append(style);
-        });
     </script>
 }

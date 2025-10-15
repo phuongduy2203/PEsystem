@@ -1,86 +1,193 @@
-﻿@{
-    ViewData["Title"] = "YR follow DC-LC";
-}
 @{
+    ViewData["Title"] = "YR follow DC-LC";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/yrdclc.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">YR follow DC/LC</h1>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">YR theo dõi DC/LC</h1>
+        <p class="text-muted mb-0">Giám sát chất lượng với giao diện sáng, đồng nhất sắc xanh NVIDIA.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="date-time-range">
-                <label for="startDate">Bắt đầu:</label>
-                <input type="datetime-local" id="startDate" />
-                <label for="endDate">Kết thúc:</label>
-                <input type="datetime-local" id="endDate" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <input id="model" name="model" class="form-control" placeholder="Model Name" />
-            </div>
-            <div class="col-md-2">
-                <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
-            </div>
-            <div class="col-md-2">
-                <input id="location" name="location" class="form-control" placeholder="Vị trí" />
-            </div>
-            <div class="col-md-2">
-                <input id="station" name="station" class="form-control" placeholder="Trạm test" />
-            </div>
-            <div class="col-md-2">
-                <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Load data</button>
+
+    <div class="nvidia-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-12">
+                <div class="date-time-range nvidia-control-group">
+                    <div>
+                        <label for="startDate" class="form-label fw-semibold">Bắt đầu</label>
+                        <input type="datetime-local" id="startDate" class="form-control nvidia-control" />
+                    </div>
+                    <div>
+                        <label for="endDate" class="form-label fw-semibold">Kết thúc</label>
+                        <input type="datetime-local" id="endDate" class="form-control nvidia-control" />
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="yrdcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>INPUT_QTY</th>
-                            <th>FAIL_QTY</th>
-                            <th>PASS_QTY</th>
-                            <th>DFR</th>
-                        </tr>
-                    </thead>
-                    <tbody id="yrdcLcTableBody"></tbody>
-                </table>
+        <div class="row g-3 align-items-end mt-1">
+            <div class="col-lg-2"><input id="model" name="model" class="form-control nvidia-control" placeholder="Model Name" /></div>
+            <div class="col-lg-2"><input id="PN" name="PN" class="form-control nvidia-control" placeholder="Mã Liệu" /></div>
+            <div class="col-lg-2"><input id="location" name="location" class="form-control nvidia-control" placeholder="Vị trí" /></div>
+            <div class="col-lg-2"><input id="station" name="station" class="form-control nvidia-control" placeholder="Trạm test" /></div>
+            <div class="col-lg-2"><input id="error" name="error" class="form-control nvidia-control" placeholder="Mã lỗi" /></div>
+        </div>
+
+        <div class="row g-3 align-items-end mt-1">
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="search()" class="btn btn-nvidia w-100">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
             </div>
+            <div class="col-lg-2 d-flex align-items-end">
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia w-100">
+                    <i class="fas fa-table me-2"></i>Load data
+                </button>
+            </div>
+        </div>
+
+        <div class="nvidia-table-wrapper mt-4">
+            <table id="yrdcLcTable" class="table table-hover align-middle nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>MODEL_NAME</th>
+                        <th>MÃ_LIỆU</th>
+                        <th>DATE_CODE</th>
+                        <th>LOT_CODE</th>
+                        <th>VENDOR_NAME</th>
+                        <th>INPUT_QTY</th>
+                        <th>FAIL_QTY</th>
+                        <th>PASS_QTY</th>
+                        <th>DFR</th>
+                    </tr>
+                </thead>
+                <tbody id="yrdcLcTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <style>
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-dark: #0f2410;
+        }
 
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f2f9ee 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(15, 36, 16, 0.08);
+        }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(15, 36, 16, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.18);
+        }
+
+        .nvidia-control {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-control:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .nvidia-control-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            border: none;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .btn-outline-nvidia {
+            background: #fff;
+            border: 1px solid var(--nvidia-green);
+            color: var(--nvidia-green);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-nvidia:hover {
+            background: var(--nvidia-green);
+            color: #fff;
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.25);
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            max-width: 220px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
     <script>
         let yrdcLcTable;
-        let snDataCache = []; // Lưu dữ liệu BY-FAIL-SN để xuất Excel
+        let snDataCache = [];
 
-        // Hàm tạo nội dung cho ô với tooltip
         function createTooltipCell(data) {
             return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
         }
 
-        // Gắn sự kiện tooltip sử dụng event delegation
         function attachTooltipEvents() {
             $(document).on('mouseover', '.tooltip-trigger', function (e) {
                 const $this = $(this);
@@ -111,7 +218,6 @@
             });
         }
 
-        // Hàm định dạng ngày giờ từ datetime-local sang YYYY-MM-DD HH:MM:SS
         function formatDateTime(dateTime) {
             if (!dateTime) return '';
             const date = new Date(dateTime);
@@ -125,7 +231,6 @@
         }
 
         $(document).ready(function () {
-            // Khởi tạo DataTable
             yrdcLcTable = $('#yrdcLcTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
@@ -135,7 +240,6 @@
                 ]
             });
 
-            // Gắn sự kiện tooltip
             attachTooltipEvents();
         });
 
@@ -148,174 +252,84 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // Kiểm tra đầu vào
             if (!model || !PN || !station || !error || !location || !startDate || !endDate) {
                 alert('Vui lòng nhập đầy đủ tất cả các trường!');
                 return;
             }
 
-            // Định dạng thời gian
             const formattedStartDate = formatDateTime(startDate);
             const formattedEndDate = formatDateTime(endDate);
 
-            // Hiển thị loading overlay
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                <div class="spinner"></div>
-                <div>Đang tải dữ liệu, vui lòng chờ...</div>
-            `;
-            document.body.appendChild(loadingOverlay);
+            yrdcLcTable.clear();
 
             try {
-                // Làm mới bảng trước khi tìm kiếm
-                yrdcLcTable.clear();
-
-                // Lần gọi API đầu tiên (BY-FAIL-TOTAL)
-                const totalResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
+                const response = await fetch('http://10.220.130.119:9090/api/RepairStatus/info-allpart/with-refdes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        type: 'GET_DC_LC',
-                        item: 'BY-FAIL-TOTAL',
-                        var_1: model,
-                        var_2: PN,
-                        var_3: formattedStartDate,
-                        var_4: formattedEndDate,
-                        var_5: station,
-                        var_6: error,
-                        var_7: location
+                        type: 'GET_YR_DC_LC',
+                        item: 'BY-FAIL',
+                        var_1: `${model};${PN};${location};${station};${error}`,
+                        var_2: `${formattedStartDate};${formattedEndDate}`
                     })
                 });
 
-                if (!totalResponse.ok) {
-                    throw new Error(`Lỗi khi gọi API BY-FAIL-TOTAL: ${await totalResponse.text()}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${errorText}`);
                 }
 
-                const totalData = await totalResponse.json();
-                if (!totalData.result || totalData.result.length === 0) {
-                    alert('Không tìm thấy dữ liệu từ API BY-FAIL-TOTAL!');
-                    document.body.removeChild(loadingOverlay);
+                const result = await response.json();
+
+                if (!result || !result.result || result.result.length === 0) {
+                    Swal.fire('Thông báo', 'Không tìm thấy dữ liệu phù hợp.', 'info');
                     return;
                 }
 
-                // Hiển thị dữ liệu từ lần gọi đầu tiên vào bảng
-                totalData.result.forEach(item => {
-                    yrdcLcTable.row.add([
-                        createTooltipCell(item.p_no),
-                        createTooltipCell(item.kp_no),
-                        createTooltipCell(item.date_code),
-                        createTooltipCell(item.lot_code),
-                        createTooltipCell(item.mfr_name),
-                        createTooltipCell(item.input_qty),
-                        createTooltipCell(item.fail_qty),
-                        createTooltipCell(item.pass_qty),
-                        createTooltipCell(item.dfr)
-                    ]).draw();
-                });
+                const formattedData = result.result.map(item => ({
+                    model_name: createTooltipCell(item.model_name),
+                    material_code: createTooltipCell(item.material_code),
+                    date_code: createTooltipCell(item.date_code),
+                    lot_code: createTooltipCell(item.lot_code),
+                    vendor_name: createTooltipCell(item.vendor_name),
+                    input_qty: createTooltipCell(item.input_qty),
+                    fail_qty: createTooltipCell(item.fail_qty),
+                    pass_qty: createTooltipCell(item.pass_qty),
+                    dfr: createTooltipCell(item.dfr)
+                }));
 
-                // Lần gọi API thứ hai (BY-FAIL-SN)
-                const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: 'GET_DC_LC',
-                        item: 'BY-FAIL-SN',
-                        var_1: model,
-                        var_2: PN,
-                        var_3: formattedStartDate,
-                        var_4: formattedEndDate,
-                        var_5: station,
-                        var_6: error,
-                        var_7: location
-                    })
-                });
-
-                if (!snResponse.ok) {
-                    throw new Error(`Lỗi khi gọi API BY-FAIL-SN: ${await snResponse.text()}`);
-                }
-
-                const snData = await snResponse.json();
-                if (!snData.result || snData.result.length === 0) {
-                    console.warn('Không có dữ liệu từ API BY-FAIL-SN.');
-                } else {
-                    // Lưu dữ liệu BY-FAIL-SN để xuất Excel
-                    snDataCache = snData.result;
-                }
-
-                // Gắn sự kiện tooltip
-                attachTooltipEvents();
-
+                yrdcLcTable.rows.add(formattedData).draw();
+                snDataCache = result.snData || [];
             } catch (error) {
-                alert(`Đã xảy ra lỗi: ${error.message}`);
-            } finally {
-                // Xóa loading overlay
-                if (document.body.contains(loadingOverlay)) {
-                    document.body.removeChild(loadingOverlay);
-                }
+                console.error(error);
+                Swal.fire('Lỗi', error.message, 'error');
             }
         }
 
         function downloadExcel() {
-            if (!snDataCache.length && !yrdcLcTable.rows().data().toArray().length) {
-                alert('Không có dữ liệu để tải xuống Excel!');
+            if (!yrdcLcTable || yrdcLcTable.rows().count() === 0) {
+                Swal.fire('Thông báo', 'Không có dữ liệu để tải xuống.', 'info');
                 return;
             }
 
-            // Dữ liệu cho sheet 1 (từ bảng yrdcLcTable)
-            const totalData = [
-                ['MODEL_NAME', 'MÃ_LIỆU', 'DATE_CODE', 'LOT_CODE', 'VENDOR_NAME', 'INPUT_QTY', 'FAIL_QTY', 'PASS_QTY', 'DFR']
-            ];
-            yrdcLcTable.rows().data().toArray().forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                totalData.push(rowData);
-            });
+            const data = yrdcLcTable.rows().data().toArray().map(row => ({
+                MODEL_NAME: $(row.model_name).text(),
+                MA_LIEU: $(row.material_code).text(),
+                DATE_CODE: $(row.date_code).text(),
+                LOT_CODE: $(row.lot_code).text(),
+                VENDOR_NAME: $(row.vendor_name).text(),
+                INPUT_QTY: $(row.input_qty).text(),
+                FAIL_QTY: $(row.fail_qty).text(),
+                PASS_QTY: $(row.pass_qty).text(),
+                DFR: $(row.dfr).text()
+            }));
 
-            // Dữ liệu cho sheet 2 (từ snDataCache)
-            const snData = [
-                ['P_SN', 'WO', 'P_NO', 'TR_SN', 'KP_NO', 'MFR_KP_NO', 'DATE_CODE', 'LOT_CODE', 'MFR_NAME', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'REF_DES', 'TEST_CODE', 'TEST_GROUP']
-            ];
-            snDataCache.forEach(item => {
-                snData.push([
-                    item.p_sn,
-                    item.wo,
-                    item.p_no,
-                    item.tr_sn,
-                    item.kp_no,
-                    item.mfr_kp_no,
-                    item.date_code,
-                    item.lot_code,
-                    item.mfr_name,
-                    item.process_flag,
-                    item.station,
-                    item.group_name,
-                    item.work_time,
-                    item.ref_des,
-                    item.test_code,
-                    item.test_group
-                ]);
-            });
-
-            // Tạo worksheet cho sheet 1
-            const ws1 = XLSX.utils.aoa_to_sheet(totalData);
-            // Tạo worksheet cho sheet 2
-            const ws2 = XLSX.utils.aoa_to_sheet(snData);
-
-            // Tạo workbook và thêm các sheet
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws1, "Total_Data");
-            XLSX.utils.book_append_sheet(wb, ws2, "SN_Data");
-
-            // Xuất file Excel
-            XLSX.writeFile(wb, 'yrdc_lc_data_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'YR_DC_LC');
+            XLSX.writeFile(workbook, `YR_DC_LC_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
     </script>
 }

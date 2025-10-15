@@ -1,163 +1,280 @@
-﻿@{
-    ViewData["Title"] = "Chuyển kho MRB";
-}
 @{
+    ViewData["Title"] = "Chuyển kho MRB";
     Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
 }
-
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="row mb-3">
-    <!-- Cột chọn loại chức năng -->
-    <div class="col-md-3">
-        <form id="search-form" class="form-inline">
-            <select id="search-mrb-options" class="form-select">
-                <option selected disabled>SELECT FUNCTION</option>
-                <option value="5">Chờ RE chuyển MRB</option>
-                <option value="6">Chờ kho MRB xác nhận</option>
-                <option value="7">Đã vào kho MRB</option>
-            </select>
-        </form>
+<div class="nvidia-page container-fluid py-4">
+    <div class="nvidia-hero text-center mb-4">
+        <h1 class="fw-bold text-nvidia-dark">MRB Warehouse Flow</h1>
+        <p class="text-muted mb-0">Theo dõi hành trình chuyển kho MRB với giao diện sáng, sắc xanh NVIDIA hiện đại.</p>
     </div>
 
-    <!-- function area-->
-    <div class="col-md-9">
-        <!-- Form Chờ RE chuyển MRB -->
-        <form id="wait-re-move-mrb" method="post" class="hidden" data-search-type="wait-re-move-mrb">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-3">
-                    @{
-                        var allowedAreas = HttpContextAccessor.HttpContext.User.Claims
-                        .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
-                        var Scrap = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "Scrap");
-                    }
-                    @if (Scrap)
-                    {
-                        <button id="move-mrb-btn" class="btn btn-ne" type="button">Move MRB</button>
-                    }else
-                    {
-                        <button id="move-mrb-btn" class="btn btn-ne hidden" type="button">Move MRB</button>
-                    }
+    <div class="row g-4">
+        <div class="col-xl-3">
+            <div class="nvidia-card h-100">
+                <h2 class="nvidia-card__title">Bước xử lý</h2>
+                <p class="nvidia-card__subtitle">Chọn giai đoạn để hiển thị tác vụ tương ứng.</p>
+                <form id="search-form" class="mt-3">
+                    <label class="form-label text-uppercase small fw-semibold text-muted" for="search-mrb-options">Chọn bước</label>
+                    <select id="search-mrb-options" class="form-select nvidia-select">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="5">Chờ RE chuyển MRB</option>
+                        <option value="6">Chờ kho MRB xác nhận</option>
+                        <option value="7">Đã vào kho MRB</option>
+                    </select>
+                </form>
+                <div class="mt-4 small text-muted">
+                    <p class="mb-1"><i class="fas fa-info-circle text-nvidia me-2"></i>Kích hoạt chức năng phù hợp với quyền của bạn.</p>
+                    <p class="mb-0"><i class="fas fa-file-export text-nvidia me-2"></i>Có thể xuất dữ liệu theo từng bước xử lý.</p>
                 </div>
             </div>
-        </form>
+        </div>
+        <div class="col-xl-9">
+            <div class="nvidia-card">
+                <h2 class="nvidia-card__title">Tác vụ MRB</h2>
+                <p class="nvidia-card__subtitle">Các biểu mẫu sẽ hiển thị khi bạn chọn giai đoạn tương ứng.</p>
 
-        <!-- Form Chờ kho MRB xác nhận -->
-        <form id="wait-mrb-confirm" method="post" class="hidden" data-search-type="wait-mrb-confirm">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-3">
-                    
-                    @{
-                        var allowedAreas1 = HttpContextAccessor.HttpContext.User.Claims
-                        .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
-                        var Mrb = allowedAreas1 != null && allowedAreas1.Any(area => area.Trim() == "Mrb");
-                    }
-                    @if (Mrb)
-                    {
-                        <button id="confirm-mrb-btn" class="btn btn-ne" type="button">Confirm</button>
-                    }else
-                    {
-                        <button id="confirm-mrb-btn" class="btn btn-ne hidden" type="button">Confirm</button>
-                    }
+                <form id="wait-re-move-mrb" method="post" class="nvidia-panel hidden" data-search-type="wait-re-move-mrb">
+                    <h3 class="nvidia-panel__title">Chờ RE chuyển MRB</h3>
+                    <div class="d-flex justify-content-end">
+                        @{
+                            var allowedAreas = HttpContextAccessor.HttpContext.User.Claims
+                                .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
+                            var Scrap = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "Scrap");
+                        }
+                        @if (Scrap)
+                        {
+                            <button id="move-mrb-btn" class="btn btn-nvidia" type="button">
+                                <i class="fas fa-dolly me-2"></i>Move MRB
+                            </button>
+                        }
+                        else
+                        {
+                            <button id="move-mrb-btn" class="btn btn-nvidia hidden" type="button">Move MRB</button>
+                        }
+                    </div>
+                </form>
+
+                <form id="wait-mrb-confirm" method="post" class="nvidia-panel hidden" data-search-type="wait-mrb-confirm">
+                    <h3 class="nvidia-panel__title">Chờ kho MRB xác nhận</h3>
+                    <div class="d-flex justify-content-end">
+                        @{
+                            var allowedAreas1 = HttpContextAccessor.HttpContext.User.Claims
+                                .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
+                            var Mrb = allowedAreas1 != null && allowedAreas1.Any(area => area.Trim() == "Mrb");
+                        }
+                        @if (Mrb)
+                        {
+                            <button id="confirm-mrb-btn" class="btn btn-nvidia" type="button">
+                                <i class="fas fa-clipboard-check me-2"></i>Confirm
+                            </button>
+                        }
+                        else
+                        {
+                            <button id="confirm-mrb-btn" class="btn btn-nvidia hidden" type="button">Confirm</button>
+                        }
+                    </div>
+                </form>
+
+                <form id="moved-mrb-form" method="post" class="nvidia-panel hidden" data-search-type="moved-mrb">
+                    <h3 class="nvidia-panel__title">Đã vào kho MRB</h3>
+                    <div class="d-flex justify-content-end">
+                        <button id="moved-mrb-btn" class="btn btn-nvidia" type="button">
+                            <i class="fas fa-database me-2"></i>Load data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div id="wait-re-move-mrb-result" class="nvidia-card nvidia-result hidden">
+                <div class="table-responsive nvidia-table-wrapper">
+                    <table id="wait-re-move-mrb-table" class="table table-hover align-middle nvidia-table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="select-all-5"></th>
+                                <th>Task Number</th>
+                                <th>Apply Time</th>
+                                <th>Total Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
-        </form>
-
-        <!-- Form Đã vào kho MRB -->
-        <form id="moved-mrb-form" method="post" class="hidden" data-search-type="moved-mrb">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-3">
-                    <button id="moved-mrb-btn" class="btn btn-ne" type="button">Load data</button>
+        </div>
+        <div class="col-12">
+            <div id="wait-mrb-confirm-result" class="nvidia-card nvidia-result hidden">
+                <div class="table-responsive nvidia-table-wrapper">
+                    <table id="wait-mrb-confirm-table" class="table table-hover align-middle nvidia-table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="select-all-6"></th>
+                                <th>Task Number</th>
+                                <th>Apply Time</th>
+                                <th>Total Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
-        </form>
-    </div>
-</div>
-
-<!--khu vực hiển thị chi tiết-->
-<div class="row mb-3">
-    <!--hiển thị của chức năng Chờ RE chuyển MRB-->
-    <div id="wait-re-move-mrb-result" class="hidden">
-        <table id="wait-re-move-mrb-table" class="mt-2 table table-bordered table-striped datatable-table" style="width:100%">
-            <thead>
-                <tr>
-                    <th class="checkbox-column"><input type="checkbox" id="select-all-5"></th>
-                    <th>Task Number</th>
-                    <th>Apply Time</th>
-                    <th>Total Qty</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <!--hiển thị của chức năng Chờ kho MRB xác nhận-->
-    <div id="wait-mrb-confirm-result" class="hidden">
-        <table id="wait-mrb-confirm-table" class="mt-2 table table-bordered table-striped datatable-table" style="width:100%">
-            <thead>
-                <tr>
-                    <th class="checkbox-column"><input type="checkbox" id="select-all-6"></th>
-                    <th>Task Number</th>
-                    <th>Apply Time</th>
-                    <th>Total Qty</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <!--hiển thị của chức năng Đã vào kho MRB-->
-    <div id="moved-mrb-form-result" class="hidden">
-        <table id="moved-mrb-form-table" class="mt-2 table table-bordered table-striped datatable-table" style="width:100%">
-            <thead>
-                <tr>
-                    <th class="checkbox-column"><input type="checkbox" id="select-all-7"></th>
-                    <th>Task Number</th>
-                    <th>Apply Time</th>
-                    <th>Total Qty</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        </div>
+        <div class="col-12">
+            <div id="moved-mrb-form-result" class="nvidia-card nvidia-result hidden">
+                <div class="table-responsive nvidia-table-wrapper">
+                    <table id="moved-mrb-form-table" class="table table-hover align-middle nvidia-table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="select-all-7"></th>
+                                <th>Task Number</th>
+                                <th>Apply Time</th>
+                                <th>Total Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .hidden {
-            display: none !important; /* Đảm bảo ẩn hoàn toàn */
+        :root {
+            --nvidia-green: #76B900;
+            --nvidia-green-dark: #5a8a00;
+            --nvidia-light: #f4fbf0;
+            --nvidia-dark: #0f2410;
         }
 
-        /* Định dạng checkbox */
+        .text-nvidia { color: var(--nvidia-green); }
+        .text-nvidia-dark { color: var(--nvidia-dark); }
+
+        .nvidia-page {
+            background: linear-gradient(135deg, #ffffff 0%, #f1f7ec 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(15, 36, 16, 0.08);
+        }
+
+        .nvidia-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(15, 36, 16, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.15);
+        }
+
+        .nvidia-card__title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--nvidia-dark);
+        }
+
+        .nvidia-card__subtitle {
+            color: #5c626a;
+            margin-bottom: 1.5rem;
+        }
+
+        .nvidia-panel {
+            border: 1px dashed rgba(118, 185, 0, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            background: linear-gradient(145deg, rgba(118, 185, 0, 0.06), rgba(255, 255, 255, 0.85));
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-panel__title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--nvidia-dark);
+            margin-bottom: 1rem;
+        }
+
+        .nvidia-panel:not(.hidden):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 24px 45px rgba(15, 36, 16, 0.18);
+        }
+
+        .nvidia-select {
+            border-radius: 12px;
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            box-shadow: none;
+            padding: 0.65rem 0.9rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nvidia-select:focus {
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.2);
+        }
+
+        .btn-nvidia {
+            background: var(--nvidia-green);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 0.65rem 1.5rem;
+            border: none;
+            box-shadow: 0 12px 24px rgba(118, 185, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nvidia:hover {
+            background: var(--nvidia-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px rgba(90, 138, 0, 0.3);
+        }
+
+        .nvidia-result {
+            min-height: 80px;
+        }
+
+        .nvidia-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .nvidia-table thead {
+            background: var(--nvidia-green);
+            color: #fff;
+        }
+
+        .nvidia-table tbody tr:hover {
+            background: rgba(118, 185, 0, 0.12);
+        }
+
+        .nvidia-table th,
+        .nvidia-table td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+
         .checkbox-column {
-            width: 20px!important; /* Đảm bảo cột checkbox không quá hẹp */
-            text-align: center !important;
-        }
-        /* Giới hạn độ rộng cột */
-        #task-checkbox-table th, #task-checkbox-table td {
-            white-space: nowrap; /* Ngăn xuống dòng */
-            overflow: hidden;
-            text-align: center;
-            text-overflow: ellipsis; /* Hiển thị dấu "..." nếu nội dung quá dài */
-            max-width: 80px!important; /* Giới hạn độ rộng cột */
+            width: 48px;
         }
 
-        /* Giới hạn độ rộng cột */
-        #history-task-checkbox-table th, #history-task-checkbox-table td {
-            white-space: nowrap; /* Ngăn xuống dòng */
-            overflow: hidden;
-            text-align: center;
-            text-overflow: ellipsis; /* Hiển thị dấu "..." nếu nội dung quá dài */
-            max-width: 80px!important; /* Giới hạn độ rộng cột */
-        }
-        #history-task-checkbox-table td, #task-checkbox-table td{
-            background-color:#fff;
+        .hidden {
+            display: none !important;
         }
 
-         /* Thêm hiệu ứng hover cho hàng */
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76b900 !important;
-            /*transition: background-color 0.2s ease;*/
+        @media (max-width: 991.98px) {
+            .nvidia-card {
+                padding: 20px;
+            }
+
+            .nvidia-page {
+                border-radius: 16px;
+            }
         }
     </style>
     <script src="~/assets/areas/scrap/js/mrb.js?v=@DateTime.Now.Ticks"></script>
