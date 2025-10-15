@@ -5,22 +5,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Định nghĩa tất cả trạng thái hợp lệ
     const validStatuses = [
-        "Scrap Lacks Task",
-        "Scrap Has Scrap",
-        "Approved BGA",
-        "Waiting approve scrap",
-        "Waiting Link",
-        "Linked MO",
-        "Waiting approve BGA"
+        "ScrapLacksTask",
+        "ScrapHasScrap",
+        "ApprovedBGA",
+        "WaitingApproveScrap",
+        "WAITING_LINK",
+        "LINKED",
+        "WaitingApprovalBGA"
     ];
 
     const statusColorMap = {
-        "Scrap Lacks Task": "#ffc107",
-        "Scrap Has Scrap": "#05b529",
-        "Approved BGA": "#17b86d",
-        "Waiting approve scrap": "#dc3545",
-        "Waiting Link": "#6c757d",
-        "Linked MO": "#ff8307"
+        "ScrapLacksTask": "#ffc107",
+        "ScrapHasScrap": "#05b529",
+        "ApprovedBGA": "#17b86d",
+        "WaitingApproveScrap": "#dc3545",
+        "WAITING_LINK": "#6c757d",
+        "LINKED": "#ff8307"
     };
 
     let dataTable;
@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             // Gán KPI
             document.getElementById("totalCount").innerText = totalCount || 0;
-            document.getElementById("noTaskscrapCount").innerText = statusCounts.find(s => s.status === "Scrap Lacks Task")?.count || 0;
-            document.getElementById("scrapCount").innerText = statusCounts.find(s => s.status === "Scrap Has Scrap")?.count || 0;
-            document.getElementById("waitingScrapCount").innerText = statusCounts.find(s => s.status === "Waiting approve scrap")?.count || 0;
-            document.getElementById("linking").innerText = statusCounts.find(s => s.status === "Waiting Link")?.count || 0;
-            document.getElementById("linked").innerText = statusCounts.find(s => s.status === "Linked MO")?.count || 0;
+            document.getElementById("noTaskscrapCount").innerText = statusCounts.find(s => s.status === "ScrapLacksTask")?.count || 0;
+            document.getElementById("scrapCount").innerText = statusCounts.find(s => s.status === "ScrapHasScrap")?.count || 0;
+            document.getElementById("waitingScrapCount").innerText = statusCounts.find(s => s.status === "WaitingApproveScrap")?.count || 0;
+            document.getElementById("waitingLinkCount").innerText = statusCounts.find(s => s.status === "WAITING_LINK")?.count || 0;
+            document.getElementById("linkedCount").innerText = statusCounts.find(s => s.status === "LINKED")?.count || 0;
 
             // Tính phần trăm cho biểu đồ
             const total = statusCounts.reduce((sum, s) => sum + s.count, 0);
@@ -61,8 +61,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     plugins: {
                         legend: {
                             position: "bottom",
-
-
                             labels: {
                                 boxWidth: 20,
                                 boxHeight: 20,
@@ -140,9 +138,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         { data: "modelName" },
                         { data: "moNumber" },
                         { data: "wipGroup" },
-                        { data: "testGroup" },
-                        { data: "testCode" },
-                        { data: "testTime" },
+                        { data: "errorFlag" },
+                        { data: "groupName" },
+                        { data: "stationTime" },
                         { data: "status" }
                     ],
                     dom: '<"top d-flex align-items-center"flB>rt<"bottom"ip>',
@@ -186,13 +184,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                                                                     <div class="form-group mb-0" style="min-width: 200px;">
                                                                         <select id="statusFilterDt" class="form-control">
                                                                             <option value="">Tất cả trạng thái</option>
-                                                                            <option value="Scrap Has Task">Scrap Has Task</option>
-                                                                            <option value="Scrap Lacks Task">Scrap Lacks Task</option>
-                                                                            <option value="Linked MO">Đã Mở MO</option>
-                                                                            <option value="Waiting Link">Chờ Link</option>
-                                                                            <option value="Approved BGA">SPE Approve to BGA</option>
-                                                                            <option value="Waiting approve BGA">Waiting approve BGA</option>
-                                                                            <option value="Waiting approve scrap">Waiting SPE Approve Scrap</option>
+                                                                            <option value="ScrapHasTask">Scrap Has Task</option>
+                                                                            <option value="ScrapLacksTask">Scrap Lacks Task</option>
+                                                                            <option value="LINKED">Linked</option>
+                                                                            <option value="WAITING_LINK">WaitingLink</option>
+                                                                            <option value="ApprovedBGA">SPE Approve to BGA</option>
+                                                                            <option value="WaitingApprovalBGA">Waiting approve BGA</option>
+                                                                            <option value="WaitingApproveScrap">Waiting SPE Approve Scrap</option>
                                                                         </select>
                                                                     </div>
                                                                 `;
@@ -246,9 +244,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         { data: "modelName" },
                         { data: "moNumber" },
                         { data: "wipGroup" },
-                        { data: "testGroup" },
-                        { data: "testCode" },
-                        { data: "testTime" },
+                        { data: "errorFlag" },
+                        { data: "groupName" },
+                        { data: "stationTime" },
                         { data: "status" },
                     ],
                     buttons: [
