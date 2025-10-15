@@ -1,10 +1,9 @@
 ﻿let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
-let selectedHistoryInternalTasks = new Set(); // Cho HISTORY_APPLY
 
 // Hàm ẩn tất cả form và khu vực kết quả
 function hideAllElements() {
-    const forms = ["input-sn-form", "custom-form", "custom-form-sn", "update-data-form", "history-apply-form"];
-    const results = ["input-sn-result", "create-task-result", "update-data-result", "history-apply-result", "create-task-result-sn"];
+    const forms = ["input-sn-form", "custom-form", "custom-form-sn", "update-data-form"];
+    const results = ["input-sn-result", "create-task-result", "update-data-result", "create-task-result-sn"];
 
     forms.forEach(formId => {
         const form = document.getElementById(formId);
@@ -190,33 +189,31 @@ async function processCreateTaskBySN(sNs, saveApplyStatus, resultDivId) {
 }
 
 // Hiển thị bảng với DataTables
-function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
-    const currentSelectedSet = checkboxName === "task-checkbox" ? selectedInternalTasks : selectedHistoryInternalTasks;
+function renderTaskTable(data, tableId, selectAllId) {
     const tableBody = document.querySelector(`#${tableId} tbody`);
     tableBody.innerHTML = ""; // Xóa nội dung cũ
 
     data.forEach(item => {
-        const isChecked = currentSelectedSet.has(item.internalTask) ? 'checked' : '';
+        const isChecked = selectedInternalTasks.has(item.internalTask) ? 'checked' : '';
         const row = `
             <tr>
-                <td class="checkbox-column"><input type="checkbox" name="${checkboxName}" value="${item.internalTask}" ${isChecked}></td>
+                <td class="checkbox-column"><input type="checkbox" name="task-checkbox" value="${item.internalTask}" ${isChecked}></td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.internalTask || 'N/A'}">${item.internalTask || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.description || 'N/A'}">${item.description || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.approveScrapPerson || 'N/A'}">${item.approveScrapPerson || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.kanBanStatus || 'N/A'}">${item.kanBanStatus || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.category || 'N/A'}">${item.category || "N/A"}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${item.purpose || 'N/A'}">${item.purpose || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.remark || 'N/A'}">${item.remark || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createTime || 'N/A'}">${item.createTime || "N/A"}</td>
                 <td data-bs-toggle="tooltip" data-bs-title="${item.createBy || 'N/A'}">${item.createBy || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTime || 'N/A') : (item.applyTaskStatus || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTime || "N/A") : (item.applyTaskStatus || "N/A")}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTaskStatus || 'N/A') : (item.totalQty || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTaskStatus || "N/A") : (item.totalQty || "N/A")}</td>
-                ${checkboxName === "history-task-checkbox" ? `<td data-bs-toggle="tooltip" data-bs-title="${item.totalQty || 'N/A'}">${item.totalQty || "N/A"}</td>` : ""}
+                <td data-bs-toggle="tooltip" data-bs-title="${item.applyTaskStatus || 'N/A'}">${item.applyTaskStatus || "N/A"}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${item.totalQty || 'N/A'}">${item.totalQty || "N/A"}</td>
             </tr>
         `;
         tableBody.insertAdjacentHTML('beforeend', row);
     });
 
-    // Khởi tạo DataTables
     const dataTable = $(`#${tableId}`).DataTable({
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
@@ -239,37 +236,36 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
         },
         destroy: true,
         drawCallback: function () {
-            // Khởi tạo Bootstrap Tooltip sau khi bảng được vẽ
             const tooltipTriggerList = document.querySelectorAll(`#${tableId} [data-bs-toggle="tooltip"]`);
             tooltipTriggerList.forEach(tooltipTriggerEl => {
                 new bootstrap.Tooltip(tooltipTriggerEl, {
-                    placement: 'top', // Vị trí tooltip (top, bottom, left, right)
-                    trigger: 'hover' // Kích hoạt khi hover
+                    placement: 'top',
+                    trigger: 'hover'
                 });
             });
         }
     });
 
-    // Xử lý checkbox "Select All"
     const selectAllCheckbox = document.getElementById(selectAllId);
     if (selectAllCheckbox) {
-        selectAllCheckbox.checked = data.length > 0 && data.every(item => currentSelectedSet.has(item.internalTask));
+        selectAllCheckbox.checked = data.length > 0 && data.every(item => selectedInternalTasks.has(item.internalTask));
         selectAllCheckbox.addEventListener("change", function () {
             const isChecked = this.checked;
             data.forEach(item => {
-                if (isChecked) currentSelectedSet.add(item.internalTask);
-                else currentSelectedSet.delete(item.internalTask);
+                if (isChecked) selectedInternalTasks.add(item.internalTask);
+                else selectedInternalTasks.delete(item.internalTask);
             });
-            $(`input[name="${checkboxName}"]`).prop("checked", isChecked);
+            $(`input[name="task-checkbox"]`).prop("checked", isChecked);
         });
     }
 
-    // Xử lý checkbox riêng lẻ
-    $(document).off("change", `input[name="${checkboxName}"]`).on("change", `input[name="${checkboxName}"]`, function () {
+    $(document).off("change", `input[name="task-checkbox"]`).on("change", `input[name="task-checkbox"]`, function () {
         const internalTask = this.value;
-        if (this.checked) currentSelectedSet.add(internalTask);
-        else currentSelectedSet.delete(internalTask);
-        selectAllCheckbox.checked = data.every(item => currentSelectedSet.has(item.internalTask));
+        if (this.checked) selectedInternalTasks.add(internalTask);
+        else selectedInternalTasks.delete(internalTask);
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = data.every(item => selectedInternalTasks.has(item.internalTask));
+        }
     });
 }
 
@@ -389,17 +385,6 @@ document.addEventListener("DOMContentLoaded", function () {
             await processCreateTask(selectedTasksArray, "0", "create-task-result");
             selectedInternalTasks.clear();
         });
-    });
-
-    // Xử lý nút "Tạo History Task"
-    document.getElementById("create-history-task-btn").addEventListener("click", async function () {
-        const selectedHistoryTasksArray = Array.from(selectedHistoryInternalTasks);
-        if (selectedHistoryTasksArray.length === 0) {
-            alert("Vui lòng chọn ít nhất một Internal Task.");
-            return;
-        }
-        await processCreateTask(selectedHistoryTasksArray, "1", "history-apply-result");
-        selectedHistoryInternalTasks.clear();
     });
 
     // Xử lý nút "Tạo Task bằng SN"
@@ -556,7 +541,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Dropdown changed to:", this.value);
         hideAllElements();
         selectedInternalTasks.clear();
-        selectedHistoryInternalTasks.clear();
+        selectedInternalTasks.clear();
 
         const selectedValue = this.value;
         if (selectedValue === "INPUT_SN") {
@@ -575,7 +560,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const result = await response.json();
                 if (response.ok) {
                     const sortedData = result.sort((a, b) => new Date(a.createTime) - new Date(b.createTime));
-                    renderTableWithDataTable(sortedData, "task-checkbox-table", "task-checkbox", "select-all");
+                    renderTaskTable(sortedData, "task-checkbox-table", "select-all");
                 } else {
                     document.getElementById("create-task-result").innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${result.message}</div>`;
                 }
@@ -589,27 +574,6 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (selectedValue === "UPDATE_DATA") {
             document.getElementById("update-data-form").classList.remove("hidden");
             document.getElementById("update-data-result").classList.remove("hidden");
-        } else if (selectedValue === "HISTORY_APPLY") {
-            document.getElementById("history-apply-form").classList.remove("hidden");
-            document.getElementById("history-apply-result").classList.remove("hidden");
-
-            try {
-                const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-history-apply", {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" }
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    const sortedData = result.sort((a, b) => new Date(b.applyTime) - new Date(a.applyTime));
-                    renderTableWithDataTable(sortedData, "history-task-checkbox-table", "history-task-checkbox", "select-all-history");
-                } else {
-                    document.getElementById("history-apply-result").innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${result.message}</div>`;
-                }
-            } catch (error) {
-                document.getElementById("history-apply-result").innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> Không thể kết nối đến API.</div>`;
-                console.error("Error:", error);
-            }
         }
     });
 });

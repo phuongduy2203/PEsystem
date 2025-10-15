@@ -1,60 +1,167 @@
-﻿@{
-    ViewData["Title"] = "Allpart DC-LC";
-}
 @{
+    ViewData["Title"] = "Allpart DC-LC";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
 <link href="~/assets/css/dclc.css" rel="stylesheet" />
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin Linh Kiện</h1>
+<div class="allpart-page">
+    <div class="allpart-hero">
+        <h1 class="allpart-title">Tra cứu thông tin linh kiện DC/LC</h1>
+        <p class="allpart-subtitle">Nhập Serial Number và vị trí để xem chi tiết linh kiện cùng thông tin nhà cung cấp.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
+
+    <div class="allpart-card">
+        <div class="row g-4 align-items-end">
+            <div class="col-lg-5">
+                <label for="serialNumber" class="form-label text-uppercase fw-semibold">Serial Number</label>
+                <textarea id="serialNumber" class="form-control" rows="4" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
             </div>
-            <div class="col-md-4">
-                <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
+            <div class="col-lg-5">
+                <label for="refDes" class="form-label text-uppercase fw-semibold">Reference Designator</label>
+                <textarea id="refDes" class="form-control" rows="4" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-lg-2 d-grid gap-2">
+                <button onclick="search()" class="btn btn-nvidia-primary">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia">
+                    <i class="fas fa-file-download me-2"></i>Tải xuống Excel
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="dcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>P_SN</th>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>VENDOR_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>REF_DES</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>PROCESS_FLAG</th>
-                            <th>STATION</th>
-                            <th>GROUP_NAME</th>
-                            <th>WORK_TIME</th>
-                            <th>WO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dcLcTableBody"></tbody>
-                </table>
-            </div>
+    <div class="allpart-card mt-4">
+        <div class="table-responsive">
+            <table id="dcLcTable" class="table table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>P_SN</th>
+                        <th>MODEL_NAME</th>
+                        <th>MÃ_LIỆU</th>
+                        <th>VENDOR_CODE</th>
+                        <th>VENDOR_NAME</th>
+                        <th>REF_DES</th>
+                        <th>DATE_CODE</th>
+                        <th>LOT_CODE</th>
+                        <th>PROCESS_FLAG</th>
+                        <th>STATION</th>
+                        <th>GROUP_NAME</th>
+                        <th>WORK_TIME</th>
+                        <th>WO</th>
+                    </tr>
+                </thead>
+                <tbody id="dcLcTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <style>
+        .allpart-page {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.1), rgba(118, 185, 0, 0.05));
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .allpart-hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .allpart-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f1f08;
+        }
+
+        .allpart-subtitle {
+            max-width: 720px;
+            margin: 0 auto;
+            color: #314321;
+        }
+
+        .allpart-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            box-shadow: 0 15px 30px rgba(15, 31, 8, 0.08);
+        }
+
+        .btn-nvidia-primary {
+            background: linear-gradient(135deg, #76B900, #4E8C00);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .btn-nvidia-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 24px rgba(118, 185, 0, 0.35);
+            }
+
+        .btn-outline-nvidia {
+            border: 2px solid #76B900;
+            color: #1A2E05;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .btn-outline-nvidia:hover {
+                background: #76B900;
+                color: #fff;
+            }
+
+        .table thead th {
+            background-color: #76B900;
+            color: #fff;
+            border: none;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(118, 185, 0, 0.1);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #76B900;
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.25);
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: rgba(25, 39, 13, 0.92);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            max-width: 260px;
+            word-wrap: break-word;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (max-width: 991.98px) {
+            .allpart-page {
+                padding: 1.5rem;
+            }
+
+            .allpart-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+
     <script>
         let dcLcTable;
 
@@ -198,34 +305,32 @@
         function downloadExcel() {
             const allData = dcLcTable.rows().data().toArray();
 
-            const excelData = [
-                ['P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME', 'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'WO']
+            if (!allData.length) {
+                alert('Không có dữ liệu để tải xuống!');
+                return;
+            }
+
+            const headers = [
+                'P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME',
+                'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION',
+                'GROUP_NAME', 'WORK_TIME', 'WO'
             ];
 
-            allData.forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                excelData.push(rowData);
-            });
+            const rows = allData.map(row => row.map(cell => {
+                const div = document.createElement('div');
+                div.innerHTML = cell;
+                const tooltipElement = div.querySelector('.tooltip-trigger');
+                return tooltipElement ? tooltipElement.dataset.tooltip || tooltipElement.textContent : div.textContent;
+            }));
 
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'DC_LC');
 
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'data_dclc_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+            const filename = `DC_LC_${formattedDate}.xlsx`;
+            XLSX.writeFile(workbook, filename);
         }
     </script>
 }

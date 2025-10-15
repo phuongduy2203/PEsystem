@@ -1,154 +1,140 @@
-﻿@{
-    ViewData["Title"] = "History Error";
-}
 @{
+    ViewData["Title"] = "History Error";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">FAIL ATE</h1>
+<div class="allpart-page">
+    <div class="allpart-hero">
+        <h1 class="allpart-title">Fail ATE Tracking</h1>
+        <p class="allpart-subtitle">Tra cứu chi tiết lỗi Fail ATE cho từng Serial Number và xuất báo cáo nhanh chóng.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="1" placeholder="Nhập SerialNumber..."></textarea>
+
+    <div class="allpart-card">
+        <div class="row g-4 align-items-end">
+            <div class="col-lg-6">
+                <label for="serialNumber" class="form-label text-uppercase fw-semibold">Serial Number</label>
+                <textarea id="serialNumber" class="form-control" rows="2" placeholder="Nhập SerialNumber..."></textarea>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+            <div class="col-lg-3 d-grid gap-2">
+                <button onclick="search()" class="btn btn-nvidia-primary">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>LINE_NAME</th>
-                            <th>SECTION_NAME</th>
-                            <th>GROUP_NAME</th>
-                            <th>STATION_NAME</th>
-                            <th>ERROR_CODE</th>
-                            <th>ERROR_DESC</th>
-                            <th>DATA6</th>
-                            <th>DATA12</th>
-                            <th>PASS_COUNT</th>
-                            <th>RETEST_COUNT</th>
-                            <th>TEST_VALUE</th>
-                            <th>IN_STATION_TIME</th>
-                            <th>RESULT</th>
-                            <th>DATA2</th>
-                            <th>TEST_MODE</th>
-                            <th>SCOF_MIN</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
-            </div>
+    <div class="allpart-card mt-4">
+        <div class="table-responsive">
+            <table id="historyDataTable" class="table table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>LINE_NAME</th>
+                        <th>SECTION_NAME</th>
+                        <th>GROUP_NAME</th>
+                        <th>STATION_NAME</th>
+                        <th>ERROR_CODE</th>
+                        <th>ERROR_DESC</th>
+                        <th>DATA6</th>
+                        <th>DATA12</th>
+                        <th>PASS_COUNT</th>
+                        <th>RETEST_COUNT</th>
+                        <th>TEST_VALUE</th>
+                        <th>IN_STATION_TIME</th>
+                        <th>RESULT</th>
+                        <th>DATA2</th>
+                        <th>TEST_MODE</th>
+                        <th>SCOF_MIN</th>
+                    </tr>
+                </thead>
+                <tbody id="historyDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
+        .allpart-page {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.1), rgba(118, 185, 0, 0.05));
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
         }
 
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
+        .allpart-hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .allpart-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f1f08;
+        }
+
+        .allpart-subtitle {
+            max-width: 720px;
+            margin: 0 auto;
+            color: #314321;
+        }
+
+        .allpart-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            box-shadow: 0 15px 30px rgba(15, 31, 8, 0.08);
+        }
+
+        .btn-nvidia-primary {
+            background: linear-gradient(135deg, #76B900, #4E8C00);
             color: #fff;
-            height: 100%;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
+            .btn-nvidia-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 24px rgba(118, 185, 0, 0.35);
             }
 
-        .custom-tooltip {
-            position: absolute;
-            background-color: #333;
+        .table thead th {
+            background-color: #76B900;
             color: #fff;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 1000;
-            display: none;
-            max-width: 200px;
-            word-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: none;
+            text-transform: uppercase;
+            font-weight: 700;
         }
 
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
+        .table tbody tr:hover {
+            background-color: rgba(118, 185, 0, 0.1);
         }
 
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
+        .form-select:focus, .form-control:focus {
+            border-color: #76B900;
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.25);
         }
 
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
+        textarea.form-control {
             resize: vertical;
         }
 
-        .datatable-table th, .datatable-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
-        }
+        @media (max-width: 991.98px) {
+            .allpart-page {
+                padding: 1.5rem;
+            }
 
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-message {
-            background: #fff;
-            padding: 15px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            .allpart-card {
+                padding: 1.5rem;
+            }
         }
     </style>
+
     <script>
         let historyTable = null;
 
@@ -201,102 +187,53 @@
 
         function renderTable(data) {
             if (historyTable) {
-                historyTable.clear().rows.add(data).draw();
-                return;
+                historyTable.destroy();
             }
 
-            historyTable = $('#historyDataTable').DataTable({
-                destroy: true,
-                data: data,
+            const tbody = document.getElementById("historyDataTableBody");
+            tbody.innerHTML = "";
+
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.serialNumber || ''}</td>
+                    <td>${item.modelName || ''}</td>
+                    <td>${item.lineName || ''}</td>
+                    <td>${item.sectionName || ''}</td>
+                    <td>${item.groupName || ''}</td>
+                    <td>${item.stationName || ''}</td>
+                    <td>${item.errorCode || ''}</td>
+                    <td>${item.errorDesc || ''}</td>
+                    <td>${item.data6 || ''}</td>
+                    <td>${item.data12 || ''}</td>
+                    <td>${item.passCount || ''}</td>
+                    <td>${item.retestCount || ''}</td>
+                    <td>${item.testValue || ''}</td>
+                    <td>${item.inStationTime || ''}</td>
+                    <td>${item.result || ''}</td>
+                    <td>${item.data2 || ''}</td>
+                    <td>${item.testMode || ''}</td>
+                    <td>${item.scofMin || ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            historyTable = $("#historyDataTable").DataTable({
+                responsive: true,
                 pageLength: 10,
-                order: [[0, "desc"]],
-                scrollX: true,
-                autoWidth: false,
-                dom: '<"top d-flex justify-content-between align-items-center"lfB>rt<"bottom"ip>',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        text: '<i class="fa fa-file-excel"></i>',
-                        className: 'btn btn-success btn-sm',
-                        title:null,
-                        filename: 'FAIL_ATE_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-'),
-                        exportOptions: {
-                            columns: ':visible'
-                        }
-                    }
-                ],
-                columns: [
-                    { data: "serialNumber" },
-                    { data: "modelName" },
-                    { data: "lineName" },
-                    { data: "sectionName" },
-                    { data: "groupName" },
-                    { data: "stationName" },
-                    { data: "errorCode" },
-                    {
-                        data: "errorDesc",
-                        render: function (data) {
-                            if (!data) return "";
-                            const text = data.toString().replace(/"/g, '&quot;');
-                            return `<span title="${text}">${text}</span>`;
-                        }
-                    },
-                    { data: "data6" },
-                    { data: "data12" },
-                    { data: "passCount" },
-                    { data: "retestCount" },
-                    { data: "testValue" },
-                    {
-                        data: "inStationTime",
-                        render: function (data) {
-                            return data ? new Date(data).toLocaleString() : "";
-                        }
-                    },
-                    { data: "result" },
-                    { data: "data2" },
-                    { data: "testMode" },
-                    { data: "scofMin" }
-                ],
+                lengthMenu: [10, 25, 50, 100],
                 language: {
                     search: "Tìm kiếm:",
-                    lengthMenu: "Hiển thị _MENU_ dòng",
-                    info: "Hiển thị _START_ - _END_ / _TOTAL_ dòng",
+                    lengthMenu: "Hiển thị _MENU_ dòng mỗi trang",
+                    info: "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
                     paginate: {
                         first: "Đầu",
                         last: "Cuối",
-                        next: "→",
-                        previous: "←"
-                    },
-                    emptyTable: "Không có dữ liệu để hiển thị"
-                },
-                createdRow: function (row, data, dataIndex) {
-                    $('td', row).each(function () {
-                        const text = $(this).text().trim();
-                        if (text.length > 0) {
-                            $(this).attr('title', text);
-                        }
-                    });
+                        next: "Tiếp",
+                        previous: "Trước"
+                    }
                 }
             });
         }
-
-
-        // ✅ CSS thêm tooltip đẹp + cắt nội dung dài
-        $(document).ready(function () {
-            const style = `
-            <style>
-                table.dataTable td {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 220px;
-                    vertical-align: middle;
-                }
-                table.dataTable td:hover {
-                    background-color: #fff9d6 !important;
-                }
-            </style>`;
-            $('head').append(style);
-        });
     </script>
 }

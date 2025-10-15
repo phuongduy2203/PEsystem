@@ -1,158 +1,168 @@
-﻿@{
-    ViewData["Title"] = "History Error";
-}
 @{
+    ViewData["Title"] = "History Error";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin lịch sử lỗi</h1>
+<div class="allpart-page">
+    <div class="allpart-hero">
+        <h1 class="allpart-title">Tra cứu lịch sử lỗi</h1>
+        <p class="allpart-subtitle">Nhập Serial Number để xem chi tiết lịch sử lỗi và tải về báo cáo theo định dạng chuẩn.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
+
+    <div class="allpart-card">
+        <div class="row g-4 align-items-end">
+            <div class="col-lg-5">
+                <label for="serialNumber" class="form-label text-uppercase fw-semibold">Serial Number</label>
                 <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
             </div>
-            <div class="col-md-2">
-                <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
+            <div class="col-lg-3">
+                <label for="type-options" class="form-label text-uppercase fw-semibold">Kiểu tra cứu</label>
                 <select id="type-options" class="form-select">
                     <option selected disabled>SELECT TYPE</option>
                     <option value="1">Tra cứu theo SN-SFG</option>
                     <option value="2">Tra cứu theo SN-FG</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
+            <div class="col-lg-2 d-grid gap-2">
+                <button onclick="search()" class="btn btn-nvidia-primary">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
             </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-lg-2 d-grid gap-2">
+                <button onclick="downloadExcel()" class="btn btn-outline-nvidia">
+                    <i class="fas fa-file-download me-2"></i>Tải xuống Excel
+                </button>
             </div>
         </div>
+    </div>
 
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-message">Đang tải dữ liệu...</div>
-        </div>
-
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>KEY_PART_SN</th>
-                            <th>MO_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>TEST_TIME</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_CODE</th>
-                            <th>DATA1</th>
-                            <th>REASON_CODE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
-            </div>
+    <div class="allpart-card mt-4">
+        <div class="table-responsive">
+            <table id="historyDataTable" class="table table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>KEY_PART_SN</th>
+                        <th>MO_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>TEST_TIME</th>
+                        <th>TEST_GROUP</th>
+                        <th>TEST_CODE</th>
+                        <th>DATA1</th>
+                        <th>REASON_CODE</th>
+                    </tr>
+                </thead>
+                <tbody id="historyDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
+        .allpart-page {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.1), rgba(118, 185, 0, 0.05));
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
         }
 
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
+        .allpart-hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .allpart-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f1f08;
+        }
+
+        .allpart-subtitle {
+            max-width: 720px;
+            margin: 0 auto;
+            color: #314321;
+        }
+
+        .allpart-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            box-shadow: 0 15px 30px rgba(15, 31, 8, 0.08);
+        }
+
+        .btn-nvidia-primary {
+            background: linear-gradient(135deg, #76B900, #4E8C00);
             color: #fff;
-            height: 100%;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
+            .btn-nvidia-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 24px rgba(118, 185, 0, 0.35);
+            }
+
+        .btn-outline-nvidia {
+            border: 2px solid #76B900;
+            color: #1A2E05;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .btn-outline-nvidia:hover {
+                background: #76B900;
+                color: #fff;
             }
 
         .custom-tooltip {
             position: absolute;
-            background-color: #333;
+            background-color: rgba(25, 39, 13, 0.92);
             color: #fff;
-            padding: 5px 10px;
-            border-radius: 3px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
             z-index: 1000;
             display: none;
-            max-width: 200px;
+            max-width: 260px;
             word-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
         }
 
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
+        .table thead th {
+            background-color: #76B900;
+            color: #fff;
+            border: none;
+            text-transform: uppercase;
+            font-weight: 700;
         }
 
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
+        .table tbody tr:hover {
+            background-color: rgba(118, 185, 0, 0.1);
         }
 
-        .dataTables_wrapper {
-            overflow-x: auto;
+        .form-select:focus, .form-control:focus {
+            border-color: #76B900;
+            box-shadow: 0 0 0 0.2rem rgba(118, 185, 0, 0.25);
         }
 
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
+        textarea.form-control {
             resize: vertical;
         }
 
-        .datatable-table th, .datatable-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
-        }
+        @media (max-width: 991.98px) {
+            .allpart-page {
+                padding: 1.5rem;
+            }
 
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-message {
-            background: #fff;
-            padding: 15px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            .allpart-card {
+                padding: 1.5rem;
+            }
         }
     </style>
 
@@ -201,135 +211,121 @@
             });
         }
 
-        $(document).ready(function () {
-            // Khởi tạo DataTable một lần duy nhất
-            dataTable = $('#historyDataTable').DataTable({
-                pageLength: 10,
-                scrollX: true,
-                responsive: true,
-                fixedHeader: true
-            });
-        });
+        function downloadExcel() {
+            if (tableData.length === 0) {
+                Swal.fire("Thông báo", "Không có dữ liệu để tải xuống!", "warning");
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(tableData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "HistoryError");
+
+            const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
+            const filename = `HistoryError_${formattedDate}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        }
 
         async function search() {
-            const serialNumbersText = document.getElementById('serialNumber').value.trim();
-            const typeValue = document.getElementById('type-options').value;
-            const loadingOverlay = document.getElementById('loading-overlay');
+            const serialNumbers = $("#serialNumber").val().trim();
+            const type = $("#type-options").val();
 
-            if (!serialNumbersText) {
-                alert('Vui lòng nhập ít nhất một Serial Number.');
+            if (!serialNumbers) {
+                Swal.fire("Thông báo", "Vui lòng nhập Serial Number!", "warning");
                 return;
             }
 
-            if (typeValue === 'SELECT TYPE') {
-                alert('Vui lòng chọn kiểu tra cứu.');
+            if (!type) {
+                Swal.fire("Thông báo", "Vui lòng chọn kiểu tra cứu!", "warning");
                 return;
             }
 
-            const serialNumbers = serialNumbersText.split('\n').map(sn => sn.trim()).filter(sn => sn);
-            if (serialNumbers.length === 0) {
-                alert('Danh sách Serial Number không hợp lệ.');
-                return;
-            }
-
-            // Hiển thị thông báo tải
-            loadingOverlay.style.display = 'flex';
+            const requestData = {
+                serialNumber: serialNumbers,
+                type: parseInt(type)
+            };
 
             try {
-                const response = await fetch('http://10.220.130.119:9090/api/SFC/history-error-by-sn', {
-                    method: 'POST',
+                Swal.fire({
+                    title: "Đang tải dữ liệu...",
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false,
+                    showConfirmButton: false
+                });
+
+                const response = await fetch("http://10.220.130.119:9090/api/HistoryError/get-data", {
+                    method: "POST",
                     headers: {
-                        'Content-Type': 'application/json'
+                        "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        serialNumbers: serialNumbers,
-                        typeValue: parseInt(typeValue)
-                    })
+                    body: JSON.stringify(requestData)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${response.statusText}`);
+                    throw new Error("API trả về lỗi: " + response.status);
                 }
 
-                const data = await response.json();
-                tableData = data; // Lưu dữ liệu để xuất Excel
+                const result = await response.json();
+                Swal.close();
 
-                // Xóa dữ liệu cũ trong DataTable
-                dataTable.clear();
-
-                if (data.length === 0) {
-                    alert('Không tìm thấy dữ liệu cho các Serial Number đã nhập.');
-                    dataTable.draw();
+                if (!result.success || !result.data || result.data.length === 0) {
+                    Swal.fire("Không có dữ liệu!", "Không tìm thấy dữ liệu lịch sử lỗi cho Serial Number đã nhập", "info");
+                    if (dataTable) {
+                        dataTable.clear().draw();
+                    }
+                    tableData = [];
                     return;
                 }
 
-                // Thêm dữ liệu mới vào DataTable
-                data.forEach(row => {
-                    dataTable.row.add([
-                        createTooltipCell(row.SERIAL_NUMBER || ''),
-                        createTooltipCell(row.KEY_PART_SN || ''),
-                        createTooltipCell(row.MO_NUMBER || ''),
-                        createTooltipCell(row.MODEL_NAME || ''),
-                        createTooltipCell(row.TEST_TIME || ''),
-                        createTooltipCell(row.TEST_GROUP || ''),
-                        createTooltipCell(row.TEST_CODE || ''),
-                        createTooltipCell(row.DATA1 || ''),
-                        createTooltipCell(row.REASON_CODE || '')
-                    ]);
+                tableData = result.data;
+
+                if (dataTable) {
+                    dataTable.destroy();
+                }
+
+                const tableBody = document.getElementById("historyDataTableBody");
+                tableBody.innerHTML = "";
+
+                result.data.forEach(item => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${createTooltipCell(item.serialNumber)}</td>
+                        <td>${createTooltipCell(item.keyPartSn)}</td>
+                        <td>${createTooltipCell(item.moNumber)}</td>
+                        <td>${createTooltipCell(item.modelName)}</td>
+                        <td>${createTooltipCell(item.testTime)}</td>
+                        <td>${createTooltipCell(item.testGroup)}</td>
+                        <td>${createTooltipCell(item.testCode)}</td>
+                        <td>${createTooltipCell(item.data1)}</td>
+                        <td>${createTooltipCell(item.reasonCode)}</td>
+                    `;
+                    tableBody.appendChild(row);
                 });
 
-                // Vẽ lại bảng
-                dataTable.draw();
+                dataTable = $("#historyDataTable").DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: {
+                        search: "Tìm kiếm:",
+                        lengthMenu: "Hiển thị _MENU_ dòng mỗi trang",
+                        info: "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
+                        paginate: {
+                            first: "Đầu",
+                            last: "Cuối",
+                            next: "Tiếp",
+                            previous: "Trước"
+                        }
+                    }
+                });
 
-                // Gắn lại sự kiện tooltip
                 attachTooltipEvents();
-
             } catch (error) {
-                console.error('Error:', error);
-                alert(`Đã xảy ra lỗi: ${error.message}`);
-            } finally {
-                // Ẩn thông báo tải
-                loadingOverlay.style.display = 'none';
+                Swal.close();
+                console.error(error);
+                Swal.fire("Lỗi!", error.message, "error");
             }
-        }
-
-        function downloadExcel() {
-            if (tableData.length === 0) {
-                alert('Không có dữ liệu để xuất Excel.');
-                return;
-            }
-
-            // Lọc dữ liệu để chỉ xuất các cột hiển thị trong bảng
-            const filteredData = tableData.map(row => ({
-                SERIAL_NUMBER: row.SERIAL_NUMBER || '',
-                KEY_PART_SN: row.KEY_PART_SN || '',
-                MO_NUMBER: row.MO_NUMBER || '',
-                MODEL_NAME: row.MODEL_NAME || '',
-                TEST_TIME: row.TEST_TIME || '',
-                TEST_GROUP: row.TEST_GROUP || '',
-                TEST_CODE: row.TEST_CODE || '',
-                DATA1: row.DATA1 || '',
-                REASON_CODE: row.REASON_CODE || ''
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(filteredData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'HistoryError');
-
-            // Đặt tiêu đề cột
-            worksheet['!cols'] = [
-                { wch: 20 }, // SERIAL_NUMBER
-                { wch: 20 }, // KEY_PART_SN
-                { wch: 15 }, // MO_NUMBER
-                { wch: 15 }, // MODEL_NAME
-                { wch: 20 }, // TEST_TIME
-                { wch: 10 }, // TEST_GROUP
-                { wch: 30 }, // TEST_CODE
-                { wch: 50 }, // DATA1
-                { wch: 15 }  // REASON_CODE
-            ];
-
-            XLSX.writeFile(workbook, 'HistoryError.xlsx');
         }
     </script>
 }

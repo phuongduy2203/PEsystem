@@ -439,15 +439,20 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 10
+        // API: Lấy dữ liệu từ ScrapList với InternalTask hợp lệ trong 3 tháng gần nhất
         [HttpGet("get-scrap-status-zero")]
         public async Task<IActionResult> GetScrapStatusZero()
         {
             try
             {
-                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 10
+                var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
+                // Lấy dữ liệu từ bảng ScrapList với InternalTask hợp lệ và CreateTime trong 3 tháng gần nhất
                 var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 10) // Lọc theo ApplyTaskStatus = 0 hoặc 10
+                    .Where(s => !string.IsNullOrEmpty(s.InternalTask)
+                                && s.InternalTask != "N/A"
+                                && s.CreateTime >= threeMonthsAgo
+                                && s.InternalTask != null)
                     .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
                     .Select(g => new
                     {
@@ -456,6 +461,7 @@ namespace API_WEB.Controllers.Scrap
                         ApproveScrapPerson = g.First().ApproveScrapperson, // Lấy giá trị đầu tiên
                         KanBanStatus = g.First().KanBanStatus, // Lấy giá trị đầu tiên
                         Category = g.First().Category,
+                        Purpose = g.First().Purpose,
                         Remark = g.First().Remark,
                         CreateTime = g.First().CreateTime.ToString("yyyy-MM-dd"), // Chỉ lấy ngày tháng năm
                         CreateBy = g.First().CreatedBy, // Lấy giá trị đầu tiên
@@ -466,7 +472,7 @@ namespace API_WEB.Controllers.Scrap
 
                 if (!scrapData.Any())
                 {
-                    return NotFound(new { message = "Không tìm thấy dữ liệu với ApplyTaskStatus = 0 hoặc 3." });
+                    return NotFound(new { message = "Không tìm thấy dữ liệu phù hợp trong 3 tháng gần nhất." });
                 }
 
                 return Ok(scrapData);
