@@ -447,28 +447,33 @@ namespace API_WEB.Controllers.Scrap
             {
                 var threeMonthsAgo = DateTime.Now.AddMonths(-3);
 
-                // Lấy dữ liệu từ bảng ScrapList với InternalTask hợp lệ và CreateTime trong 3 tháng gần nhất
-                var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.InternalTask != null
-                                && s.InternalTask != "N/A"
-                                && s.CreateTime != default
-                                && s.CreateTime >= threeMonthsAgo)
-                    .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
-                    .Select(g => new
-                    {
-                        InternalTask = g.Key,
-                        Description = g.First().Desc, // Lấy giá trị đầu tiên của Description
-                        ApproveScrapPerson = g.First().ApproveScrapperson, // Lấy giá trị đầu tiên
-                        KanBanStatus = g.First().KanBanStatus, // Lấy giá trị đầu tiên
-                        Category = g.First().Category,
-                        Remark = g.First().Remark,
-                        CreateTime = g.First().CreateTime.ToString("yyyy-MM-dd"), // Chỉ lấy ngày tháng năm
-                        CreateBy = g.First().CreatedBy, // Lấy giá trị đầu tiên
-                        ApplyTaskStatus = g.First().ApplyTaskStatus, // Lấy giá trị đầu tiên
-                        Purpose = g.First().Purpose,
-                        TotalQty = g.Count() // Đếm số lượng SN trong mỗi InternalTask
-                    })
+                // Lấy dữ liệu từ bảng ScrapList với InternalTask hợp lệ
+                var scrapRecords = await _sqlContext.ScrapLists
+                    .Where(s => s.InternalTask != null && s.InternalTask != "N/A")
                     .ToListAsync();
+
+                var scrapData = scrapRecords
+                    .Where(s => s.CreateTime != default && s.CreateTime >= threeMonthsAgo)
+                    .GroupBy(s => s.InternalTask)
+                    .Select(g =>
+                    {
+                        var first = g.First();
+                        return new
+                        {
+                            InternalTask = g.Key,
+                            Description = first.Desc,
+                            ApproveScrapPerson = first.ApproveScrapperson,
+                            KanBanStatus = first.KanBanStatus,
+                            Category = first.Category,
+                            Remark = first.Remark,
+                            CreateTime = first.CreateTime.ToString("yyyy-MM-dd"),
+                            CreateBy = first.CreatedBy,
+                            ApplyTaskStatus = first.ApplyTaskStatus,
+                            Purpose = first.Purpose,
+                            TotalQty = g.Count()
+                        };
+                    })
+                    .ToList();
 
                 if (!scrapData.Any())
                 {
