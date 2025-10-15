@@ -1,58 +1,71 @@
-﻿@{
-    ViewData["Title"] = "Allpart DC-LC";
-}
 @{
+    ViewData["Title"] = "Allpart DC-LC";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
+<link rel="stylesheet" href="~/assets/Areas/Allpart/css/theme.css" asp-append-version="true" />
 
-<link href="~/assets/css/dclc.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin Linh Kiện</h1>
-    </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
+<section class="allpart-page py-4">
+    <div class="allpart-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+            <div>
+                <h1>DC-LC Insight</h1>
+                <p>Tìm kiếm thông tin linh kiện theo Serial Number và vị trí, xuất dữ liệu trực quan chỉ với vài thao tác.</p>
             </div>
-            <div class="col-md-4">
-                <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
-            </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
-            </div>
-        </div>
-
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="dcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>P_SN</th>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>VENDOR_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>REF_DES</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>PROCESS_FLAG</th>
-                            <th>STATION</th>
-                            <th>GROUP_NAME</th>
-                            <th>WORK_TIME</th>
-                            <th>WO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dcLcTableBody"></tbody>
-                </table>
+            <div class="allpart-badge-list">
+                <span class="badge"><i class="fas fa-microchip me-2"></i>Thông tin linh kiện</span>
+                <span class="badge"><i class="fas fa-download me-2"></i>Xuất Excel nhanh</span>
             </div>
         </div>
     </div>
-</div>
+
+    <div class="allpart-card shadow-sm">
+        <div class="allpart-card-header">
+            <h2 class="allpart-card-title">Tìm Kiếm Thông Tin Linh Kiện</h2>
+            <p class="allpart-card-subtitle">Nhập danh sách Serial Number &amp; Reference Designator để truy vấn</p>
+        </div>
+        <div class="allpart-card-body">
+            <div class="row g-3 mb-4 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label" for="serialNumber">Serial Number</label>
+                    <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="refDes">Reference Designator</label>
+                    <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
+                </div>
+                <div class="col-md-2 d-grid gap-2">
+                    <button onclick="search()" class="btn btn-nv">Tìm kiếm</button>
+                    <button onclick="downloadExcel()" class="btn btn-nv">Tải xuống Excel</button>
+                </div>
+            </div>
+
+            <div class="allpart-table-wrapper">
+                <div class="table-responsive">
+                    <table id="dcLcTable" class="display table allpart-table table-hover align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>P_SN</th>
+                                <th>MODEL_NAME</th>
+                                <th>MÃ_LIỆU</th>
+                                <th>VENDOR_CODE</th>
+                                <th>VENDOR_NAME</th>
+                                <th>REF_DES</th>
+                                <th>DATE_CODE</th>
+                                <th>LOT_CODE</th>
+                                <th>PROCESS_FLAG</th>
+                                <th>STATION</th>
+                                <th>GROUP_NAME</th>
+                                <th>WORK_TIME</th>
+                                <th>WO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dcLcTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
     <script>
@@ -198,34 +211,28 @@
         function downloadExcel() {
             const allData = dcLcTable.rows().data().toArray();
 
-            const excelData = [
-                ['P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME', 'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'WO']
+            if (allData.length === 0) {
+                alert('Không có dữ liệu để tải xuống. Vui lòng tìm kiếm trước.');
+                return;
+            }
+
+            const headers = [
+                'P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME', 'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'WO'
             ];
 
-            allData.forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
+            const worksheetData = allData.map(row => {
+                const rowData = {};
+                headers.forEach((header, index) => {
+                    const value = $(row[index]).text().trim();
+                    rowData[header] = value;
                 });
-                excelData.push(rowData);
+                return rowData;
             });
 
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'data_dclc_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'DC_LC_DATA');
+            XLSX.writeFile(workbook, 'DC_LC_Data.xlsx');
         }
     </script>
 }

@@ -1,222 +1,214 @@
-﻿﻿@{
-    ViewData["Title"] = "Scrap Area";
-}
 @{
-    Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
+    ViewData["Title"] = "Scrap Area";
+    Layout = "~/Areas/Scrap/Views/Shared/Layout_scrap.cshtml";
 }
 
-<div class="row">
-    <!-- Cột chọn loại chức năng -->
-    <div class="col-md-3">
-        <form id="search-form" class="form-inline">
-            <select id="search-options" class="form-select">
-                <option selected disabled>SELECT FUNCTION</option>
-                <option value="INPUT_SN">INPUT SN</option>
-                <option value="CREATE_TASK_FORM">CREATE TASK FORM</option>
-                <option value="CREATE_TASK_FORM_SN">CREATE TASK FORM BY SN</option>
-                <option value="UPDATE_DATA">UPDATE DATA</option>
-                <option value="HISTORY_APPLY">HISTORY APPLY</option>
-            </select>
-        </form>
+<section class="scrap-page container-fluid py-4">
+    <div class="scrap-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+            <div>
+                <h1>SN - SPE Approved</h1>
+                <p>Quản lý danh sách bản lỗi đã được SPE phê duyệt và chuẩn bị gửi task nội bộ chỉ trong vài cú nhấp chuột.</p>
+            </div>
+            <div class="scrap-badge-list">
+                <span class="scrap-chip"><i class="fas fa-recycle"></i>Internal task mới nhất 3 tháng</span>
+                <span class="scrap-chip"><i class="fas fa-database"></i>Tổng hợp số lượng tự động</span>
+                <span class="scrap-chip"><i class="fas fa-bullseye"></i>Quản lý mục đích rõ ràng</span>
+            </div>
+        </div>
     </div>
 
-    <!-- function area-->
-    <div class="col-md-9">
-        <!-- Form input SN -->
-        <form id="input-sn-form" method="post" class="hidden" data-search-type="INPUT_SN">
-            <div class="row align-items-end">
-                <div class="col-md-4">
-                    <textarea name="serialNumbers" id="sn-input" class="form-control" rows="10" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+    <div class="row g-4 align-items-stretch">
+        <div class="col-xl-4">
+            <div class="scrap-card h-100">
+                <div class="scrap-card-header">
+                    <h2 class="scrap-card-title">Chức năng nhanh</h2>
+                    <p class="scrap-card-subtitle">Lựa chọn tác vụ phù hợp với nhu cầu hiện tại</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <input type="text" id="description-input" name="description" class="form-control" placeholder="Tiêu đề mail khách hàng approved">
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" id="NVmember-input" name="po" class="form-control" placeholder="Nhập tên khách hàng approved">
-                    </div>
-                    <div class="mb-2">
-                        <select id="Scrap-options" class="form-select">
-                            <option selected disabled>Select type scrap</option>
-                            <option value="0">SPE approve to scrap</option>
-                            <option value="1">Scrap to quarterly</option>
-                            <option value="2">Approved to engineer sample</option>
-                            <option value="3">Approved to master board</option>
-                            <option value="4">Approved to BGA</option>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label for="speApproveTime-input" class="form-label">Thời gian khách hàng approve</label>
-                        <input type="date" id="speApproveTime-input" name="speApproveTime" class="form-control" />
-                    </div>
-                    <div class="mb-2">
-                        <button id="input-sn-btn" class="btn btn-ne" type="button">INPUT SN</button>
-                    </div>
+                <div class="scrap-card-body">
+                    <form id="search-form" class="d-flex flex-column gap-3">
+                        <div>
+                            <label for="search-options" class="form-label">Chọn chức năng</label>
+                            <select id="search-options" class="form-select">
+                                <option selected disabled>SELECT FUNCTION</option>
+                                <option value="INPUT_SN">INPUT SN</option>
+                                <option value="CREATE_TASK_FORM">CREATE TASK FORM</option>
+                                <option value="CREATE_TASK_FORM_SN">CREATE TASK FORM BY SN</option>
+                                <option value="UPDATE_DATA">UPDATE DATA</option>
+                            </select>
+                        </div>
+                        <div class="scrap-hint">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Chọn một chức năng để hiển thị biểu mẫu tương ứng. Các thông tin được lưu lại cho lần thao tác tiếp theo.
+                        </div>
+                    </form>
                 </div>
             </div>
-        </form>
+        </div>
 
-        <!-- Form create task -->
-        <form id="custom-form" method="post" class="hidden" data-search-type="CREATE_TASK_FORM">
-            <div class="row align-items-end">
-                <div class="col-md-2">
-                    <button id="create-task-btn" class="btn btn-ne" type="button">Create task</button>
+        <div class="col-xl-8 d-flex flex-column gap-4">
+            <form id="input-sn-form" method="post" class="scrap-card hidden" data-search-type="INPUT_SN">
+                <div class="scrap-card-header">
+                    <h2 class="scrap-card-title">Nhập danh sách SN</h2>
+                    <p class="scrap-card-subtitle">Gửi thông tin bản lỗi và tạo internal task tự động</p>
                 </div>
-            </div>
-        </form>
-
-        <!-- Form create task by SN -->
-        <form id="custom-form-sn" method="post" class="hidden" data-search-type="CREATE_TASK_FORM_SN">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-4">
-                    <textarea name="SN box" id="create-task-btn-sn-box" class="form-control" rows="5" placeholder="Nhập SN"></textarea>
-                </div>
-                <div class="col-md-2">
-                    <button id="create-task-btn-sn" class="btn btn-ne" type="button">Create task</button>
-                </div>
-            </div>
-        </form>
-
-        <!-- Form update data -->
-        <form id="update-data-form" method="post" class="hidden" data-search-type="UPDATE_DATA">
-            <div class="row">
-                <div class="col-md-4">
-                    <textarea name="serialNumbers" id="sn-input-update" class="form-control" rows="8" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <label for="task-input" class="form-label">Task</label>
-                        <input type="text" id="task-input" name="task" class="form-control" placeholder="Nhập Task">
+                <div class="scrap-card-body">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <label for="sn-input" class="form-label">Danh sách Serial Number</label>
+                            <textarea name="serialNumbers" id="sn-input" class="form-control" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                            <div class="scrap-hint">Mỗi SN tối đa 50 ký tự. Hệ thống sẽ kiểm tra tự động trước khi xử lý.</div>
+                        </div>
+                        <div class="col-lg-6 d-flex flex-column gap-3">
+                            <div>
+                                <label for="description-input" class="form-label">Tiêu đề phê duyệt</label>
+                                <input type="text" id="description-input" name="description" class="form-control" placeholder="Tiêu đề mail khách hàng approved" />
+                            </div>
+                            <div>
+                                <label for="NVmember-input" class="form-label">Khách hàng phê duyệt</label>
+                                <input type="text" id="NVmember-input" name="po" class="form-control" placeholder="Nhập tên khách hàng approved" />
+                            </div>
+                            <div>
+                                <label for="Scrap-options" class="form-label">Mục đích xử lý</label>
+                                <select id="Scrap-options" class="form-select">
+                                    <option selected disabled>Select type scrap</option>
+                                    <option value="0">SPE approve to scrap</option>
+                                    <option value="1">Scrap to quarterly</option>
+                                    <option value="2">Approved to engineer sample</option>
+                                    <option value="3">Approved to master board</option>
+                                    <option value="4">Approved to BGA</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="speApproveTime-input" class="form-label">Thời gian khách hàng approve</label>
+                                <input type="date" id="speApproveTime-input" name="speApproveTime" class="form-control" />
+                            </div>
+                            <div class="pt-2">
+                                <button id="input-sn-btn" class="btn btn-nv" type="button">INPUT SN</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <label for="po-input" class="form-label">PO</label>
-                        <input type="text" id="po-input" name="po" class="form-control" placeholder="Nhập PO">
-                    </div>
-                    <button id="update-task-btn" class="btn btn-ne mt-1" type="button">Update</button>
                 </div>
+            </form>
 
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <label for="cost-input" class="form-label">Cost</label>
-                        <input type="text" id="cost-input" name="cost" class="form-control" placeholder="Nhập Cost">
-                    </div>
-                    <div class="mb-2">
-                        <label for="file-input" class="form-label">Upload Excel File (Board SN & Cost)</label>
-                        <input type="file" id="file-input" name="file" class="form-control" accept=".xlsx, .xls">
-                    </div>
-                    <button id="update-cost-btn" class="btn btn-ne mt-1" type="button">Update Cost</button>
+            <form id="custom-form" method="post" class="scrap-card hidden" data-search-type="CREATE_TASK_FORM">
+                <div class="scrap-card-header">
+                    <h2 class="scrap-card-title">Tạo task nội bộ</h2>
+                    <p class="scrap-card-subtitle">Kết nối dữ liệu SPE đã duyệt với hệ thống MRB</p>
                 </div>
-            </div>
-        </form>
+                <div class="scrap-card-body d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div class="scrap-hint mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Chọn các Internal Task bên dưới, sau đó nhấn tạo task.
+                    </div>
+                    <button id="create-task-btn" class="btn btn-nv" type="button">Create task</button>
+                </div>
+            </form>
 
-        <!-- Form history apply -->
-        <form id="history-apply-form" method="post" class="hidden" data-search-type="HISTORY_APPLY_FORM">
-            <div class="row align-items-end">
-                <div class="col-md-2">
-                    <button id="create-history-task-btn" class="btn btn-ne" type="button">Data</button>
+            <form id="custom-form-sn" method="post" class="scrap-card hidden" data-search-type="CREATE_TASK_FORM_SN">
+                <div class="scrap-card-header">
+                    <h2 class="scrap-card-title">Tạo task theo Serial Number</h2>
+                    <p class="scrap-card-subtitle">Tải task trực tiếp cho danh sách SN cụ thể</p>
                 </div>
-            </div>
-        </form>
+                <div class="scrap-card-body">
+                    <div class="row g-4 align-items-start">
+                        <div class="col-lg-8">
+                            <label for="create-task-btn-sn-box" class="form-label">Danh sách SN</label>
+                            <textarea name="SN box" id="create-task-btn-sn-box" class="form-control" rows="6" placeholder="Nhập SN (mỗi dòng 1 SN)"></textarea>
+                        </div>
+                        <div class="col-lg-4 d-flex align-items-end">
+                            <button id="create-task-btn-sn" class="btn btn-nv w-100" type="button">Create task</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <form id="update-data-form" method="post" class="scrap-card hidden" data-search-type="UPDATE_DATA">
+                <div class="scrap-card-header">
+                    <h2 class="scrap-card-title">Cập nhật thông tin nội bộ</h2>
+                    <p class="scrap-card-subtitle">Điều chỉnh Task, PO và chi phí trực tiếp từ bảng ScrapList</p>
+                </div>
+                <div class="scrap-card-body">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <label for="sn-input-update" class="form-label">Danh sách SN</label>
+                            <textarea name="serialNumbers" id="sn-input-update" class="form-control" rows="8" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                        </div>
+                        <div class="col-lg-4 d-flex flex-column gap-3">
+                            <div>
+                                <label for="task-input" class="form-label">Task</label>
+                                <input type="text" id="task-input" name="task" class="form-control" placeholder="Nhập Task" />
+                            </div>
+                            <div>
+                                <label for="po-input" class="form-label">PO</label>
+                                <input type="text" id="po-input" name="po" class="form-control" placeholder="Nhập PO" />
+                            </div>
+                            <button id="update-task-btn" class="btn btn-nv" type="button">Update Task &amp; PO</button>
+                        </div>
+                        <div class="col-lg-4 d-flex flex-column gap-3">
+                            <div>
+                                <label for="cost-input" class="form-label">Cost</label>
+                                <input type="text" id="cost-input" name="cost" class="form-control" placeholder="Nhập Cost" />
+                            </div>
+                            <div>
+                                <label for="file-input" class="form-label">Upload Excel (Board SN &amp; Cost)</label>
+                                <input type="file" id="file-input" name="file" class="form-control" accept=".xlsx, .xls" />
+                            </div>
+                            <button id="update-cost-btn" class="btn btn-nv" type="button">Update Cost</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!--hiển thị của chức năng input sn-->
-<div id="input-sn-result" class="hidden"></div>
+    <div class="d-flex flex-column gap-4 mt-4">
+        <div id="input-sn-result" class="scrap-card hidden">
+            <div data-role="result-message"></div>
+        </div>
 
-<!--hiển thị của chức năng create task-->
-<div id="create-task-result" class="hidden">
-    <table id="task-checkbox-table" class="mt-2 table table-bordered table-striped datatable-table" style="width:100%">
-        <thead>
-            <tr>
-                <th class="checkbox-column"><input type="checkbox" id="select-all"></th>
-                <th>INTERNAL_TASK</th>
-                <th>DESCRIPTION</th>
-                <th>NV_APPROVE</th>
-                <th>KANBAN_STATUS</th>
-                <th>CATEGORY</th>
-                <th>TYPE_BP</th>
-                <th>CREATE_TIME</th>
-                <th>CREATE_BY</th>
-                <th>APPLY_TASK_STATUS</th>
-                <th>TOTAL_Q'TY</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
+        <div id="create-task-result" class="scrap-card hidden">
+            <div class="scrap-card-header">
+                <h2 class="scrap-card-title">Danh sách Internal Task</h2>
+                <p class="scrap-card-subtitle">Tích chọn những Internal Task cần tạo task hệ thống</p>
+            </div>
+            <div class="scrap-card-body">
+                <div data-role="result-message" class="mb-3"></div>
+                <div class="scrap-table-wrapper">
+                    <div class="table-responsive">
+                        <table id="task-checkbox-table" class="table table-hover scrap-table align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-column"><input type="checkbox" id="select-all" /></th>
+                                    <th>INTERNAL_TASK</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>PURPOSE</th>
+                                    <th>NV_APPROVE</th>
+                                    <th>KANBAN_STATUS</th>
+                                    <th>CATEGORY</th>
+                                    <th>TYPE_BP</th>
+                                    <th>CREATE_TIME</th>
+                                    <th>CREATE_BY</th>
+                                    <th>APPLY_TASK_STATUS</th>
+                                    <th>TOTAL_Q'TY</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<!--hiển thị của chức năng create task by sn-->
-<div id="create-task-result-sn" class="hidden"></div>
+        <div id="create-task-result-sn" class="scrap-card hidden">
+            <div data-role="result-message"></div>
+        </div>
 
-<!--hiển thị của chức năng update data-->
-<div id="update-data-result" class="hidden"></div>
-
-<!--hiển thị của chức năng update data-->
-<div id="history-apply-result" class="hidden">
-    <table id="history-task-checkbox-table" class="mt-2 table table-bordered table-striped datatable-table" style="width:100%">
-        <thead>
-            <tr>
-                <th class="checkbox-column"><input type="checkbox" id="select-all-history"></th>
-                <th>INTERNAL_TASK</th>
-                <th>DESCRIPTION</th>
-                <th>NV_APPROVE</th>
-                <th>KANBAN_STATUS</th>
-                <th>CATEGORY</th>
-                <th>TYPE_BP</th>
-                <th>CREATE_TIME</th>
-                <th>CREATE_BY</th>
-                <th>APPLY_TIME</th>
-                <th>APPLY_TASK_STATUS</th>
-                <th>TOTAL_Q'TY</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-
+        <div id="update-data-result" class="scrap-card hidden">
+            <div data-role="result-message"></div>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
-    <!-- Script tùy chỉnh -->
-    <script src="~/assets/areas/scrap/js/function.js?v=@DateTime.Now.Ticks"></script>
-    <style>
-        .hidden {
-            display: none !important;
-        }
-        /* Định dạng checkbox */
-        .checkbox-column {
-            width: 20px!important; /* Đảm bảo cột checkbox không quá hẹp */
-            text-align: center !important;
-        }
-        /* Giới hạn độ rộng cột */
-        #task-checkbox-table th, #task-checkbox-table td {
-            white-space: nowrap; /* Ngăn xuống dòng */
-            overflow: hidden;
-            text-align: center;
-            text-overflow: ellipsis; /* Hiển thị dấu "..." nếu nội dung quá dài */
-            /*max-width: 80px!important;  Giới hạn độ rộng cột */
-        }
-
-        /* Giới hạn độ rộng cột */
-        #history-task-checkbox-table th, #history-task-checkbox-table td {
-            white-space: nowrap; /* Ngăn xuống dòng */
-            overflow: hidden;
-            text-align: center;
-            text-overflow: ellipsis; /* Hiển thị dấu "..." nếu nội dung quá dài */
-            /*max-width: 80px!important;  Giới hạn độ rộng cột */
-        }
-        #history-task-checkbox-table td, #task-checkbox-table td{
-            background-color:#fff;
-        }
-
-         /* Thêm hiệu ứng hover cho hàng */
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76b900 !important;
-            /*transition: background-color 0.2s ease;*/
-        }
-
-
-    </style>
+    <script src="~/assets/Areas/Scrap/js/Function.js?v=@DateTime.Now.Ticks"></script>
 }

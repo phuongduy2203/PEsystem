@@ -1,86 +1,101 @@
-﻿@{
-    ViewData["Title"] = "YR follow DC-LC";
-}
 @{
+    ViewData["Title"] = "YR follow DC-LC";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
+<link rel="stylesheet" href="~/assets/Areas/Allpart/css/theme.css" asp-append-version="true" />
 
-<link href="~/assets/css/yrdclc.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">YR follow DC/LC</h1>
-    </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="date-time-range">
-                <label for="startDate">Bắt đầu:</label>
-                <input type="datetime-local" id="startDate" />
-                <label for="endDate">Kết thúc:</label>
-                <input type="datetime-local" id="endDate" />
+<section class="allpart-page py-4">
+    <div class="allpart-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+            <div>
+                <h1>YR follow DC/LC</h1>
+                <p>Phân tích dữ liệu DC/LC theo thời gian, model và mã lỗi với giao diện trực quan.</p>
             </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <input id="model" name="model" class="form-control" placeholder="Model Name" />
-            </div>
-            <div class="col-md-2">
-                <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
-            </div>
-            <div class="col-md-2">
-                <input id="location" name="location" class="form-control" placeholder="Vị trí" />
-            </div>
-            <div class="col-md-2">
-                <input id="station" name="station" class="form-control" placeholder="Trạm test" />
-            </div>
-            <div class="col-md-2">
-                <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Load data</button>
-            </div>
-        </div>
-
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="yrdcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>INPUT_QTY</th>
-                            <th>FAIL_QTY</th>
-                            <th>PASS_QTY</th>
-                            <th>DFR</th>
-                        </tr>
-                    </thead>
-                    <tbody id="yrdcLcTableBody"></tbody>
-                </table>
+            <div class="allpart-badge-list">
+                <span class="badge"><i class="fas fa-calendar me-2"></i>Lọc theo thời gian</span>
+                <span class="badge"><i class="fas fa-chart-line me-2"></i>Thống kê DFR</span>
             </div>
         </div>
     </div>
-</div>
+
+    <div class="allpart-card shadow-sm">
+        <div class="allpart-card-header">
+            <h2 class="allpart-card-title">Tìm kiếm dữ liệu YR</h2>
+            <p class="allpart-card-subtitle">Thiết lập bộ lọc và tải dữ liệu nhanh chóng</p>
+        </div>
+        <div class="allpart-card-body">
+            <div class="row g-3 mb-3 align-items-center">
+                <div class="col-md-12 d-flex flex-wrap gap-3 align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="startDate" class="form-label m-0">Bắt đầu:</label>
+                        <input type="datetime-local" id="startDate" class="form-control" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="endDate" class="form-label m-0">Kết thúc:</label>
+                        <input type="datetime-local" id="endDate" class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-4 align-items-center">
+                <div class="col-md-2">
+                    <label class="form-label" for="model">Model Name</label>
+                    <input id="model" name="model" class="form-control" placeholder="Model Name" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="PN">Mã Liệu</label>
+                    <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="location">Vị trí</label>
+                    <input id="location" name="location" class="form-control" placeholder="Vị trí" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="station">Trạm test</label>
+                    <input id="station" name="station" class="form-control" placeholder="Trạm test" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="error">Mã lỗi</label>
+                    <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
+                </div>
+                <div class="col-md-2 d-grid gap-2">
+                    <button onclick="search()" class="btn btn-nv">Tìm kiếm</button>
+                    <button onclick="downloadExcel()" class="btn btn-nv">Load data</button>
+                </div>
+            </div>
+
+            <div class="allpart-table-wrapper">
+                <div class="table-responsive">
+                    <table id="yrdcLcTable" class="display table allpart-table table-hover align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>MODEL_NAME</th>
+                                <th>MÃ_LIỆU</th>
+                                <th>DATE_CODE</th>
+                                <th>LOT_CODE</th>
+                                <th>VENDOR_NAME</th>
+                                <th>INPUT_QTY</th>
+                                <th>FAIL_QTY</th>
+                                <th>PASS_QTY</th>
+                                <th>DFR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="yrdcLcTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
-
     <script>
         let yrdcLcTable;
         let snDataCache = []; // Lưu dữ liệu BY-FAIL-SN để xuất Excel
 
-        // Hàm tạo nội dung cho ô với tooltip
         function createTooltipCell(data) {
             return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
         }
 
-        // Gắn sự kiện tooltip sử dụng event delegation
         function attachTooltipEvents() {
             $(document).on('mouseover', '.tooltip-trigger', function (e) {
                 const $this = $(this);
@@ -111,7 +126,6 @@
             });
         }
 
-        // Hàm định dạng ngày giờ từ datetime-local sang YYYY-MM-DD HH:MM:SS
         function formatDateTime(dateTime) {
             if (!dateTime) return '';
             const date = new Date(dateTime);
@@ -125,7 +139,6 @@
         }
 
         $(document).ready(function () {
-            // Khởi tạo DataTable
             yrdcLcTable = $('#yrdcLcTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
@@ -135,7 +148,6 @@
                 ]
             });
 
-            // Gắn sự kiện tooltip
             attachTooltipEvents();
         });
 
@@ -148,17 +160,14 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // Kiểm tra đầu vào
             if (!model || !PN || !station || !error || !location || !startDate || !endDate) {
                 alert('Vui lòng nhập đầy đủ tất cả các trường!');
                 return;
             }
 
-            // Định dạng thời gian
             const formattedStartDate = formatDateTime(startDate);
             const formattedEndDate = formatDateTime(endDate);
 
-            // Hiển thị loading overlay
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'loading-overlay';
             loadingOverlay.innerHTML = `
@@ -168,10 +177,8 @@
             document.body.appendChild(loadingOverlay);
 
             try {
-                // Làm mới bảng trước khi tìm kiếm
                 yrdcLcTable.clear();
 
-                // Lần gọi API đầu tiên (BY-FAIL-TOTAL)
                 const totalResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
@@ -201,14 +208,13 @@
                     return;
                 }
 
-                // Hiển thị dữ liệu từ lần gọi đầu tiên vào bảng
                 totalData.result.forEach(item => {
                     yrdcLcTable.row.add([
-                        createTooltipCell(item.p_no),
+                        createTooltipCell(item.model_name),
                         createTooltipCell(item.kp_no),
                         createTooltipCell(item.date_code),
                         createTooltipCell(item.lot_code),
-                        createTooltipCell(item.mfr_name),
+                        createTooltipCell(item.vendor_name),
                         createTooltipCell(item.input_qty),
                         createTooltipCell(item.fail_qty),
                         createTooltipCell(item.pass_qty),
@@ -216,7 +222,8 @@
                     ]).draw();
                 });
 
-                // Lần gọi API thứ hai (BY-FAIL-SN)
+                attachTooltipEvents();
+
                 const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
@@ -240,82 +247,25 @@
                 }
 
                 const snData = await snResponse.json();
-                if (!snData.result || snData.result.length === 0) {
-                    console.warn('Không có dữ liệu từ API BY-FAIL-SN.');
-                } else {
-                    // Lưu dữ liệu BY-FAIL-SN để xuất Excel
-                    snDataCache = snData.result;
-                }
-
-                // Gắn sự kiện tooltip
-                attachTooltipEvents();
+                snDataCache = snData.result || [];
 
             } catch (error) {
                 alert(`Đã xảy ra lỗi: ${error.message}`);
             } finally {
-                // Xóa loading overlay
-                if (document.body.contains(loadingOverlay)) {
-                    document.body.removeChild(loadingOverlay);
-                }
+                document.body.removeChild(loadingOverlay);
             }
         }
 
         function downloadExcel() {
-            if (!snDataCache.length && !yrdcLcTable.rows().data().toArray().length) {
-                alert('Không có dữ liệu để tải xuống Excel!');
+            if (!snDataCache || snDataCache.length === 0) {
+                alert('Không có dữ liệu SN để tải xuống. Vui lòng nhấn "Tìm kiếm" trước.');
                 return;
             }
 
-            // Dữ liệu cho sheet 1 (từ bảng yrdcLcTable)
-            const totalData = [
-                ['MODEL_NAME', 'MÃ_LIỆU', 'DATE_CODE', 'LOT_CODE', 'VENDOR_NAME', 'INPUT_QTY', 'FAIL_QTY', 'PASS_QTY', 'DFR']
-            ];
-            yrdcLcTable.rows().data().toArray().forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                totalData.push(rowData);
-            });
-
-            // Dữ liệu cho sheet 2 (từ snDataCache)
-            const snData = [
-                ['P_SN', 'WO', 'P_NO', 'TR_SN', 'KP_NO', 'MFR_KP_NO', 'DATE_CODE', 'LOT_CODE', 'MFR_NAME', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'REF_DES', 'TEST_CODE', 'TEST_GROUP']
-            ];
-            snDataCache.forEach(item => {
-                snData.push([
-                    item.p_sn,
-                    item.wo,
-                    item.p_no,
-                    item.tr_sn,
-                    item.kp_no,
-                    item.mfr_kp_no,
-                    item.date_code,
-                    item.lot_code,
-                    item.mfr_name,
-                    item.process_flag,
-                    item.station,
-                    item.group_name,
-                    item.work_time,
-                    item.ref_des,
-                    item.test_code,
-                    item.test_group
-                ]);
-            });
-
-            // Tạo worksheet cho sheet 1
-            const ws1 = XLSX.utils.aoa_to_sheet(totalData);
-            // Tạo worksheet cho sheet 2
-            const ws2 = XLSX.utils.aoa_to_sheet(snData);
-
-            // Tạo workbook và thêm các sheet
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws1, "Total_Data");
-            XLSX.utils.book_append_sheet(wb, ws2, "SN_Data");
-
-            // Xuất file Excel
-            XLSX.writeFile(wb, 'yrdc_lc_data_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            const worksheet = XLSX.utils.json_to_sheet(snDataCache);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'YR_BY_FAIL_SN');
+            XLSX.writeFile(workbook, 'YR_BY_FAIL_SN.xlsx');
         }
     </script>
 }

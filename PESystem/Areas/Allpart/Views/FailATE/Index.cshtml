@@ -1,161 +1,155 @@
-﻿@{
-    ViewData["Title"] = "History Error";
-}
 @{
+    ViewData["Title"] = "Fail ATE";
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
+<link rel="stylesheet" href="~/assets/Areas/Allpart/css/theme.css" asp-append-version="true" />
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">FAIL ATE</h1>
-    </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="1" placeholder="Nhập SerialNumber..."></textarea>
+<section class="allpart-page py-4">
+    <div class="allpart-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+            <div>
+                <h1>Fail ATE Analytics</h1>
+                <p>Phân tích lỗi kiểm tra ATE theo Serial Number, tra cứu nguyên nhân và xuất báo cáo nhanh.</p>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-        </div>
-
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>LINE_NAME</th>
-                            <th>SECTION_NAME</th>
-                            <th>GROUP_NAME</th>
-                            <th>STATION_NAME</th>
-                            <th>ERROR_CODE</th>
-                            <th>ERROR_DESC</th>
-                            <th>DATA6</th>
-                            <th>DATA12</th>
-                            <th>PASS_COUNT</th>
-                            <th>RETEST_COUNT</th>
-                            <th>TEST_VALUE</th>
-                            <th>IN_STATION_TIME</th>
-                            <th>RESULT</th>
-                            <th>DATA2</th>
-                            <th>TEST_MODE</th>
-                            <th>SCOF_MIN</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
+            <div class="allpart-badge-list">
+                <span class="badge"><i class="fas fa-microchip me-2"></i>Thông tin kiểm tra</span>
+                <span class="badge"><i class="fas fa-chart-line me-2"></i>Phân tích xu hướng</span>
             </div>
         </div>
     </div>
-</div>
+
+    <div class="allpart-card shadow-sm">
+        <div class="allpart-card-header">
+            <div>
+                <h2 class="allpart-card-title">Tra cứu lỗi Fail ATE</h2>
+                <p class="allpart-card-subtitle">Nhập Serial Number để xem chi tiết lỗi và trạng thái kiểm tra</p>
+            </div>
+        </div>
+        <div class="allpart-card-body">
+            <div class="row g-3 mb-4 align-items-end">
+                <div class="col-lg-5">
+                    <label class="form-label" for="serialNumber">Serial Number</label>
+                    <textarea id="serialNumber" class="form-control" rows="2" placeholder="Nhập SerialNumber..."></textarea>
+                    <p class="allpart-hint mt-2 mb-0">Có thể nhập nhiều Serial Number, mỗi dòng một giá trị.</p>
+                </div>
+                <div class="col-md-3 col-lg-2 d-grid">
+                    <button onclick="search()" class="btn btn-nv">Tìm kiếm</button>
+                </div>
+            </div>
+
+            <div class="allpart-table-wrapper">
+                <div class="table-responsive">
+                    <table id="historyDataTable" class="display table allpart-table table-hover align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>SERIAL_NUMBER</th>
+                                <th>MODEL_NAME</th>
+                                <th>LINE_NAME</th>
+                                <th>SECTION_NAME</th>
+                                <th>GROUP_NAME</th>
+                                <th>STATION_NAME</th>
+                                <th>ERROR_CODE</th>
+                                <th>ERROR_DESC</th>
+                                <th>DATA6</th>
+                                <th>DATA12</th>
+                                <th>PASS_COUNT</th>
+                                <th>RETEST_COUNT</th>
+                                <th>TEST_VALUE</th>
+                                <th>IN_STATION_TIME</th>
+                                <th>RESULT</th>
+                                <th>DATA2</th>
+                                <th>TEST_MODE</th>
+                                <th>SCOF_MIN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyDataTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
-    <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
-        }
-
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
-            color: #fff;
-            height: 100%;
-        }
-
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
-            }
-
-        .custom-tooltip {
-            position: absolute;
-            background-color: #333;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 1000;
-            display: none;
-            max-width: 200px;
-            word-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
-        }
-
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
-        }
-
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
-            resize: vertical;
-        }
-
-        .datatable-table th, .datatable-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
-        }
-
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-message {
-            background: #fff;
-            padding: 15px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-    </style>
     <script>
         let historyTable = null;
 
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function createTooltipCell(data) {
+            const safe = escapeHtml(data ?? '');
+            return `<span class="tooltip-trigger" data-tooltip="${safe}">${safe}</span>`;
+        }
+
+        function ensureTooltipContainer() {
+            let tip = document.querySelector('.custom-tooltip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.className = 'custom-tooltip';
+                document.body.appendChild(tip);
+            }
+            return tip;
+        }
+
+        function attachTooltipEvents() {
+            document.querySelectorAll('.tooltip-trigger').forEach(el => {
+                if (el.dataset.tooltipBound === '1') return;
+
+                el.addEventListener('mouseover', (e) => {
+                    const tooltipText = el.getAttribute('data-tooltip') || '';
+                    if (!tooltipText) return;
+                    const tooltip = ensureTooltipContainer();
+                    tooltip.textContent = tooltipText;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY - 20) + 'px';
+                });
+
+                el.addEventListener('mousemove', (e) => {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        tooltip.style.left = (e.pageX + 10) + 'px';
+                        tooltip.style.top = (e.pageY - 20) + 'px';
+                    }
+                });
+
+                el.addEventListener('mouseout', () => {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
+
+                el.dataset.tooltipBound = '1';
+            });
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '';
+            const dt = new Date(value);
+            if (Number.isNaN(dt.getTime())) {
+                return value;
+            }
+            return dt.toLocaleString();
+        }
+
         async function search() {
-            const sn = $("#serialNumber").val().trim().toUpperCase();
-            if (!sn) {
+            const snRaw = $("#serialNumber").val().trim();
+            if (!snRaw) {
                 Swal.fire("Thông báo", "Vui lòng nhập Serial Number!", "warning");
+                return;
+            }
+
+            const serialNumbers = snRaw.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+            if (serialNumbers.length === 0) {
+                Swal.fire("Thông báo", "Danh sách Serial Number không hợp lệ!", "warning");
                 return;
             }
 
@@ -167,31 +161,48 @@
                     showConfirmButton: false
                 });
 
-                const response = await fetch("http://10.220.130.119:9090/api/CheckInOut/get-fail-ate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(sn)
-                });
+                const aggregated = [];
+                const missing = [];
 
-                if (!response.ok) {
-                    throw new Error("API trả về lỗi: " + response.status);
+                for (const sn of serialNumbers) {
+                    const normalized = sn.toUpperCase();
+                    const response = await fetch("http://10.220.130.119:9090/api/CheckInOut/get-fail-ate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(normalized)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("API trả về lỗi: " + response.status);
+                    }
+
+                    const result = await response.json();
+
+                    if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+                        missing.push(normalized);
+                        continue;
+                    }
+
+                    aggregated.push(...result.data);
                 }
-
-                const result = await response.json();
 
                 Swal.close();
 
-                if (!result.success || !result.data || result.data.length === 0) {
-                    Swal.fire("Không có dữ liệu!", "Không tìm thấy dữ liệu lỗi cho SN: " + sn, "info");
+                if (aggregated.length === 0) {
+                    Swal.fire("Không có dữ liệu!", "Không tìm thấy dữ liệu lỗi cho Serial Number đã nhập.", "info");
                     if (historyTable) {
                         historyTable.clear().draw();
                     }
                     return;
                 }
 
-                renderTable(result.data);
+                renderTable(aggregated);
+
+                if (missing.length > 0) {
+                    Swal.fire("Thông tin", `Không có dữ liệu cho: ${missing.join(', ')}`, "info");
+                }
             } catch (err) {
                 Swal.close();
                 console.error(err);
@@ -200,103 +211,73 @@
         }
 
         function renderTable(data) {
-            if (historyTable) {
+            const columns = [
+                { data: "serialNumber", render: data => createTooltipCell(data) },
+                { data: "modelName", render: data => createTooltipCell(data) },
+                { data: "lineName", render: data => createTooltipCell(data) },
+                { data: "sectionName", render: data => createTooltipCell(data) },
+                { data: "groupName", render: data => createTooltipCell(data) },
+                { data: "stationName", render: data => createTooltipCell(data) },
+                { data: "errorCode", render: data => createTooltipCell(data) },
+                { data: "errorDesc", render: data => createTooltipCell(data) },
+                { data: "data6", render: data => createTooltipCell(data) },
+                { data: "data12", render: data => createTooltipCell(data) },
+                { data: "passCount", render: data => createTooltipCell(data) },
+                { data: "retestCount", render: data => createTooltipCell(data) },
+                { data: "testValue", render: data => createTooltipCell(data) },
+                { data: "inStationTime", render: data => createTooltipCell(formatDateTime(data)) },
+                { data: "result", render: data => createTooltipCell(data) },
+                { data: "data2", render: data => createTooltipCell(data) },
+                { data: "testMode", render: data => createTooltipCell(data) },
+                { data: "scofMin", render: data => createTooltipCell(data) }
+            ];
+
+            if (!historyTable) {
+                historyTable = $('#historyDataTable').DataTable({
+                    data,
+                    pageLength: 10,
+                    order: [[0, "desc"]],
+                    scrollX: true,
+                    autoWidth: false,
+                    dom: '<"top d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2"lfB>rt<"bottom"ip>',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fa fa-file-excel me-2"></i>Xuất Excel',
+                            className: 'btn btn-nv btn-sm',
+                            title: null,
+                            filename: 'FAIL_ATE_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-'),
+                            exportOptions: {
+                                columns: ':visible',
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return $(node).text();
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    columns,
+                    language: {
+                        search: "Tìm kiếm:",
+                        lengthMenu: "Hiển thị _MENU_ dòng",
+                        info: "Hiển thị _START_ - _END_ / _TOTAL_ dòng",
+                        paginate: {
+                            first: "Đầu",
+                            last: "Cuối",
+                            next: "→",
+                            previous: "←"
+                        },
+                        emptyTable: "Không có dữ liệu để hiển thị"
+                    }
+                });
+
+                historyTable.on('draw', attachTooltipEvents);
+            } else {
                 historyTable.clear().rows.add(data).draw();
-                return;
             }
 
-            historyTable = $('#historyDataTable').DataTable({
-                destroy: true,
-                data: data,
-                pageLength: 10,
-                order: [[0, "desc"]],
-                scrollX: true,
-                autoWidth: false,
-                dom: '<"top d-flex justify-content-between align-items-center"lfB>rt<"bottom"ip>',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        text: '<i class="fa fa-file-excel"></i>',
-                        className: 'btn btn-success btn-sm',
-                        title:null,
-                        filename: 'FAIL_ATE_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-'),
-                        exportOptions: {
-                            columns: ':visible'
-                        }
-                    }
-                ],
-                columns: [
-                    { data: "serialNumber" },
-                    { data: "modelName" },
-                    { data: "lineName" },
-                    { data: "sectionName" },
-                    { data: "groupName" },
-                    { data: "stationName" },
-                    { data: "errorCode" },
-                    {
-                        data: "errorDesc",
-                        render: function (data) {
-                            if (!data) return "";
-                            const text = data.toString().replace(/"/g, '&quot;');
-                            return `<span title="${text}">${text}</span>`;
-                        }
-                    },
-                    { data: "data6" },
-                    { data: "data12" },
-                    { data: "passCount" },
-                    { data: "retestCount" },
-                    { data: "testValue" },
-                    {
-                        data: "inStationTime",
-                        render: function (data) {
-                            return data ? new Date(data).toLocaleString() : "";
-                        }
-                    },
-                    { data: "result" },
-                    { data: "data2" },
-                    { data: "testMode" },
-                    { data: "scofMin" }
-                ],
-                language: {
-                    search: "Tìm kiếm:",
-                    lengthMenu: "Hiển thị _MENU_ dòng",
-                    info: "Hiển thị _START_ - _END_ / _TOTAL_ dòng",
-                    paginate: {
-                        first: "Đầu",
-                        last: "Cuối",
-                        next: "→",
-                        previous: "←"
-                    },
-                    emptyTable: "Không có dữ liệu để hiển thị"
-                },
-                createdRow: function (row, data, dataIndex) {
-                    $('td', row).each(function () {
-                        const text = $(this).text().trim();
-                        if (text.length > 0) {
-                            $(this).attr('title', text);
-                        }
-                    });
-                }
-            });
+            attachTooltipEvents();
         }
-
-
-        // ✅ CSS thêm tooltip đẹp + cắt nội dung dài
-        $(document).ready(function () {
-            const style = `
-            <style>
-                table.dataTable td {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 220px;
-                    vertical-align: middle;
-                }
-                table.dataTable td:hover {
-                    background-color: #fff9d6 !important;
-                }
-            </style>`;
-            $('head').append(style);
-        });
     </script>
 }

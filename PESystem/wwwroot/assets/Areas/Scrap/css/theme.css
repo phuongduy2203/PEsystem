@@ -1,0 +1,352 @@
+:root {
+    --scrap-green: #76b900;
+    --scrap-green-dark: #4e7d00;
+    --scrap-green-light: #9fe62d;
+    --scrap-bg: #030a03;
+    --scrap-panel: rgba(12, 19, 12, 0.92);
+    --scrap-panel-alt: rgba(17, 32, 17, 0.92);
+    --scrap-text: #e8ffe3;
+    --scrap-muted: #a0c97a;
+}
+
+.scrap-body {
+    background: radial-gradient(circle at 20% 0%, rgba(118, 185, 0, 0.12), transparent 45%),
+        radial-gradient(circle at 90% 10%, rgba(159, 230, 45, 0.1), transparent 50%),
+        var(--scrap-bg);
+    color: var(--scrap-text);
+    min-height: 100vh;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    letter-spacing: 0.01em;
+}
+
+.scrap-page {
+    position: relative;
+}
+
+.scrap-hero {
+    background: linear-gradient(135deg, rgba(118, 185, 0, 0.18), rgba(118, 185, 0, 0.06));
+    border: 1px solid rgba(118, 185, 0, 0.35);
+    border-radius: 22px;
+    padding: 1.8rem;
+    color: var(--scrap-text);
+    box-shadow: 0 35px 70px -50px rgba(118, 185, 0, 0.85);
+}
+
+.scrap-hero h1 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--scrap-green-light);
+}
+
+.scrap-hero p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: var(--scrap-muted);
+}
+
+.scrap-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.scrap-hero .badge {
+    background: rgba(118, 185, 0, 0.16);
+    border: 1px solid rgba(118, 185, 0, 0.35);
+    color: var(--scrap-green-light);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.scrap-card {
+    position: relative;
+    background: var(--scrap-panel);
+    border-radius: 20px;
+    border: 1px solid rgba(118, 185, 0, 0.28);
+    padding: 1.5rem;
+    color: var(--scrap-text);
+    box-shadow: 0 30px 80px -60px rgba(118, 185, 0, 0.9);
+    overflow: hidden;
+}
+
+.scrap-card::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 65%;
+    height: 160%;
+    background: radial-gradient(circle, rgba(118, 185, 0, 0.35), transparent 60%);
+    opacity: 0.18;
+    transform: rotate(18deg);
+}
+
+.scrap-card::after {
+    content: "";
+    position: absolute;
+    bottom: -35%;
+    left: -10%;
+    width: 55%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(118, 185, 0, 0.22), transparent 70%);
+    opacity: 0.2;
+    transform: rotate(-12deg);
+}
+
+.scrap-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.scrap-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(118, 185, 0, 0.25);
+    margin-bottom: 1.1rem;
+}
+
+.scrap-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--scrap-green-light);
+    margin: 0;
+}
+
+.scrap-card-subtitle {
+    font-size: 0.85rem;
+    color: var(--scrap-muted);
+    margin: 0;
+}
+
+.scrap-card .form-label {
+    font-weight: 600;
+    color: rgba(232, 255, 227, 0.86);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+}
+
+.scrap-card .form-control,
+.scrap-card .form-select {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(118, 185, 0, 0.35);
+    color: var(--scrap-text);
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.scrap-card textarea.form-control {
+    min-height: 220px;
+    resize: vertical;
+}
+
+.scrap-card .form-control:focus,
+.scrap-card .form-select:focus {
+    border-color: var(--scrap-green-light);
+    box-shadow: 0 0 0 0.15rem rgba(118, 185, 0, 0.35);
+    transform: translateY(-2px);
+}
+
+.btn-nv {
+    background: linear-gradient(135deg, var(--scrap-green), var(--scrap-green-light));
+    border: none;
+    color: #031401;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 14px;
+    padding: 0.7rem 1.6rem;
+    box-shadow: 0 22px 40px -22px rgba(118, 185, 0, 0.85);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-nv:hover,
+.btn-nv:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 25px 50px -20px rgba(159, 230, 45, 0.85);
+    color: #031401;
+}
+
+.btn-nv:active {
+    transform: translateY(1px);
+}
+
+.scrap-hint {
+    font-size: 0.85rem;
+    color: rgba(232, 255, 227, 0.7);
+    margin-top: 0.3rem;
+}
+
+.scrap-table-wrapper {
+    border-radius: 18px;
+    border: 1px solid rgba(118, 185, 0, 0.25);
+    overflow: hidden;
+    background: var(--scrap-panel-alt);
+    box-shadow: inset 0 0 0 1px rgba(118, 185, 0, 0.08);
+}
+
+.scrap-table {
+    color: var(--scrap-text);
+    margin-bottom: 0;
+}
+
+.scrap-table thead th {
+    background: linear-gradient(90deg, rgba(118, 185, 0, 0.85), rgba(118, 185, 0, 0.6));
+    color: #041203;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    border-bottom: none;
+}
+
+.scrap-table tbody tr {
+    background-color: transparent;
+    transition: background-color 0.25s ease, transform 0.2s ease;
+}
+
+.scrap-table tbody tr:hover {
+    background-color: rgba(118, 185, 0, 0.16);
+}
+
+.scrap-table td {
+    border-top: 1px solid rgba(118, 185, 0, 0.2);
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+
+.scrap-table .badge {
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.scrap-table .badge.bg-scrap {
+    background: rgba(118, 185, 0, 0.22);
+    color: var(--scrap-green-light);
+    border: 1px solid rgba(118, 185, 0, 0.35);
+}
+
+.scrap-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(118, 185, 0, 0.14);
+    color: var(--scrap-green-light);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(118, 185, 0, 0.3);
+}
+
+.scrap-chip i {
+    font-size: 0.9rem;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(118, 185, 0, 0.35);
+    color: var(--scrap-text);
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+}
+
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_info {
+    color: var(--scrap-muted);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--scrap-text) !important;
+    border-radius: 50px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: #031401 !important;
+    background: linear-gradient(135deg, var(--scrap-green), var(--scrap-green-light)) !important;
+    border-color: transparent;
+}
+
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.3rem 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.badge-status.bg-wait {
+    background: rgba(255, 193, 7, 0.18);
+    color: #ffecb5;
+}
+
+.badge-status.bg-progress {
+    background: rgba(13, 110, 253, 0.2);
+    color: #bcd5ff;
+}
+
+.badge-status.bg-success {
+    background: rgba(118, 185, 0, 0.22);
+    color: var(--scrap-green-light);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.scrap-section-label {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.72rem;
+    color: rgba(232, 255, 227, 0.6);
+}
+
+.scrap-table-wrapper .table-responsive {
+    margin-bottom: 0;
+}
+
+@media (max-width: 991.98px) {
+    .scrap-card {
+        padding: 1.25rem;
+    }
+
+    .scrap-card textarea.form-control {
+        min-height: 160px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .scrap-hero {
+        text-align: center;
+    }
+
+    .scrap-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .scrap-hero .badge,
+    .scrap-chip {
+        width: 100%;
+        justify-content: center;
+    }
+}
