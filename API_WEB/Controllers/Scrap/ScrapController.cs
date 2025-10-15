@@ -507,7 +507,7 @@ namespace API_WEB.Controllers.Scrap
 
                 var rejectedStatuses = new[] { 2, 4, 8 };
                 var rejectedSNs = scrapRecords
-                    .Where(s => rejectedStatuses.Contains(s.ApplyTaskStatus ?? -1))
+                    .Where(s => rejectedStatuses.Contains(s.ApplyTaskStatus))
                     .Select(s =>
                     {
                         var reason = s.ApplyTaskStatus switch
