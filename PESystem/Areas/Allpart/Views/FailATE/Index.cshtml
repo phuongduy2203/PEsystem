@@ -6,6 +6,7 @@
 }
 
 <link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
 
 <div class="allpart-interface nvidia-section">
     <div class="section-heading text-center text-lg-start">
@@ -75,7 +76,34 @@
 
 @section Scripts {
     <script>
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
         let historyTable = null;
+
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
+        }
+
+        const pick = (obj, ...keys) => {
+            for (const key of keys) {
+                if (obj && obj[key] !== undefined && obj[key] !== null) {
+                    return obj[key];
+                }
+            }
+            return '';
+        };
+
+        function htmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
 
         async function search() {
             const sn = $("#serialNumber").val().trim().toUpperCase();
@@ -101,7 +129,8 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("API trả về lỗi: " + response.status);
+                    const errorText = await response.text();
+                    throw new Error(`API trả về lỗi: ${response.status} - ${errorText}`);
                 }
 
                 const result = await response.json();
@@ -129,9 +158,10 @@
                 historyTable = $('#historyDataTable').DataTable({
                     pageLength: 10,
                     scrollX: true,
-                    responsive: true,
+                    responsive: false,
+                    autoWidth: false,
                     columnDefs: [
-                        { targets: '_all', defaultContent: '' }
+                        { targets: '_all', defaultContent: '', width: '210px' }
                     ]
                 });
             } else {
@@ -140,24 +170,24 @@
 
             data.forEach(item => {
                 historyTable.row.add([
-                    createTooltipCell(item.serial_Number),
-                    createTooltipCell(item.model_Name),
-                    createTooltipCell(item.line_Name),
-                    createTooltipCell(item.section_Name),
-                    createTooltipCell(item.group_Name),
-                    createTooltipCell(item.station_Name),
-                    createTooltipCell(item.error_Code),
-                    createTooltipCell(item.error_Desc),
-                    createTooltipCell(item.data6),
-                    createTooltipCell(item.data12),
-                    createTooltipCell(item.pass_Count),
-                    createTooltipCell(item.retest_Count),
-                    createTooltipCell(item.test_Value),
-                    createTooltipCell(item.in_Station_Time),
-                    createTooltipCell(item.result),
-                    createTooltipCell(item.data2),
-                    createTooltipCell(item.test_Mode),
-                    createTooltipCell(item.scof_Min)
+                    createTooltipCell(pick(item, 'serial_Number', 'serialNumber')),
+                    createTooltipCell(pick(item, 'model_Name', 'modelName')),
+                    createTooltipCell(pick(item, 'line_Name', 'lineName')),
+                    createTooltipCell(pick(item, 'section_Name', 'sectionName')),
+                    createTooltipCell(pick(item, 'group_Name', 'groupName')),
+                    createTooltipCell(pick(item, 'station_Name', 'stationName')),
+                    createTooltipCell(pick(item, 'error_Code', 'errorCode')),
+                    createTooltipCell(pick(item, 'error_Desc', 'errorDesc')),
+                    createTooltipCell(pick(item, 'data6', 'dataSix', 'data_6')),
+                    createTooltipCell(pick(item, 'data12', 'dataTwelve', 'data_12')),
+                    createTooltipCell(pick(item, 'pass_Count', 'passCount')),
+                    createTooltipCell(pick(item, 'retest_Count', 'retestCount')),
+                    createTooltipCell(pick(item, 'test_Value', 'testValue')),
+                    createTooltipCell(pick(item, 'in_Station_Time', 'inStationTime')),
+                    createTooltipCell(pick(item, 'result')),
+                    createTooltipCell(pick(item, 'data2', 'data_2')),
+                    createTooltipCell(pick(item, 'test_Mode', 'testMode')),
+                    createTooltipCell(pick(item, 'scof_Min', 'scofMin'))
                 ]);
             });
 
@@ -166,14 +196,17 @@
         }
 
         function createTooltipCell(data) {
-            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+            const text = htmlEscape(data);
+            return `<span class="tooltip-trigger" data-tooltip="${text}">${text}</span>`;
         }
 
         function attachTooltipEvents() {
-            $(document).on('mouseover', '.tooltip-trigger', function (e) {
-                const $this = $(this);
-                const tooltipText = $this.data('tooltip');
-                if (tooltipText) {
+            $(document)
+                .off('.tooltipHover')
+                .on('mouseover.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltipText = $(this).data('tooltip');
+                    if (!tooltipText) return;
+
                     let tooltip = document.querySelector('.custom-tooltip');
                     if (!tooltip) {
                         tooltip = document.createElement('div');
@@ -182,21 +215,20 @@
                     }
                     tooltip.textContent = tooltipText;
                     tooltip.style.display = 'block';
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mousemove', '.tooltip-trigger', function (e) {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip && tooltip.style.display === 'block') {
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mouseout', '.tooltip-trigger', function () {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip) {
-                    tooltip.style.display = 'none';
-                }
-            });
+                    positionTooltip(e, tooltip);
+                })
+                .on('mousemove.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        positionTooltip(e, tooltip);
+                    }
+                })
+                .on('mouseout.tooltipHover', '.tooltip-trigger', function () {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
         }
     </script>
 }

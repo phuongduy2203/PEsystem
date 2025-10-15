@@ -203,6 +203,16 @@
     box-shadow: 0 18px 40px rgba(15, 46, 18, 0.16);
 }
 
+.scrap-interface .nvidia-table {
+    border-collapse: separate;
+    border-spacing: 0 0.6rem;
+}
+
+.scrap-interface .nvidia-table thead th,
+.scrap-interface .nvidia-table tbody td {
+    padding: 1rem 1.85rem;
+}
+
 .nvidia-table thead th {
     background: linear-gradient(115deg, var(--nvidia-forest), rgba(118, 185, 0, 0.85));
     color: #eafdd8;
@@ -214,7 +224,7 @@
 }
 
 .nvidia-table tbody td {
-    padding: 0.85rem 1.25rem;
+    padding: 0.95rem 1.4rem;
     vertical-align: middle;
     border-color: rgba(118, 185, 0, 0.12);
     color: var(--nvidia-ink);
@@ -247,7 +257,7 @@
 }
 
 .custom-tooltip {
-    position: fixed;
+    position: absolute;
     background: rgba(15, 46, 18, 0.95);
     color: #f4fde8;
     padding: 0.45rem 0.75rem;
@@ -264,6 +274,114 @@
 .tooltip-trigger {
     cursor: help;
     border-bottom: 1px dashed rgba(118, 185, 0, 0.45);
+}
+
+.action-feedback > .alert {
+    margin-bottom: 0;
+}
+
+.stacked-result-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.65rem;
+    color: var(--nvidia-ink);
+}
+
+.stacked-result-table thead th {
+    background: linear-gradient(105deg, rgba(15, 46, 18, 0.95), rgba(118, 185, 0, 0.9));
+    color: #f2ffda;
+    padding: 0.8rem 1.45rem;
+    border: none;
+}
+
+.stacked-result-table tbody td {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.8rem 1.45rem;
+    border: 1px solid rgba(118, 185, 0, 0.18);
+    border-radius: 8px;
+}
+
+.stacked-result-table tbody tr {
+    background: transparent;
+}
+
+.grouped-result {
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 10px 24px rgba(15, 46, 18, 0.15);
+}
+
+.grouped-result + .grouped-result {
+    margin-top: 2rem;
+}
+
+.grouped-result { gap: 1rem; }
+
+.grouped-result-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+.grouped-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.grouped-result-header h6 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--nvidia-forest);
+}
+
+.grouped-result-table {
+    overflow-x: auto;
+}
+
+.soft-scroll {
+    overflow-x: auto;
+}
+
+.allpart-interface .nvidia-table thead th,
+.allpart-interface .nvidia-table tbody td {
+    padding: 1.05rem 1.95rem;
+    min-width: 11rem;
+}
+
+#table-sn-wait-approve,
+#task-checkbox-table,
+#history-task-checkbox-table,
+#task-stock-status-result table,
+#search-status-result table,
+#history-search-result table {
+    border-collapse: separate !important;
+    border-spacing: 0 0.65rem !important;
+}
+
+#table-sn-wait-approve th,
+#table-sn-wait-approve td,
+#task-checkbox-table th,
+#task-checkbox-table td,
+#history-task-checkbox-table th,
+#history-task-checkbox-table td,
+#task-stock-status-result table th,
+#task-stock-status-result table td,
+#search-status-result table th,
+#search-status-result table td,
+#history-search-result table th,
+#history-search-result table td {
+    padding: 1rem 1.8rem;
+}
+
+.badge.bg-success-subtle {
+    background-color: rgba(118, 185, 0, 0.18);
+    color: var(--nvidia-forest);
+    border: 1px solid rgba(118, 185, 0, 0.3);
+    padding: 0.4rem 0.65rem;
+    font-weight: 600;
 }
 
 .loading-overlay {

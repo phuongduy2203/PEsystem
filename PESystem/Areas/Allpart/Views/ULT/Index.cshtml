@@ -5,6 +5,7 @@
 }
 
 <link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
 
 <div class="allpart-interface nvidia-section">
     <div class="section-heading text-center text-lg-start">
@@ -89,6 +90,16 @@
             const v = data ?? '';
             return `<span class="tooltip-trigger" data-tooltip="${escapeHtml(String(v))}">${escapeHtml(String(v))}</span>`;
         }
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
+
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
+        }
+
         function attachTooltipEvents() {
             document.querySelectorAll('.tooltip-trigger').forEach(el => {
                 if (el.dataset.tooltipBound) return;
@@ -101,14 +112,12 @@
                     }
                     tip.textContent = el.getAttribute('data-tooltip') || '';
                     tip.style.display = 'block';
-                    tip.style.left = (e.pageX + 10) + 'px';
-                    tip.style.top = (e.pageY - 20) + 'px';
+                    positionTooltip(e, tip);
                 });
                 el.addEventListener('mousemove', (e) => {
                     const tip = document.querySelector('.custom-tooltip');
                     if (tip) {
-                        tip.style.left = (e.pageX + 10) + 'px';
-                        tip.style.top = (e.pageY - 20) + 'px';
+                        positionTooltip(e, tip);
                     }
                 });
                 el.addEventListener('mouseout', () => {
@@ -190,9 +199,10 @@
             dataTable = $('#ULTDataTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
-                responsive: true,
+                responsive: false,
+                autoWidth: false,
                 columnDefs: [
-                    { targets: '_all', width: '150px' }
+                    { targets: '_all', width: '210px' }
                 ]
             });
             attachTooltipEvents();
@@ -219,33 +229,36 @@
                 let allResults = [];
                 const batchSize = 100;
                 for (let i = 0; i < inputList.length; i += batchSize) {
-                    const batch = inputList.slice(i, i + batchSize);
-                    const payload = {
-                        type: 'GET_ULT',
-                        item: typeOption === 'SN' ? 'BY-SN' : 'BY-ULT',
-                        var_1: batch.join(';')
-                    };
+                const batch = inputList.slice(i, i + batchSize);
+                const payload = {
+                    type: typeOption,
+                    data: batch
+                };
 
-                    const response = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-ult', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
+                const response = await fetch('http://10.220.130.119:9090/api/SFC/search-ult-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Lỗi khi gọi API: ${response.status} - ${errorText}`);
-                    }
-
-                    const result = await response.json();
-                    if (Array.isArray(result) && result.length > 0) {
-                        allResults = allResults.concat(result);
-                    }
+                if (response.status === 404) {
+                    continue;
                 }
 
-                rawResults = allResults.map(item => ({
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                if (Array.isArray(result) && result.length > 0) {
+                    allResults = allResults.concat(result);
+                }
+            }
+
+            rawResults = allResults.map(item => ({
                     SERIAL_NUMBER: item.SERIAL_NUMBER ?? '',
                     MODEL_NAME: item.MODEL_NAME ?? '',
                     GROUP_NAME: item.GROUP_NAME ?? '',

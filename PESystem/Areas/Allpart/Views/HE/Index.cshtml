@@ -6,6 +6,7 @@
 }
 
 <link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
 
 <div class="allpart-interface nvidia-section">
     <div class="section-heading text-center text-lg-start">
@@ -81,55 +82,75 @@
 
 @section Scripts {
     <script>
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
         let tableData = [];
         let dataTable;
 
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
+        }
+
+        function htmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
         function createTooltipCell(data) {
-            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+            const text = htmlEscape(data);
+            return `<span class="tooltip-trigger" data-tooltip="${text}">${text}</span>`;
         }
 
         function attachTooltipEvents() {
-            $('.tooltip-trigger').each(function () {
-                const $this = $(this);
-                if (!$this.data('tooltip-initialized')) {
-                    $this.on('mouseover', function (e) {
-                        const tooltipText = $this.data('tooltip');
-                        if (tooltipText) {
-                            let tooltip = document.querySelector('.custom-tooltip');
-                            if (!tooltip) {
-                                tooltip = document.createElement('div');
-                                tooltip.className = 'custom-tooltip';
-                                document.body.appendChild(tooltip);
-                            }
-                            tooltip.textContent = tooltipText;
-                            tooltip.style.display = 'block';
-                            tooltip.style.left = (e.pageX + 10) + 'px';
-                            tooltip.style.top = (e.pageY - 20) + 'px';
-                        }
-                    }).on('mousemove', function (e) {
-                        const tooltip = document.querySelector('.custom-tooltip');
-                        if (tooltip && tooltip.style.display === 'block') {
-                            tooltip.style.left = (e.pageX + 10) + 'px';
-                            tooltip.style.top = (e.pageY - 20) + 'px';
-                        }
-                    }).on('mouseout', function () {
-                        const tooltip = document.querySelector('.custom-tooltip');
-                        if (tooltip) {
-                            tooltip.style.display = 'none';
-                        }
-                    });
-                    $this.data('tooltip-initialized', true);
-                }
-            });
+            $(document)
+                .off('.tooltipHover')
+                .on('mouseover.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltipText = $(this).data('tooltip');
+                    if (!tooltipText) return;
+
+                    let tooltip = document.querySelector('.custom-tooltip');
+                    if (!tooltip) {
+                        tooltip = document.createElement('div');
+                        tooltip.className = 'custom-tooltip';
+                        document.body.appendChild(tooltip);
+                    }
+                    tooltip.textContent = tooltipText;
+                    tooltip.style.display = 'block';
+                    positionTooltip(e, tooltip);
+                })
+                .on('mousemove.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        positionTooltip(e, tooltip);
+                    }
+                })
+                .on('mouseout.tooltipHover', '.tooltip-trigger', function () {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
         }
 
         $(document).ready(function () {
             dataTable = $('#historyDataTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
-                responsive: true,
+                responsive: false,
+                autoWidth: false,
+                columnDefs: [
+                    { targets: '_all', width: '210px' }
+                ],
                 fixedHeader: true
             });
+            attachTooltipEvents();
         });
 
         async function search() {
