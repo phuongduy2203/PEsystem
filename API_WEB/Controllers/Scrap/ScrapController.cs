@@ -439,34 +439,45 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 10
+        // API: Lấy dữ liệu từ ScrapList cho các InternalTask hợp lệ trong 3 tháng gần nhất
         [HttpGet("get-scrap-status-zero")]
         public async Task<IActionResult> GetScrapStatusZero()
         {
             try
             {
-                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 10
+                var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
                 var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 10) // Lọc theo ApplyTaskStatus = 0 hoặc 10
-                    .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
+                    .Where(s => !string.IsNullOrEmpty(s.InternalTask)
+                                && s.InternalTask != "N/A"
+                                && s.CreateTime >= threeMonthsAgo)
+                    .GroupBy(s => s.InternalTask)
                     .Select(g => new
                     {
                         InternalTask = g.Key,
-                        Description = g.First().Desc, // Lấy giá trị đầu tiên của Description
-                        ApproveScrapPerson = g.First().ApproveScrapperson, // Lấy giá trị đầu tiên
-                        KanBanStatus = g.First().KanBanStatus, // Lấy giá trị đầu tiên
-                        Category = g.First().Category,
-                        Remark = g.First().Remark,
-                        CreateTime = g.First().CreateTime.ToString("yyyy-MM-dd"), // Chỉ lấy ngày tháng năm
-                        CreateBy = g.First().CreatedBy, // Lấy giá trị đầu tiên
-                        ApplyTaskStatus = g.First().ApplyTaskStatus, // Lấy giá trị đầu tiên
-                        TotalQty = g.Count() // Đếm số lượng SN trong mỗi InternalTask
+                        Latest = g.OrderByDescending(s => s.CreateTime).FirstOrDefault(),
+                        TotalQty = g.Count()
+                    })
+                    .Where(x => x.Latest != null)
+                    .Select(x => new
+                    {
+                        x.InternalTask,
+                        Description = x.Latest!.Desc,
+                        ApproveScrapPerson = x.Latest!.ApproveScrapperson,
+                        KanBanStatus = x.Latest!.KanBanStatus,
+                        Category = x.Latest!.Category,
+                        Remark = x.Latest!.Remark,
+                        Purpose = x.Latest!.Purpose,
+                        CreateTime = x.Latest!.CreateTime.ToString("yyyy-MM-dd"),
+                        CreateBy = x.Latest!.CreatedBy,
+                        ApplyTaskStatus = x.Latest!.ApplyTaskStatus,
+                        x.TotalQty
                     })
                     .ToListAsync();
 
                 if (!scrapData.Any())
                 {
-                    return NotFound(new { message = "Không tìm thấy dữ liệu với ApplyTaskStatus = 0 hoặc 3." });
+                    return NotFound(new { message = "Không tìm thấy dữ liệu phù hợp." });
                 }
 
                 return Ok(scrapData);

@@ -1,4 +1,4 @@
-﻿﻿@{
+@{
     ViewData["Title"] = "Scrap Area";
 }
 @{
@@ -8,232 +8,232 @@
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="row mb-3">
-    <!-- Cột chọn loại chức năng -->
-    <div class="col-md-2">
-        <form id="search-form" class="form-inline">
-            <select id="search-options" class="form-select">
-                <option selected disabled>SELECT FUNCTION</option>
-                <option value="TASK_STOCK_STATUS">Checking scrap quaterly</option>
-                <!--<option value="UPDATE_STATUS">UPDATE STATUS</option>-->
-                <option value="SEARCH_STATUS">Tìm kiếm</option>
-                <option value="SEARCH_HISTORY">Tra lịch sử SN</option>
-            </select>
-        </form>
+<div class="scrap-wrapper container-fluid py-4">
+    <div class="scrap-heading d-flex align-items-center gap-3 mb-4">
+        <div class="scrap-icon rounded-circle d-flex align-items-center justify-content-center">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+            <div class="scrap-eyebrow text-uppercase">Scrap Center</div>
+            <h1 class="scrap-title mb-0">Progress Monitor</h1>
+        </div>
     </div>
 
-    <!-- function area-->
-    <div class="col-md-10">
+    <div class="row g-4 align-items-stretch">
+        <div class="col-xl-4">
+            <div class="scrap-card selection-card h-100">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <label for="search-options" class="form-label text-uppercase mb-0">Chức năng</label>
+                    <select id="search-options" class="form-select form-select-lg theme-control">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="TASK_STOCK_STATUS">Checking scrap quarterly</option>
+                        <option value="SEARCH_STATUS">Tìm kiếm</option>
+                        <option value="SEARCH_HISTORY">Tra lịch sử SN</option>
+                    </select>
+                </form>
+            </div>
+        </div>
 
-        <!-- Form Checking scrap quaterly -->
-        <form id="task-stock-status-form" method="post" class="hidden" data-search-type="TASK_STOCK_STATUS_FORM">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-2">
+        <div class="col-xl-8 d-flex flex-column gap-4">
+            <form id="task-stock-status-form" method="post" class="scrap-card panel hidden" data-search-type="TASK_STOCK_STATUS_FORM">
+                <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
+                    <div>
+                        <h2 class="panel-title mb-0">Checking scrap quarterly</h2>
+                    </div>
                     <button id="task-stock-status-btn" class="btn btn-ne" type="button">Detail</button>
                 </div>
-            </div>
-        </form>
+            </form>
 
-        <!-- Form UPDATE STATUS 
-        <form id="update-status-form" method="post" class="hidden" data-search-type="UPDATE_STATUS">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-4">
-                    <textarea name="serialNumbers" id="sn-status-update" class="form-control" rows="8" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <label for="status-input" class="form-label">Update trạng thái</label>
-                        <select id="status-options" class="form-select">
-                            <option selected disabled>SELECT STATUS</option>
-                            <option value="1">Đã tìm thấy bản</option>
-                            <option value="2">Đã chuyển kho phế</option>
-                        </select>
+            <form id="search-status-form" method="post" class="scrap-card panel hidden" data-search-type="SEARCH_STATUS">
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-lg-6">
+                        <label for="search-status-update" class="form-label text-uppercase">SN / Internal Task</label>
+                        <textarea name="SN/TASK" id="search-status-update" class="form-control theme-control" rows="8" placeholder="Nhập SN hoặc Internal Task"></textarea>
                     </div>
-                    
-
-                    <div>
-                        @{
-                            var allowedAreas = HttpContextAccessor.HttpContext.User.Claims
-                            .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
-
-                            var Scrap = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "Scrap");
-                            
-                        }
-                        @if (Scrap)
-                        {
-                            <button id="update-status-btn" class="md-2 btn btn-ne" type="button">Update</button>
-                        }else
-                        {
-                            <button id="update-status-btn" class="md-2 btn btn-ne hidden" type="button">Update</button>
-                        }
+                    <div class="col-lg-6">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="search-status-options" class="form-label text-uppercase">Phương thức</label>
+                                <select id="search-status-options" class="form-select theme-control">
+                                    <option selected disabled>SELECT STATUS</option>
+                                    <option value="1">Theo SN</option>
+                                    <option value="2">Theo Internal Task</option>
+                                    <option value="3">Theo Task NV</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="search-status-btn" class="btn btn-ne w-100" type="button">Search</button>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="load-status-btn" class="btn btn-ne w-100" type="button">Load List</button>
+                            </div>
+                        </div>
+                        <div class="status-hint mt-4">
+                            <div class="status-title text-uppercase">ApplyTaskStatus</div>
+                            <div class="status-grid">
+                                <span>0 - Phế, chưa gửi task</span>
+                                <span>1 - Đã gửi, chờ task</span>
+                                <span>2 - Chờ SPE phế</span>
+                                <span>3 - Approved thay BGA</span>
+                                <span>4 - Chờ approved BGA</span>
+                                <span>5 - Có task, chờ chuyển</span>
+                                <span>6 - Đã chuyển, chờ MRB</span>
+                                <span>7 - MRB đã nhận</span>
+                                <span>8 - Lỗi process</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </form>-->
+            </form>
 
-        <!-- Form SEARCH STATUS -->
-        <form id="search-status-form" method="post" class="hidden" data-search-type="SEARCH_STATUS">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-3">
-                    <textarea name="SN/TASK" id="search-status-update" class="form-control" rows="8" placeholder="Nhập SN/Internal Task"></textarea>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <label for="SNTASK-input" class="form-label">Tìm kiếm trạng thái</label>
-                        <select id="search-status-options" class="form-select">
-                            <option selected disabled>SELECT STATUS</option>
-                            <option value="1">Tìm kiếm theo SN</option>
-                            <option value="2">Tìm kiếm theo Internal Task</option>
-                            <option value="3">Tìm kiếm theo Task NV</option>
-                        </select>
+            <form id="search-history-form" method="post" class="scrap-card panel hidden" data-search-type="SEARCH_HISTORY">
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-lg-6">
+                        <label for="history-search-update" class="form-label text-uppercase">Serial Number</label>
+                        <textarea name="SN" id="history-search-update" class="form-control theme-control" rows="8" placeholder="Nhập SN (mỗi dòng 1 SN)"></textarea>
                     </div>
-                    <button id="search-status-btn" class="md-2 btn btn-ne" type="button">Search</button>
-                    <button id="load-status-btn" class="md-2 btn btn-ne" type="button">Load List</button>
-                </div>
-                <div class="col-md-2">
-                    <div>ApplyTaskStatus</div>
-                    <div>0. Phế, chưa gửi xin task</div>
-                    <div>1. Phế, đã gửi xin task nhưng chưa có</div>
-                    <div>2. Chờ SPE approved phế</div>
-                    <div>3. Đã approved thay BGA</div>
-                    
-                </div>
-                <div class="col-md-2">
-                    <div>4. Chờ approved thay BGA</div>
-                    <div>5. Đã có task, chờ chuyển kho phế</div>
-                    <div>6. Đã chuyển kho phế chờ MRB xác nhận</div>
-                    <div>7. MRB đã nhận bản phế</div>
-                    <div>8. Lỗi process, không thể sửa chữa</div>
-                </div>
-            </div>
-        </form>
-
-        <!-- Form SEARCH HISTORY -->
-        <form id="search-history-form" method="post" class="hidden" data-search-type="SEARCH_HISTORY">
-            <div class="row" style="display: flex; align-items:flex-start; gap: 10px;">
-                <div class="col-md-3">
-                    <textarea name="SN" id="history-search-update" class="form-control" rows="8" placeholder="Nhập SN cần tra lịch sử (mỗi dòng 1 SN)"></textarea>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <label class="form-label">Tra cứu lịch sử SN</label>
-                        <p class="form-text">Nhập danh sách SN để xem lịch sử thay đổi từ HistoryScrapList.</p>
+                    <div class="col-lg-6">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <button id="history-search-btn" class="btn btn-ne w-100" type="button">Search history</button>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="history-download-btn" class="btn btn-ne w-100" type="button">Download Excel</button>
+                            </div>
+                        </div>
                     </div>
-                    <button id="history-search-btn" class="md-2 btn btn-ne" type="button">Search history</button>
-                    <button id="history-download-btn" class="md-2 btn btn-ne" type="button">Download Excel</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-<!--khu vực hiển thị chi tiết-->
-<div class="row mb-3">
-    <!--hiển thị của chức năng create task-->
-    <div id="task-stock-status-result" class="hidden"></div>
-    <!--hiển thị của chức năng update data
-    <div id="update-status-result" class="hidden"></div>-->
-    <!--hiển thị của chức năng search data-->
-    <div id="search-status-result" class="hidden"></div>
-    <!--hiển thị của chức năng history search-->
-    <div id="history-search-result" class="hidden"></div>
+    <div class="result-zone mt-4 d-flex flex-column gap-4">
+        <div id="task-stock-status-result" class="scrap-card panel hidden"></div>
+        <div id="search-status-result" class="scrap-card panel hidden"></div>
+        <div id="history-search-result" class="scrap-card panel hidden"></div>
+    </div>
 </div>
 
 @section Scripts {
+    <script src="~/assets/areas/scrap/js/progress.js?v=@DateTime.Now.Ticks"></script>
     <style>
+        :root {
+            --nv-green: #76b900;
+            --nv-muted: #8cab57;
+            --nv-text: #e8ffe0;
+        }
+
+        .scrap-wrapper {
+            background: linear-gradient(160deg, rgba(2, 18, 7, 0.95), rgba(4, 30, 16, 0.95));
+            border-radius: 26px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+            color: var(--nv-text);
+        }
+
+        .scrap-heading .scrap-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(118, 185, 0, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.45);
+            font-size: 1.5rem;
+            color: var(--nv-green);
+        }
+
+        .scrap-eyebrow {
+            letter-spacing: 0.45em;
+            font-size: 0.75rem;
+            color: var(--nv-muted);
+        }
+
+        .scrap-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: var(--nv-green);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .scrap-card {
+            background: rgba(7, 25, 14, 0.92);
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(6px);
+        }
+
+        .panel-title {
+            font-size: 1.125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--nv-muted);
+        }
+
+        .form-label {
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .theme-control {
+            background: rgba(4, 18, 9, 0.85);
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            color: var(--nv-text);
+            border-radius: 14px;
+        }
+
+        .theme-control:focus {
+            border-color: var(--nv-green);
+            box-shadow: 0 0 0 0.25rem rgba(118, 185, 0, 0.25);
+        }
+
+        .btn-ne {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.95), rgba(90, 155, 0, 0.95));
+            border: none;
+            border-radius: 14px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #031005;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-ne:hover,
+        .btn-ne:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(118, 185, 0, 0.35);
+            color: #020804;
+        }
+
+        .status-hint {
+            background: rgba(5, 20, 11, 0.55);
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            color: var(--nv-text);
+        }
+
+        .status-title {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: var(--nv-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .status-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .status-grid span {
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(118, 185, 0, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.25);
+        }
+
         .hidden {
             display: none !important;
         }
-
-        /* Container cho bảng để hỗ trợ cuộn ngang */
-        .table-container {
-            max-width: 100%;
-            overflow-x: auto;
-            margin-top: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px; /* Tăng kích thước chữ để dễ đọc */
-            table-layout: auto; /* Để các cột tự điều chỉnh theo nội dung */
-        }
-
-        th, td {
-            padding: 10px 12px; /* Tăng padding để thoáng hơn */
-            text-align: left;
-            border: 1px solid #ddd; /* Viền rõ ràng hơn */
-            white-space: nowrap; /* Ngăn nội dung xuống dòng */
-        }
-
-        th {
-            background-color: #28a715; /* Màu xanh lá cây giống nút "Create task" (Bootstrap success) */
-            color: white; /* Chữ trắng để dễ đọc */
-            font-weight: bold;
-            position: sticky; /* Giữ tiêu đề cố định khi cuộn */
-            top: 0;
-            z-index: 1;
-        }
-
-        td {
-            background-color: rgba(255, 255, 255, 0.9); /* Nền trắng với độ mờ nhẹ */
-        }
-
-            /* Căn chỉnh cụ thể cho một số cột */
-            th:nth-child(1), td:nth-child(1) { /* Cột checkbox */
-                width: 40px; /* Chiều rộng cố định cho cột checkbox */
-                text-align: center;
-            }
-
-            th:nth-child(9), td:nth-child(9), /* Cột Cost */
-            th:nth-child(13), td:nth-child(13), /* Cột Create Time */
-            th:nth-child(14), td:nth-child(14) { /* Cột Apply Time */
-                text-align: center; /* Căn giữa */
-            }
-
-            /* Cột có nội dung dài (Description, Remark) */
-            th:nth-child(1), td:nth-child(1), /* Cột internal task */
-            th:nth-child(2), td:nth-child(2), /* Cột internal task */
-            th:nth-child(3), td:nth-child(3), /* Cột Description */
-            th:nth-child(10), td:nth-child(10) { /* Cột Remark */
-                /*white-space: normal; * Cho phép xuống dòng */
-                max-width: 300px; /* Giới hạn chiều rộng tối đa */
-                word-wrap: break-word; /* Đảm bảo xuống dòng đúng */
-            }
-
-        /* Hiệu ứng hover để dễ theo dõi dòng */
-        tr:hover td {
-            background-color: rgba(200, 200, 200, 0.2); /* Nền xám nhạt khi hover */
-        }
-
-        /* Định dạng checkbox */
-        .checkbox-column {
-            width: 40px; /* Đảm bảo cột checkbox không quá hẹp */
-            text-align: center;
-        }
-
-        /* Đảm bảo bảng không vượt quá container */
-        table {
-            min-width: 1200px; /* Đảm bảo bảng có chiều rộng tối thiểu để không bị co lại quá mức */
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-            .pagination button {
-                margin: 0 5px;
-                padding: 5px 10px;
-                font-size: 14px;
-            }
-
-            .pagination span {
-                font-size: 14px;
-                color: #333;
-            }
     </style>
-    <script src="~/assets/areas/scrap/js/progress.js?v=@DateTime.Now.Ticks"></script>
 }

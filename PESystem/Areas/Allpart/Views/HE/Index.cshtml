@@ -1,135 +1,183 @@
-﻿@{
+@{
     ViewData["Title"] = "History Error";
 }
 @{
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin lịch sử lỗi</h1>
+<div class="allpart-wrapper container-fluid py-4">
+    <div class="allpart-heading d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="allpart-eyebrow text-uppercase">Allpart Insight</div>
+            <h1 class="allpart-title mb-0">History Error</h1>
+        </div>
+        <div class="heading-icon rounded-circle d-flex align-items-center justify-content-center">
+            <i class="fas fa-history"></i>
+        </div>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
+
+    <div class="allpart-card p-4 mb-4">
+        <div class="row g-3 align-items-stretch">
+            <div class="col-lg-5">
+                <label for="serialNumber" class="form-label text-uppercase">Serial Number</label>
+                <textarea id="serialNumber" class="form-control theme-control" rows="4" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
             </div>
-            <div class="col-md-2">
-                <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
-                <select id="type-options" class="form-select">
+            <div class="col-md-3">
+                <label for="type-options" class="form-label text-uppercase">Kiểu tra cứu</label>
+                <select id="type-options" class="form-select theme-control">
                     <option selected disabled>SELECT TYPE</option>
-                    <option value="1">Tra cứu theo SN-SFG</option>
-                    <option value="2">Tra cứu theo SN-FG</option>
+                    <option value="1">SN-SFG</option>
+                    <option value="2">SN-FG</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+            <div class="col-md-2 d-flex flex-column gap-3">
+                <button onclick="search()" class="btn btn-nv w-100">Tìm kiếm</button>
+                <button onclick="downloadExcel()" class="btn btn-nv w-100">Tải Excel</button>
             </div>
         </div>
+    </div>
 
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-message">Đang tải dữ liệu...</div>
-        </div>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-message">Đang tải dữ liệu...</div>
+    </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="historyDataTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>KEY_PART_SN</th>
-                            <th>MO_NUMBER</th>
-                            <th>MODEL_NAME</th>
-                            <th>TEST_TIME</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_CODE</th>
-                            <th>DATA1</th>
-                            <th>REASON_CODE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyDataTableBody"></tbody>
-                </table>
-            </div>
+    <div class="allpart-card p-4">
+        <div class="table-responsive">
+            <table id="historyDataTable" class="table theme-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>KEY_PART_SN</th>
+                        <th>MO_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>TEST_TIME</th>
+                        <th>TEST_GROUP</th>
+                        <th>TEST_CODE</th>
+                        <th>DATA1</th>
+                        <th>REASON_CODE</th>
+                    </tr>
+                </thead>
+                <tbody id="historyDataTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <style>
-        .bg-nvidia-green {
-            background-color: #76B900 !important;
+        :root {
+            --nv-green: #76b900;
+            --nv-text: #e8ffe0;
+            --nv-muted: #8cab57;
         }
 
-        .btn-nvidia-green {
-            background-color: #76B900 !important;
-            border-color: #76B900 !important;
-            color: #fff;
-            height: 100%;
+        .allpart-wrapper {
+            background: linear-gradient(160deg, rgba(1, 12, 7, 0.95), rgba(5, 26, 15, 0.95));
+            border-radius: 26px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+            color: var(--nv-text);
         }
 
-            .btn-nvidia-green:hover {
-                background-color: #639A00 !important;
-                border-color: #639A00 !important;
-            }
-
-        .custom-tooltip {
-            position: absolute;
-            background-color: #333;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 1000;
-            display: none;
-            max-width: 200px;
-            word-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        .allpart-eyebrow {
+            letter-spacing: 0.35em;
+            font-size: 0.75rem;
+            color: var(--nv-muted);
         }
 
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76B900 !important;
+        .allpart-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--nv-green);
         }
 
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            padding: 5px;
-            vertical-align: middle;
+        .heading-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(118, 185, 0, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.45);
+            color: var(--nv-green);
+            font-size: 1.5rem;
         }
 
-        .dataTables_wrapper {
-            overflow-x: auto;
+        .allpart-card {
+            background: rgba(7, 25, 14, 0.92);
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            border-radius: 22px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
         }
 
-        .table-responsive {
-            overflow-x: auto;
+        .form-label {
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
-        .row.align-items-center {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .form-control {
-            height: auto;
+        .theme-control {
+            background: rgba(4, 18, 9, 0.85);
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            color: var(--nv-text);
+            border-radius: 14px;
             resize: vertical;
         }
 
-        .datatable-table th, .datatable-table td {
+        .theme-control:focus {
+            border-color: var(--nv-green);
+            box-shadow: 0 0 0 0.25rem rgba(118, 185, 0, 0.25);
+        }
+
+        .btn-nv {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.95), rgba(90, 155, 0, 0.95));
+            border: none;
+            border-radius: 14px;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #031005;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nv:hover,
+        .btn-nv:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(118, 185, 0, 0.35);
+            color: #020804;
+        }
+
+        .theme-table {
+            color: var(--nv-text);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .theme-table thead th {
+            background: rgba(118, 185, 0, 0.35);
+            border: none;
+            color: var(--nv-text);
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-align: center;
+        }
+
+        .theme-table tbody tr {
+            background: rgba(5, 20, 11, 0.75);
+        }
+
+        .theme-table tbody tr:hover td {
+            background: rgba(118, 185, 0, 0.18);
+        }
+
+        .theme-table td,
+        .theme-table th {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 150px;
-            padding: 5px;
+            max-width: 160px;
+            padding: 10px;
+            text-align: center;
+            border-color: rgba(118, 185, 0, 0.15);
         }
 
         .loading-overlay {
@@ -139,33 +187,57 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.65);
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
+            color: var(--nv-text);
+            letter-spacing: 0.05em;
         }
 
         .loading-message {
-            background: #fff;
-            padding: 15px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top: 4px solid var(--nv-green);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(6, 18, 10, 0.9);
+            color: var(--nv-text);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            z-index: 1000;
+            display: none;
+            max-width: 320px;
+            word-wrap: break-word;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 
     <script>
-        let tableData = []; // Lưu dữ liệu để xuất Excel
-        let dataTable; // Lưu tham chiếu đến DataTable
+        let tableData = [];
+        let dataTable;
 
-        // Hàm tạo nội dung cho ô với tooltip
         function createTooltipCell(data) {
             return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
         }
 
-        // Hàm gắn sự kiện tooltip cho các phần tử
         function attachTooltipEvents() {
             $('.tooltip-trigger').each(function () {
                 const $this = $(this);
@@ -202,7 +274,6 @@
         }
 
         $(document).ready(function () {
-            // Khởi tạo DataTable một lần duy nhất
             dataTable = $('#historyDataTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
@@ -232,104 +303,79 @@
                 return;
             }
 
-            // Hiển thị thông báo tải
             loadingOverlay.style.display = 'flex';
 
             try {
                 const response = await fetch('http://10.220.130.119:9090/api/SFC/history-error-by-sn', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        serialNumbers: serialNumbers,
-                        typeValue: parseInt(typeValue)
+                        type: typeValue === '1' ? 'SN-SFG' : 'SN-FG',
+                        serialNumbers
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${response.statusText}`);
+                    const errorText = await response.text();
+                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${errorText}`);
                 }
 
                 const data = await response.json();
-                tableData = data; // Lưu dữ liệu để xuất Excel
+                tableData = data || [];
 
-                // Xóa dữ liệu cũ trong DataTable
                 dataTable.clear();
 
-                if (data.length === 0) {
-                    alert('Không tìm thấy dữ liệu cho các Serial Number đã nhập.');
-                    dataTable.draw();
-                    return;
-                }
-
-                // Thêm dữ liệu mới vào DataTable
-                data.forEach(row => {
-                    dataTable.row.add([
-                        createTooltipCell(row.SERIAL_NUMBER || ''),
-                        createTooltipCell(row.KEY_PART_SN || ''),
-                        createTooltipCell(row.MO_NUMBER || ''),
-                        createTooltipCell(row.MODEL_NAME || ''),
-                        createTooltipCell(row.TEST_TIME || ''),
-                        createTooltipCell(row.TEST_GROUP || ''),
-                        createTooltipCell(row.TEST_CODE || ''),
-                        createTooltipCell(row.DATA1 || ''),
-                        createTooltipCell(row.REASON_CODE || '')
+                if (tableData.length) {
+                    const rows = tableData.map(item => [
+                        createTooltipCell(item.serial_NUMBER),
+                        createTooltipCell(item.key_PART_SN),
+                        createTooltipCell(item.mo_NUMBER),
+                        createTooltipCell(item.model_NAME),
+                        createTooltipCell(item.test_TIME),
+                        createTooltipCell(item.test_GROUP),
+                        createTooltipCell(item.test_CODE),
+                        createTooltipCell(item.data1),
+                        createTooltipCell(item.reason_CODE)
                     ]);
-                });
 
-                // Vẽ lại bảng
-                dataTable.draw();
-
-                // Gắn lại sự kiện tooltip
-                attachTooltipEvents();
-
+                    dataTable.rows.add(rows).draw();
+                    attachTooltipEvents();
+                } else {
+                    alert('Không tìm thấy dữ liệu phù hợp.');
+                }
             } catch (error) {
-                console.error('Error:', error);
-                alert(`Đã xảy ra lỗi: ${error.message}`);
+                console.error('Lỗi khi tìm kiếm dữ liệu:', error);
+                alert('Có lỗi xảy ra khi tìm kiếm dữ liệu. Vui lòng kiểm tra lại.');
             } finally {
-                // Ẩn thông báo tải
                 loadingOverlay.style.display = 'none';
             }
         }
 
         function downloadExcel() {
             if (tableData.length === 0) {
-                alert('Không có dữ liệu để xuất Excel.');
+                alert('Không có dữ liệu để tải. Vui lòng tìm kiếm trước.');
                 return;
             }
 
-            // Lọc dữ liệu để chỉ xuất các cột hiển thị trong bảng
-            const filteredData = tableData.map(row => ({
-                SERIAL_NUMBER: row.SERIAL_NUMBER || '',
-                KEY_PART_SN: row.KEY_PART_SN || '',
-                MO_NUMBER: row.MO_NUMBER || '',
-                MODEL_NAME: row.MODEL_NAME || '',
-                TEST_TIME: row.TEST_TIME || '',
-                TEST_GROUP: row.TEST_GROUP || '',
-                TEST_CODE: row.TEST_CODE || '',
-                DATA1: row.DATA1 || '',
-                REASON_CODE: row.REASON_CODE || ''
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(filteredData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'HistoryError');
-
-            // Đặt tiêu đề cột
-            worksheet['!cols'] = [
-                { wch: 20 }, // SERIAL_NUMBER
-                { wch: 20 }, // KEY_PART_SN
-                { wch: 15 }, // MO_NUMBER
-                { wch: 15 }, // MODEL_NAME
-                { wch: 20 }, // TEST_TIME
-                { wch: 10 }, // TEST_GROUP
-                { wch: 30 }, // TEST_CODE
-                { wch: 50 }, // DATA1
-                { wch: 15 }  // REASON_CODE
+            const worksheetData = [
+                ['SERIAL_NUMBER', 'KEY_PART_SN', 'MO_NUMBER', 'MODEL_NAME', 'TEST_TIME', 'TEST_GROUP', 'TEST_CODE', 'DATA1', 'REASON_CODE'],
+                ...tableData.map(item => [
+                    item.serial_NUMBER,
+                    item.key_PART_SN,
+                    item.mo_NUMBER,
+                    item.model_NAME,
+                    item.test_TIME,
+                    item.test_GROUP,
+                    item.test_CODE,
+                    item.data1,
+                    item.reason_CODE
+                ])
             ];
 
-            XLSX.writeFile(workbook, 'HistoryError.xlsx');
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'History Error');
+            XLSX.writeFile(workbook, 'History_Error.xlsx');
         }
     </script>
 }

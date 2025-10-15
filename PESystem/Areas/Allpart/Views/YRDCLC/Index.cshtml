@@ -1,70 +1,73 @@
-﻿@{
+@{
     ViewData["Title"] = "YR follow DC-LC";
 }
 @{
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/yrdclc.css" rel="stylesheet" />
-
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">YR follow DC/LC</h1>
+<div class="allpart-wrapper container-fluid py-4">
+    <div class="allpart-heading d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="allpart-eyebrow text-uppercase">Allpart Insight</div>
+            <h1 class="allpart-title mb-0">YR follow DC/LC</h1>
+        </div>
+        <div class="heading-icon rounded-circle d-flex align-items-center justify-content-center">
+            <i class="fas fa-industry"></i>
+        </div>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="date-time-range">
-                <label for="startDate">Bắt đầu:</label>
-                <input type="datetime-local" id="startDate" />
-                <label for="endDate">Kết thúc:</label>
-                <input type="datetime-local" id="endDate" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <input id="model" name="model" class="form-control" placeholder="Model Name" />
-            </div>
-            <div class="col-md-2">
-                <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
-            </div>
-            <div class="col-md-2">
-                <input id="location" name="location" class="form-control" placeholder="Vị trí" />
-            </div>
-            <div class="col-md-2">
-                <input id="station" name="station" class="form-control" placeholder="Trạm test" />
-            </div>
-            <div class="col-md-2">
-                <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Load data</button>
-            </div>
-        </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="yrdcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>INPUT_QTY</th>
-                            <th>FAIL_QTY</th>
-                            <th>PASS_QTY</th>
-                            <th>DFR</th>
-                        </tr>
-                    </thead>
-                    <tbody id="yrdcLcTableBody"></tbody>
-                </table>
+    <div class="allpart-card p-4 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-6">
+                <div class="date-range d-flex flex-wrap gap-3 align-items-center">
+                    <label for="startDate" class="form-label text-uppercase mb-0">Bắt đầu</label>
+                    <input type="datetime-local" id="startDate" class="form-control theme-control" />
+                    <label for="endDate" class="form-label text-uppercase mb-0">Kết thúc</label>
+                    <input type="datetime-local" id="endDate" class="form-control theme-control" />
+                </div>
             </div>
+        </div>
+        <div class="row g-3 mt-3">
+            <div class="col-md-2">
+                <input id="model" name="model" class="form-control theme-control" placeholder="Model Name" />
+            </div>
+            <div class="col-md-2">
+                <input id="PN" name="PN" class="form-control theme-control" placeholder="Mã Liệu" />
+            </div>
+            <div class="col-md-2">
+                <input id="location" name="location" class="form-control theme-control" placeholder="Vị trí" />
+            </div>
+            <div class="col-md-2">
+                <input id="station" name="station" class="form-control theme-control" placeholder="Trạm test" />
+            </div>
+            <div class="col-md-2">
+                <input id="error" name="error" class="form-control theme-control" placeholder="Mã lỗi" />
+            </div>
+            <div class="col-md-2 d-flex flex-column gap-3">
+                <button onclick="search()" class="btn btn-nv w-100">Tìm kiếm</button>
+                <button onclick="downloadExcel()" class="btn btn-nv w-100">Load data</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="allpart-card p-4">
+        <div class="table-responsive">
+            <table id="yrdcLcTable" class="table theme-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>MODEL_NAME</th>
+                        <th>MÃ_LIỆU</th>
+                        <th>DATE_CODE</th>
+                        <th>LOT_CODE</th>
+                        <th>VENDOR_NAME</th>
+                        <th>INPUT_QTY</th>
+                        <th>FAIL_QTY</th>
+                        <th>PASS_QTY</th>
+                        <th>DFR</th>
+                    </tr>
+                </thead>
+                <tbody id="yrdcLcTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -73,14 +76,12 @@
 
     <script>
         let yrdcLcTable;
-        let snDataCache = []; // Lưu dữ liệu BY-FAIL-SN để xuất Excel
+        let snDataCache = [];
 
-        // Hàm tạo nội dung cho ô với tooltip
         function createTooltipCell(data) {
             return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
         }
 
-        // Gắn sự kiện tooltip sử dụng event delegation
         function attachTooltipEvents() {
             $(document).on('mouseover', '.tooltip-trigger', function (e) {
                 const $this = $(this);
@@ -111,7 +112,6 @@
             });
         }
 
-        // Hàm định dạng ngày giờ từ datetime-local sang YYYY-MM-DD HH:MM:SS
         function formatDateTime(dateTime) {
             if (!dateTime) return '';
             const date = new Date(dateTime);
@@ -125,7 +125,6 @@
         }
 
         $(document).ready(function () {
-            // Khởi tạo DataTable
             yrdcLcTable = $('#yrdcLcTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
@@ -135,187 +134,285 @@
                 ]
             });
 
-            // Gắn sự kiện tooltip
             attachTooltipEvents();
         });
 
         async function search() {
+            const startDate = formatDateTime(document.getElementById('startDate').value);
+            const endDate = formatDateTime(document.getElementById('endDate').value);
             const model = document.getElementById('model').value.trim();
-            const PN = document.getElementById('PN').value.trim();
+            const pn = document.getElementById('PN').value.trim();
             const location = document.getElementById('location').value.trim();
             const station = document.getElementById('station').value.trim();
             const error = document.getElementById('error').value.trim();
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
 
-            // Kiểm tra đầu vào
-            if (!model || !PN || !station || !error || !location || !startDate || !endDate) {
-                alert('Vui lòng nhập đầy đủ tất cả các trường!');
+            if (!startDate || !endDate) {
+                alert('Vui lòng chọn thời gian bắt đầu và kết thúc.');
                 return;
             }
 
-            // Định dạng thời gian
-            const formattedStartDate = formatDateTime(startDate);
-            const formattedEndDate = formatDateTime(endDate);
+            const requestData = {
+                type: 'GET_YR_DC_LC',
+                item: 'BY-FAIL-RATIO',
+                var_1: `${startDate};${endDate}`,
+                var_2: `${model};${pn};${location};${station};${error}`
+            };
 
-            // Hiển thị loading overlay
+            yrdcLcTable.clear();
+            snDataCache = [];
+
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'loading-overlay';
             loadingOverlay.innerHTML = `
-                <div class="spinner"></div>
-                <div>Đang tải dữ liệu, vui lòng chờ...</div>
-            `;
+                        <div class="spinner"></div>
+                        <div>Đang tải dữ liệu, vui lòng chờ...</div>
+                    `;
             document.body.appendChild(loadingOverlay);
 
             try {
-                // Làm mới bảng trước khi tìm kiếm
-                yrdcLcTable.clear();
-
-                // Lần gọi API đầu tiên (BY-FAIL-TOTAL)
-                const totalResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
+                const response = await fetch('http://10.220.130.119:9090/api/RepairStatus/info-allpart', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: 'GET_DC_LC',
-                        item: 'BY-FAIL-TOTAL',
-                        var_1: model,
-                        var_2: PN,
-                        var_3: formattedStartDate,
-                        var_4: formattedEndDate,
-                        var_5: station,
-                        var_6: error,
-                        var_7: location
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
                 });
 
-                if (!totalResponse.ok) {
-                    throw new Error(`Lỗi khi gọi API BY-FAIL-TOTAL: ${await totalResponse.text()}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${errorText}`);
                 }
 
-                const totalData = await totalResponse.json();
-                if (!totalData.result || totalData.result.length === 0) {
-                    alert('Không tìm thấy dữ liệu từ API BY-FAIL-TOTAL!');
-                    document.body.removeChild(loadingOverlay);
-                    return;
-                }
+                const data = await response.json();
 
-                // Hiển thị dữ liệu từ lần gọi đầu tiên vào bảng
-                totalData.result.forEach(item => {
-                    yrdcLcTable.row.add([
-                        createTooltipCell(item.p_no),
-                        createTooltipCell(item.kp_no),
-                        createTooltipCell(item.date_code),
-                        createTooltipCell(item.lot_code),
-                        createTooltipCell(item.mfr_name),
-                        createTooltipCell(item.input_qty),
-                        createTooltipCell(item.fail_qty),
-                        createTooltipCell(item.pass_qty),
+                if (data?.result?.length) {
+                    const formattedResults = data.result.map(item => [
+                        createTooltipCell(item.model_NAME),
+                        createTooltipCell(item.mÃ_LIỆU),
+                        createTooltipCell(item.date_CODE),
+                        createTooltipCell(item.lot_CODE),
+                        createTooltipCell(item.vendor_NAME),
+                        createTooltipCell(item.input_QTY),
+                        createTooltipCell(item.fail_QTY),
+                        createTooltipCell(item.pass_QTY),
                         createTooltipCell(item.dfr)
-                    ]).draw();
-                });
+                    ]);
 
-                // Lần gọi API thứ hai (BY-FAIL-SN)
-                const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: 'GET_DC_LC',
+                    yrdcLcTable.rows.add(formattedResults).draw();
+
+                    const snRequest = {
+                        type: 'GET_YR_DC_LC',
                         item: 'BY-FAIL-SN',
-                        var_1: model,
-                        var_2: PN,
-                        var_3: formattedStartDate,
-                        var_4: formattedEndDate,
-                        var_5: station,
-                        var_6: error,
-                        var_7: location
-                    })
-                });
+                        var_1: `${startDate};${endDate}`,
+                        var_2: `${model};${pn};${location};${station};${error}`
+                    };
 
-                if (!snResponse.ok) {
-                    throw new Error(`Lỗi khi gọi API BY-FAIL-SN: ${await snResponse.text()}`);
-                }
+                    const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/info-allpart', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(snRequest)
+                    });
 
-                const snData = await snResponse.json();
-                if (!snData.result || snData.result.length === 0) {
-                    console.warn('Không có dữ liệu từ API BY-FAIL-SN.');
+                    if (snResponse.ok) {
+                        const snData = await snResponse.json();
+                        snDataCache = snData?.result || [];
+                    }
                 } else {
-                    // Lưu dữ liệu BY-FAIL-SN để xuất Excel
-                    snDataCache = snData.result;
+                    alert('Không tìm thấy dữ liệu phù hợp.');
                 }
-
-                // Gắn sự kiện tooltip
-                attachTooltipEvents();
-
             } catch (error) {
-                alert(`Đã xảy ra lỗi: ${error.message}`);
+                console.error('Lỗi khi gọi API:', error);
+                alert('Có lỗi xảy ra khi tìm kiếm dữ liệu. Vui lòng kiểm tra lại.');
             } finally {
-                // Xóa loading overlay
-                if (document.body.contains(loadingOverlay)) {
-                    document.body.removeChild(loadingOverlay);
-                }
+                document.body.removeChild(loadingOverlay);
             }
         }
 
         function downloadExcel() {
-            if (!snDataCache.length && !yrdcLcTable.rows().data().toArray().length) {
-                alert('Không có dữ liệu để tải xuống Excel!');
+            if (!snDataCache.length) {
+                alert('Không có dữ liệu SN để tải. Vui lòng tìm kiếm trước.');
                 return;
             }
 
-            // Dữ liệu cho sheet 1 (từ bảng yrdcLcTable)
-            const totalData = [
-                ['MODEL_NAME', 'MÃ_LIỆU', 'DATE_CODE', 'LOT_CODE', 'VENDOR_NAME', 'INPUT_QTY', 'FAIL_QTY', 'PASS_QTY', 'DFR']
-            ];
-            yrdcLcTable.rows().data().toArray().forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                totalData.push(rowData);
-            });
-
-            // Dữ liệu cho sheet 2 (từ snDataCache)
-            const snData = [
-                ['P_SN', 'WO', 'P_NO', 'TR_SN', 'KP_NO', 'MFR_KP_NO', 'DATE_CODE', 'LOT_CODE', 'MFR_NAME', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'REF_DES', 'TEST_CODE', 'TEST_GROUP']
-            ];
-            snDataCache.forEach(item => {
-                snData.push([
-                    item.p_sn,
-                    item.wo,
-                    item.p_no,
-                    item.tr_sn,
-                    item.kp_no,
-                    item.mfr_kp_no,
-                    item.date_code,
-                    item.lot_code,
-                    item.mfr_name,
-                    item.process_flag,
+            const worksheetData = [
+                ['SERIAL_NUMBER', 'MODEL_NAME', 'MÃ_LIỆU', 'DATE_CODE', 'LOT_CODE', 'VENDOR_NAME', 'REF_DES', 'ERROR_CODE', 'STATION', 'WORK_TIME'],
+                ...snDataCache.map(item => [
+                    item.serial_NUMBER,
+                    item.model_NAME,
+                    item.mÃ_LIỆU,
+                    item.date_CODE,
+                    item.lot_CODE,
+                    item.vendor_NAME,
+                    item.ref_DES,
+                    item.error_CODE,
                     item.station,
-                    item.group_name,
-                    item.work_time,
-                    item.ref_des,
-                    item.test_code,
-                    item.test_group
-                ]);
-            });
+                    item.work_TIME
+                ])
+            ];
 
-            // Tạo worksheet cho sheet 1
-            const ws1 = XLSX.utils.aoa_to_sheet(totalData);
-            // Tạo worksheet cho sheet 2
-            const ws2 = XLSX.utils.aoa_to_sheet(snData);
-
-            // Tạo workbook và thêm các sheet
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws1, "Total_Data");
-            XLSX.utils.book_append_sheet(wb, ws2, "SN_Data");
-
-            // Xuất file Excel
-            XLSX.writeFile(wb, 'yrdc_lc_data_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'YR-DC-LC');
+            XLSX.writeFile(workbook, 'YR_DC_LC.xlsx');
         }
     </script>
+    <style>
+        :root {
+            --nv-green: #76b900;
+            --nv-dark: #0b1f14;
+            --nv-text: #e8ffe0;
+            --nv-muted: #8cab57;
+        }
+
+        .allpart-wrapper {
+            background: linear-gradient(160deg, rgba(1, 12, 7, 0.95), rgba(5, 26, 15, 0.95));
+            border-radius: 26px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+            color: var(--nv-text);
+        }
+
+        .allpart-eyebrow {
+            letter-spacing: 0.35em;
+            font-size: 0.75rem;
+            color: var(--nv-muted);
+        }
+
+        .allpart-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--nv-green);
+        }
+
+        .heading-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(118, 185, 0, 0.12);
+            border: 1px solid rgba(118, 185, 0, 0.45);
+            color: var(--nv-green);
+            font-size: 1.5rem;
+        }
+
+        .allpart-card {
+            background: rgba(7, 25, 14, 0.92);
+            border: 1px solid rgba(118, 185, 0, 0.25);
+            border-radius: 22px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .form-label {
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .theme-control {
+            background: rgba(4, 18, 9, 0.85);
+            border: 1px solid rgba(118, 185, 0, 0.35);
+            color: var(--nv-text);
+            border-radius: 14px;
+        }
+
+        .theme-control:focus {
+            border-color: var(--nv-green);
+            box-shadow: 0 0 0 0.25rem rgba(118, 185, 0, 0.25);
+        }
+
+        .btn-nv {
+            background: linear-gradient(135deg, rgba(118, 185, 0, 0.95), rgba(90, 155, 0, 0.95));
+            border: none;
+            border-radius: 14px;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #031005;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-nv:hover,
+        .btn-nv:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(118, 185, 0, 0.35);
+            color: #020804;
+        }
+
+        .theme-table {
+            color: var(--nv-text);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .theme-table thead th {
+            background: rgba(118, 185, 0, 0.35);
+            border: none;
+            color: var(--nv-text);
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-align: center;
+        }
+
+        .theme-table tbody tr {
+            background: rgba(5, 20, 11, 0.75);
+        }
+
+        .theme-table tbody tr:hover td {
+            background: rgba(118, 185, 0, 0.18);
+        }
+
+        .theme-table td,
+        .theme-table th {
+            min-width: 140px;
+            white-space: normal;
+            word-wrap: break-word;
+            padding: 10px;
+            text-align: center;
+            border-color: rgba(118, 185, 0, 0.15);
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(6, 18, 10, 0.9);
+            color: var(--nv-text);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            z-index: 1000;
+            display: none;
+            max-width: 320px;
+            word-wrap: break-word;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: var(--nv-text);
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top: 4px solid var(--nv-green);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 }
