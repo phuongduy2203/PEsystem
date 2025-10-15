@@ -794,7 +794,8 @@ namespace API_WEB.Controllers.Repositories
             await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
             await connection.OpenAsync();
 
-            string query = @"SELECT 
+            string query = @"
+                SELECT 
                     r107.SERIAL_NUMBER,
                     r107.MODEL_NAME,
                     model_desc.PRODUCT_LINE,
@@ -818,11 +819,8 @@ namespace API_WEB.Controllers.Repositories
                 FROM sfism4.r107 r107
                 JOIN sfis1.c_model_desc_t model_desc
                   ON r107.model_name = model_desc.model_name
-
                 LEFT JOIN sfism4.r_repair_task_t repair_task
                   ON r107.SERIAL_NUMBER = repair_task.SERIAL_NUMBER
-
-                -- 🧩 Gộp checkin + DATA19 (đọc bảng detail 1 lần)
                 LEFT JOIN (
                     SELECT
                         d.SERIAL_NUMBER,
@@ -854,8 +852,6 @@ namespace API_WEB.Controllers.Repositories
                     WHERE rn = 1
                 ) r109_latest
                   ON r109_latest.SERIAL_NUMBER = r107.SERIAL_NUMBER
-
-                --Lấy bản ghi *_OFF mới nhất
                 LEFT JOIN (
                     SELECT SERIAL_NUMBER, GROUP_NAME, PASS_TIME, DATA2, PASS_DATE, DATA5
                     FROM (
@@ -868,28 +864,20 @@ namespace API_WEB.Controllers.Repositories
                     WHERE rn = 1
                 ) RE_TEST
                   ON RE_TEST.SERIAL_NUMBER = r107.SERIAL_NUMBER
-
                 INNER JOIN sfis1.C_ERROR_CODE_T error_desc
                   ON r109_latest.TEST_CODE = error_desc.ERROR_CODE
-
-                --Dùng anti-join thay cho NOT IN để nhanh hơn
                 LEFT JOIN SFISM4.Z_KANBAN_TRACKING_T z
                   ON z.SERIAL_NUMBER = r107.SERIAL_NUMBER
-
                 WHERE 
                     model_desc.MODEL_SERIAL = 'ADAPTER'
                     AND z.SERIAL_NUMBER IS NULL                
-                    AND NOT (r107.MODEL_NAME LIKE '900%' 
-                          OR r107.MODEL_NAME LIKE '692%' 
-                          OR r107.MODEL_NAME LIKE '930%')
+                    AND NOT REGEXP_LIKE(r107.MODEL_NAME, '^(900|930|692)')
                     AND r107.WIP_GROUP NOT LIKE '%BR2C%'
                     AND (
                         r107.ERROR_FLAG IN ('7','8')
-                        OR r107.WIP_GROUP LIKE '%B28M%'
-                        OR r107.WIP_GROUP LIKE '%B30M%'
+                        OR REGEXP_LIKE(r107.WIP_GROUP, 'B(28M|30M)$')
                         OR r107.WORK_FLAG IN ('2','5')
-                        OR (r107.ERROR_FLAG = '1' 
-                            AND r109_latest.TEST_TIME <= SYSDATE - (8/24))
+                        OR (r107.ERROR_FLAG = '1' AND r109_latest.TEST_TIME <= SYSDATE - (8/24))
                     )
                     AND r109_latest.TEST_CODE NOT IN (
                         'BV00','PP10','BRK00','HSK00','SCR00','C028','TA00','CAR0','C010','C012',
@@ -1773,10 +1761,8 @@ WHERE
                 bool filterByStatus = request.Statuses?.Any() == true;
                 var statuses = filterByStatus ? request.Statuses.Where(s => !string.IsNullOrEmpty(s)).ToList() : null;
 
-                // L?y data t? Oracle
                 var allData = await ExecuteAdapterMoQuery();
 
-                // L?y ApplyTaskStatus t? ScrapLists
                 var scrapCategories = await _sqlContext.ScrapLists
                     .Select(s => new { SN = s.SN, ApplyTaskStatus = s.ApplyTaskStatus, TaskNumber = s.TaskNumber })
                     .ToListAsync();
@@ -1787,43 +1773,43 @@ WHERE
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                // ??nh ngh?a validStatuses
                 var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    "Scrap Lacks Task",
-                    "Scrap Has Scrap",
-                    "Approved BGA",
-                    "Waiting approve BGA",
-                    "Waiting approve scrap",
-                    "Waiting Link",
-                    "Linked MO"
+                    "ScrapLacksTask",
+                    "ScrapHasScrap",
+                    "ApprovedBGA",
+                    "WaitingApprovalBGA",
+                    "WaitingApproveScrap",
+                    "WAITING_LINK",
+                    "LINKED"
                 };
 
-                // Phan lo?i status
                 var result = allData
                     .Select(b =>
                     {
                         var sn = b.SERIAL_NUMBER?.Trim().ToUpper() ?? "";
                         string status;
 
-                        // Ki?m tra thong tin trong scrapDict
                         if (scrapDict.TryGetValue(sn, out var scrapInfo))
                         {
                             var applyTaskStatus = scrapInfo.ApplyTaskStatus;
                             var taskNumber = scrapInfo.TaskNumber;
 
-                            if (applyTaskStatus == 0 || applyTaskStatus == 1 || applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                            if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                                status = "ScrapHasTask";
+                            else if (applyTaskStatus == 0 || applyTaskStatus == 1)
                             {
-                                status = string.IsNullOrEmpty(taskNumber) ? "Scrap Lacks Task" : "Scrap Has Scrap";
+                                if (string.IsNullOrEmpty(taskNumber) || taskNumber == "N/A")
+                                    status = "ScrapLacksTask";
+                                else status = "ScrapHasTask";
                             }
                             else
                             {
                                 status = applyTaskStatus switch
                                 {
-                                    2 => "Waiting approve scrap",
-                                    3 => "Approved BGA",
-                                    4 => "Waiting approve BGA",
-                                    _ => b.MO_STATUS
+                                    2 => "WaitingApproveScrap",
+                                    4 => "WaitingApprovalBGA",
+                                    _ => "ApprovedBGA"
                                 };
                             }
                         }
@@ -1835,13 +1821,13 @@ WHERE
                         return new
                         {
                             SN = b.SERIAL_NUMBER,
-                            ModelName = b.MODEL_NAME,
-                            MoNumber = b.MO_NUMBER,
+                            modelName = b.MODEL_NAME,
+                            moNumber = b.MO_NUMBER,
                             ProductLine = b.PRODUCT_LINE,
-                            WipGroup = b.WIP_GROUP,
-                            TestGroup = b.TEST_GROUP,
-                            TestCode = b.TEST_CODE,
-                            TestTime = b.TEST_TIME,
+                            wipGroup = b.WIP_GROUP,
+                            groupName = b.GROUP_NAME,
+                            errorFlag = b.ERROR_FLAG,
+                            stationTime = b.STATION_TIME,
                             Status = status
                         };
                     })
@@ -1884,7 +1870,6 @@ WHERE
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                // Phan lo?i tr?ng thai
                 var result = moData
                     .Select(b =>
                     {
@@ -1896,18 +1881,21 @@ WHERE
                             var applyTaskStatus = scrapInfo.ApplyTaskStatus;
                             var taskNumber = scrapInfo.TaskNumber;
 
-                            if (applyTaskStatus == 0 || applyTaskStatus == 1 || applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                            if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                                status = "ScrapHasTask";
+                            else if (applyTaskStatus == 0 || applyTaskStatus == 1)
                             {
-                                status = string.IsNullOrEmpty(taskNumber) ? "Scrap Lacks Task" : "Scrap Has Scrap";
+                                if (string.IsNullOrEmpty(taskNumber) || taskNumber == "N/A")
+                                    status = "ScrapLacksTask";
+                                else status = "ScrapHasTask";
                             }
                             else
                             {
                                 status = applyTaskStatus switch
                                 {
-                                    2 => "Waiting approve scrap",
-                                    3 => "Approved BGA",
-                                    4 => "Waiting approve BGA",
-                                    _ => b.MO_STATUS
+                                    2 => "WaitingApproveScrap",
+                                    4 => "WaitingApprovalBGA",
+                                    _ => "ApprovedBGA"
                                 };
                             }
                         }
@@ -1949,103 +1937,69 @@ WHERE
             await connection.OpenAsync();
 
             string query = @"
-                SELECT 
-                    r107.SERIAL_NUMBER,
-                    r107.MODEL_NAME,
-                    model_desc.PRODUCT_LINE,
-                    r107.WIP_GROUP,
-                    r107.MO_NUMBER,
-                    R109.TEST_GROUP,
-                    R109.TEST_CODE,
-                    R109.TEST_TIME,
-                    'CH? LINK' AS MO_STATUS
-                FROM 
-                    SFISM4.R107 r107
-                INNER JOIN 
-                    SFIS1.C_MODEL_DESC_T model_desc
-                    ON r107.MODEL_NAME = model_desc.MODEL_NAME
-                LEFT JOIN (
-                    SELECT 
-                        SERIAL_NUMBER,
-                        TEST_CODE,
-                        TEST_TIME,
-                        TEST_GROUP,
-                        ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY TEST_TIME DESC) AS rn
-                    FROM SFISM4.R109
-                ) R109
-                    ON r107.SERIAL_NUMBER = R109.SERIAL_NUMBER AND R109.rn = 1
-                WHERE 
-                    r107.WIP_GROUP LIKE '%B31M%'
-                    AND model_desc.MODEL_SERIAL = 'ADAPTER'
-                    AND r107.MODEL_NAME NOT LIKE '900%'
-                    AND r107.MODEL_NAME NOT LIKE '692%'
+               SELECT 
+                r107.SERIAL_NUMBER,
+                r107.MO_NUMBER,
+                r107.MODEL_NAME,
+                model_desc.PRODUCT_LINE,
+                r107.WIP_GROUP,
+                r107.ERROR_FLAG,
+                R107.IN_STATION_TIME,
+                R107.GROUP_NAME,
+                'WAITING_LINK' AS MO_STATUS
+            FROM 
+                SFISM4.R107 r107
+            INNER JOIN SFIS1.C_MODEL_DESC_T model_desc
+                ON r107.MODEL_NAME = model_desc.MODEL_NAME
+            WHERE 
+                r107.WIP_GROUP LIKE '%B31M%'
+                AND model_desc.MODEL_SERIAL = 'ADAPTER'
+                AND r107.MODEL_NAME NOT LIKE '900%'
+                AND r107.MODEL_NAME NOT LIKE '692%'
 
-                UNION ALL
+            UNION ALL
 
+            SELECT 
+                c.SERIAL_NUMBER,
+                c.MO_NUMBER,
+                c.MODEL_NAME,
+                b.PRODUCT_LINE,
+                c.WIP_GROUP,
+                c.ERROR_FLAG,
+                latest.IN_STATION_TIME,
+                latest.GROUP_NAME,
+                'LINKED' AS MO_STATUS
+            FROM (
                 SELECT 
-                    r107.SERIAL_NUMBER,
-                    r107.MO_NUMBER,
-                    r107.MODEL_NAME,
-                    r107.WIP_GROUP,
-                    model_desc.PRODUCT_LINE,
-                    R109.TEST_GROUP,
-                    R109.TEST_CODE,
-                    R109.TEST_TIME,
-                    '?a M? MO' AS MO_STATUS
-                FROM 
-                    SFISM4.R107 r107
-                INNER JOIN 
-                    SFISM4.R105 r105
-                    ON r107.MO_NUMBER = r105.MO_NUMBER
-                INNER JOIN 
-                    SFIS1.C_MODEL_DESC_T model_desc
-                    ON r107.MODEL_NAME = model_desc.MODEL_NAME
-                LEFT JOIN (
-                    SELECT 
-                        SERIAL_NUMBER,
-                        TEST_CODE,
-                        TEST_TIME,
-                        TEST_GROUP,
-                        ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY TEST_TIME DESC) AS rn
-                    FROM SFISM4.R109
-                ) R109
-                    ON r107.SERIAL_NUMBER = R109.SERIAL_NUMBER AND R109.rn = 1
-                INNER JOIN (
-                    SELECT SERIAL_NUMBER
-                    FROM (
-                        SELECT 
-                            SERIAL_NUMBER,
-                            GROUP_NAME,
-                            ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY IN_STATION_TIME DESC) AS rn
-                        FROM SFISM4.R117
-                    ) t
-                    WHERE rn = 1 AND GROUP_NAME = 'LINK_MO'
-                ) r117_latest
-                    ON r107.SERIAL_NUMBER = r117_latest.SERIAL_NUMBER
-                INNER JOIN (
-                    SELECT SERIAL_NUMBER
-                    FROM (
-                        SELECT 
-                            SERIAL_NUMBER,
-                            WIP_GROUP,
-                            ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY IN_STATION_TIME DESC) AS rn
-                        FROM SFISM4.R117
-                    ) t
-                    WHERE rn = 2 AND WIP_GROUP LIKE '%B31M%'
-                ) r117_second
-                    ON r107.SERIAL_NUMBER = r117_second.SERIAL_NUMBER
-                WHERE 
-                    r107.WIP_GROUP NOT IN ('KANBAN_IN', 'STOCKIN')
-                    AND r107.WIP_GROUP NOT LIKE '%B28M%'
-                    AND r107.WIP_GROUP NOT LIKE '%B30M%'
-                    AND r107.WIP_GROUP NOT LIKE '%BR2C%'
-                    AND r107.WIP_GROUP NOT LIKE '%B31M%'
-                    AND r107.MO_NUMBER LIKE '3%'
-                    AND r107.MODEL_NAME NOT LIKE '900%'
-                    AND r107.MODEL_NAME NOT LIKE '692%'
-                    AND r105.CLOSE_FLAG = 2
-                    AND model_desc.MODEL_SERIAL = 'ADAPTER'
-            ";
+                    r117.SERIAL_NUMBER,
+                    r117.MODEL_NAME,
+                    r117.MO_NUMBER,
+                    r117.WIP_GROUP,
+                    r117.GROUP_NAME,
+                    r117.IN_STATION_TIME,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY r117.SERIAL_NUMBER
+                        ORDER BY r117.IN_STATION_TIME DESC
+                    ) AS rn
+                FROM SFISM4.R117 r117
+                WHERE r117.WIP_GROUP LIKE '%B31M%'
+            ) latest
+            INNER JOIN sfis1.c_model_desc_t b
+                ON latest.MODEL_NAME = b.MODEL_NAME
+            INNER JOIN sfism4.R107 c
+                ON c.SERIAL_NUMBER = latest.SERIAL_NUMBER
+            INNER JOIN sfism4.R105 d
+                ON d.MO_NUMBER = latest.MO_NUMBER
+            LEFT JOIN sfism4.Z_KANBAN_TRACKING_T z
+                ON z.SERIAL_NUMBER = latest.SERIAL_NUMBER
+            WHERE 
+                latest.rn = 1
+                AND b.MODEL_SERIAL = 'ADAPTER'
+                AND c.MO_NUMBER LIKE '3%' 
+                AND c.ERROR_FLAG IN ('0','1')
+                AND d.CLOSE_FLAG = 2
+                AND z.SERIAL_NUMBER IS NULL
+                AND NOT REGEXP_LIKE(c.WIP_GROUP, 'B28M|B30M|B31M|BR2C|B34G|B36R|STOCKIN')";
 
             using (var command = new OracleCommand(query, connection))
             {
@@ -2060,9 +2014,9 @@ WHERE
                             PRODUCT_LINE = reader["PRODUCT_LINE"].ToString(),
                             WIP_GROUP = reader["WIP_GROUP"].ToString(),
                             MO_NUMBER = reader["MO_NUMBER"].ToString(),
-                            TEST_GROUP = reader["TEST_GROUP"] != DBNull.Value ? reader["TEST_GROUP"].ToString() : null,
-                            TEST_CODE = reader["TEST_CODE"] != DBNull.Value ? reader["TEST_CODE"].ToString() : null,
-                            TEST_TIME = reader["TEST_TIME"] != DBNull.Value ? Convert.ToDateTime(reader["TEST_TIME"]) : (DateTime?)null,
+                            GROUP_NAME = reader["GROUP_NAME"].ToString(),
+                            ERROR_FLAG = reader["ERROR_FLAG"].ToString(),
+                            STATION_TIME = reader["IN_STATION_TIME"] != DBNull.Value ? Convert.ToDateTime(reader["IN_STATION_TIME"]) : (DateTime?)null,
                             MO_STATUS = reader["MO_STATUS"].ToString()
                         });
                     }
@@ -2079,10 +2033,10 @@ WHERE
         public string MODEL_NAME { get; set; }
         public string PRODUCT_LINE { get; set; }
         public string WIP_GROUP { get; set; }
+        public string ERROR_FLAG { get; set; }
         public string MO_NUMBER { get; set; }
-        public string TEST_GROUP { get; set; }
-        public string TEST_CODE { get; set; }
-        public DateTime? TEST_TIME { get; set; }
+        public string GROUP_NAME { get; set; }
+        public DateTime? STATION_TIME { get; set; }
         public string MO_STATUS { get; set; }
     }
 

@@ -1050,7 +1050,7 @@ namespace API_WEB.Controllers.SmartFA
                                ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
                         FROM sfism4.P_WIP_KEYPARTS_T kp 
                         WHERE kp.GROUP_NAME = 'SFG_LINK_FG' 
-                          AND LENGTH(kp.SERIAL_NUMBER) IN (12, 18, 21, 20) 
+                          AND LENGTH(kp.SERIAL_NUMBER) IN (11, 12, 18, 21, 20) 
                           AND LENGTH(kp.KEY_PART_SN) IN (14, 13)
                     )
                     WHERE rn = 1
