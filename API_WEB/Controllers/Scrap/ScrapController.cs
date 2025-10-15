@@ -140,48 +140,32 @@ namespace API_WEB.Controllers.Scrap
 
                 foreach (var sn in existingSNs)
                 {
-                    if (sn.ApplyTaskStatus == 0)
+                    if (sn.ApplyTaskStatus == 2)
                     {
-                        rejectedSNs.Add($"{sn.SN} (SPE đã đồng ý phế, chờ xin task)");
+                        rejectedSNs.Add($"{sn.SN} (ApplyTaskStatus = 2 - trạng thái không được phép tạo task)");
                     }
-                    else if (sn.ApplyTaskStatus == 1)
+                    else if (sn.ApplyTaskStatus == 4)
                     {
-                        rejectedSNs.Add($"{sn.SN} (đang xin task, chờ NV gửi task)");
+                        rejectedSNs.Add($"{sn.SN} (ApplyTaskStatus = 4 - trạng thái không được phép tạo task)");
                     }
-                    else if (sn.ApplyTaskStatus == 3)
+                    else if (sn.ApplyTaskStatus == 8)
                     {
-                        rejectedSNs.Add($"{sn.SN} (NV đã approved thay BGA)");
-                    }
-                    else if (sn.ApplyTaskStatus == 5)
-                    {
-                        rejectedSNs.Add($"{sn.SN} (Đã có task, chờ chuyển MRB)");
-                    }
-                    else if (sn.ApplyTaskStatus == 6)
-                    {
-                        rejectedSNs.Add($"{sn.SN} (Đã chuyển kho phế, chờ MRB xác nhận)");
-                    }
-                    else if (sn.ApplyTaskStatus == 7)
-                    {
-                        rejectedSNs.Add($"{sn.SN} (Đã chuyển kho phế thành công)");
-                    }
-                    else if (sn.ApplyTaskStatus == 2 || sn.ApplyTaskStatus == 4)
-                    {
-                        validSNs.Add(sn); // SN hợp lệ để cập nhật
+                        rejectedSNs.Add($"{sn.SN} (ApplyTaskStatus = 8 - trạng thái không được phép tạo task)");
                     }
                     else
                     {
-                        rejectedSNs.Add($"{sn.SN} (trạng thái không xác định: {sn.ApplyTaskStatus})");
+                        validSNs.Add(sn);
                     }
                 }
 
                 if (rejectedSNs.Any())
                 {
-                    return BadRequest(new { message = $"Các SN sau không hợp lệ để cập nhật: {string.Join(", ", rejectedSNs)}" });
+                    return BadRequest(new { message = $"Các SN sau không hợp lệ để cập nhật (ApplyTaskStatus phải khác 2, 4, 8): {string.Join(", ", rejectedSNs)}" });
                 }
 
                 if (!validSNs.Any())
                 {
-                    return BadRequest(new { message = "Không có SN nào hợp lệ để cập nhật (yêu cầu ApplyTaskStatus = 2 & 4)." });
+                    return BadRequest(new { message = "Không có SN nào hợp lệ để cập nhật (ApplyTaskStatus phải khác 2, 4, 8)." });
                 }
 
                 // kiểm tra xem có lẫn lộn bản giữa Bonepile 1.0 và SN 2.0 không
