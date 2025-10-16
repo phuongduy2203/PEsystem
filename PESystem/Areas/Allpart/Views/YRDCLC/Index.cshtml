@@ -1,91 +1,131 @@
-﻿@{
+@{
     ViewData["Title"] = "YR follow DC-LC";
 }
 @{
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/yrdclc.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">YR follow DC/LC</h1>
+<div class="allpart-interface nvidia-section">
+    <div class="section-heading text-center text-lg-start">
+        <h1 class="display-6">YR follow DC/LC</h1>
+        <p>Theo dõi dữ liệu YR theo DC/LC với bộ lọc linh hoạt và bảng thống kê rõ ràng.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="date-time-range">
-                <label for="startDate">Bắt đầu:</label>
-                <input type="datetime-local" id="startDate" />
-                <label for="endDate">Kết thúc:</label>
-                <input type="datetime-local" id="endDate" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <input id="model" name="model" class="form-control" placeholder="Model Name" />
-            </div>
-            <div class="col-md-2">
-                <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
-            </div>
-            <div class="col-md-2">
-                <input id="location" name="location" class="form-control" placeholder="Vị trí" />
-            </div>
-            <div class="col-md-2">
-                <input id="station" name="station" class="form-control" placeholder="Trạm test" />
-            </div>
-            <div class="col-md-2">
-                <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
-            </div>
-        </div>
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Load data</button>
+
+    <div class="row g-4 align-items-stretch">
+        <div class="col-12">
+            <div class="nvidia-card h-100">
+                <div class="nvidia-card-header">
+                    <h2>Bộ lọc tìm kiếm</h2>
+                    <span class="badge-nvidia">YR - DC/LC</span>
+                </div>
+                <div class="nvidia-card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Khoảng thời gian</label>
+                            <div class="d-flex flex-column flex-md-row gap-2">
+                                <input type="datetime-local" id="startDate" class="form-control" />
+                                <input type="datetime-local" id="endDate" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="model" class="form-label">Model Name</label>
+                            <input id="model" name="model" class="form-control" placeholder="Model Name" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="PN" class="form-label">Mã Liệu</label>
+                            <input id="PN" name="PN" class="form-control" placeholder="Mã Liệu" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="location" class="form-label">Vị trí</label>
+                            <input id="location" name="location" class="form-control" placeholder="Vị trí" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="station" class="form-label">Trạm test</label>
+                            <input id="station" name="station" class="form-control" placeholder="Trạm test" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="error" class="form-label">Mã lỗi</label>
+                            <input id="error" name="error" class="form-control" placeholder="Mã lỗi" />
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="search()" class="btn btn-ne w-100">Tìm kiếm</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="downloadExcel()" class="btn btn-ne w-100">Load data</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="yrdcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>INPUT_QTY</th>
-                            <th>FAIL_QTY</th>
-                            <th>PASS_QTY</th>
-                            <th>DFR</th>
-                        </tr>
-                    </thead>
-                    <tbody id="yrdcLcTableBody"></tbody>
-                </table>
+        <div class="col-12">
+            <div class="nvidia-card">
+                <div class="nvidia-card-header">
+                    <h2>Kết quả tổng hợp</h2>
+                </div>
+                <div class="nvidia-card-body">
+                    <div class="table-responsive">
+                        <table id="yrdcLcTable" class="display table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>MODEL_NAME</th>
+                                    <th>MÃ_LIỆU</th>
+                                    <th>DATE_CODE</th>
+                                    <th>LOT_CODE</th>
+                                    <th>VENDOR_NAME</th>
+                                    <th>INPUT_QTY</th>
+                                    <th>FAIL_QTY</th>
+                                    <th>PASS_QTY</th>
+                                    <th>DFR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="yrdcLcTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-
     <script>
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
         let yrdcLcTable;
-        let snDataCache = []; // Lưu dữ liệu BY-FAIL-SN để xuất Excel
+        let snDataCache = [];
 
-        // Hàm tạo nội dung cho ô với tooltip
-        function createTooltipCell(data) {
-            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
         }
 
-        // Gắn sự kiện tooltip sử dụng event delegation
+        function htmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function createTooltipCell(data) {
+            const text = htmlEscape(data);
+            return `<span class="tooltip-trigger" data-tooltip="${text}">${text}</span>`;
+        }
+
         function attachTooltipEvents() {
-            $(document).on('mouseover', '.tooltip-trigger', function (e) {
-                const $this = $(this);
-                const tooltipText = $this.data('tooltip');
-                if (tooltipText) {
+            $(document)
+                .off('.tooltipHover')
+                .on('mouseover.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltipText = $(this).data('tooltip');
+                    if (!tooltipText) return;
+
                     let tooltip = document.querySelector('.custom-tooltip');
                     if (!tooltip) {
                         tooltip = document.createElement('div');
@@ -94,24 +134,22 @@
                     }
                     tooltip.textContent = tooltipText;
                     tooltip.style.display = 'block';
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mousemove', '.tooltip-trigger', function (e) {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip && tooltip.style.display === 'block') {
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mouseout', '.tooltip-trigger', function () {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip) {
-                    tooltip.style.display = 'none';
-                }
-            });
+                    positionTooltip(e, tooltip);
+                })
+                .on('mousemove.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        positionTooltip(e, tooltip);
+                    }
+                })
+                .on('mouseout.tooltipHover', '.tooltip-trigger', function () {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
         }
 
-        // Hàm định dạng ngày giờ từ datetime-local sang YYYY-MM-DD HH:MM:SS
         function formatDateTime(dateTime) {
             if (!dateTime) return '';
             const date = new Date(dateTime);
@@ -125,17 +163,16 @@
         }
 
         $(document).ready(function () {
-            // Khởi tạo DataTable
             yrdcLcTable = $('#yrdcLcTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
-                responsive: true,
+                responsive: false,
+                autoWidth: false,
                 columnDefs: [
-                    { targets: '_all', width: '150px' }
+                    { targets: '_all', width: '210px' }
                 ]
             });
 
-            // Gắn sự kiện tooltip
             attachTooltipEvents();
         });
 
@@ -148,30 +185,26 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-            // Kiểm tra đầu vào
             if (!model || !PN || !station || !error || !location || !startDate || !endDate) {
                 alert('Vui lòng nhập đầy đủ tất cả các trường!');
                 return;
             }
 
-            // Định dạng thời gian
             const formattedStartDate = formatDateTime(startDate);
             const formattedEndDate = formatDateTime(endDate);
 
-            // Hiển thị loading overlay
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'loading-overlay';
             loadingOverlay.innerHTML = `
                 <div class="spinner"></div>
                 <div>Đang tải dữ liệu, vui lòng chờ...</div>
             `;
+            loadingOverlay.style.display = 'flex';
             document.body.appendChild(loadingOverlay);
 
             try {
-                // Làm mới bảng trước khi tìm kiếm
                 yrdcLcTable.clear();
 
-                // Lần gọi API đầu tiên (BY-FAIL-TOTAL)
                 const totalResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
@@ -201,10 +234,9 @@
                     return;
                 }
 
-                // Hiển thị dữ liệu từ lần gọi đầu tiên vào bảng
                 totalData.result.forEach(item => {
                     yrdcLcTable.row.add([
-                        createTooltipCell(item.p_no),
+                        createTooltipCell(item.model_name),
                         createTooltipCell(item.kp_no),
                         createTooltipCell(item.date_code),
                         createTooltipCell(item.lot_code),
@@ -213,10 +245,10 @@
                         createTooltipCell(item.fail_qty),
                         createTooltipCell(item.pass_qty),
                         createTooltipCell(item.dfr)
-                    ]).draw();
+                    ]);
                 });
+                yrdcLcTable.draw();
 
-                // Lần gọi API thứ hai (BY-FAIL-SN)
                 const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
@@ -240,82 +272,26 @@
                 }
 
                 const snData = await snResponse.json();
-                if (!snData.result || snData.result.length === 0) {
-                    console.warn('Không có dữ liệu từ API BY-FAIL-SN.');
-                } else {
-                    // Lưu dữ liệu BY-FAIL-SN để xuất Excel
-                    snDataCache = snData.result;
-                }
+                snDataCache = snData.result || [];
 
-                // Gắn sự kiện tooltip
                 attachTooltipEvents();
-
             } catch (error) {
                 alert(`Đã xảy ra lỗi: ${error.message}`);
             } finally {
-                // Xóa loading overlay
-                if (document.body.contains(loadingOverlay)) {
-                    document.body.removeChild(loadingOverlay);
-                }
+                document.body.removeChild(loadingOverlay);
             }
         }
 
         function downloadExcel() {
-            if (!snDataCache.length && !yrdcLcTable.rows().data().toArray().length) {
-                alert('Không có dữ liệu để tải xuống Excel!');
+            if (!snDataCache.length) {
+                alert('Không có dữ liệu SN để tải.');
                 return;
             }
 
-            // Dữ liệu cho sheet 1 (từ bảng yrdcLcTable)
-            const totalData = [
-                ['MODEL_NAME', 'MÃ_LIỆU', 'DATE_CODE', 'LOT_CODE', 'VENDOR_NAME', 'INPUT_QTY', 'FAIL_QTY', 'PASS_QTY', 'DFR']
-            ];
-            yrdcLcTable.rows().data().toArray().forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                totalData.push(rowData);
-            });
-
-            // Dữ liệu cho sheet 2 (từ snDataCache)
-            const snData = [
-                ['P_SN', 'WO', 'P_NO', 'TR_SN', 'KP_NO', 'MFR_KP_NO', 'DATE_CODE', 'LOT_CODE', 'MFR_NAME', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'REF_DES', 'TEST_CODE', 'TEST_GROUP']
-            ];
-            snDataCache.forEach(item => {
-                snData.push([
-                    item.p_sn,
-                    item.wo,
-                    item.p_no,
-                    item.tr_sn,
-                    item.kp_no,
-                    item.mfr_kp_no,
-                    item.date_code,
-                    item.lot_code,
-                    item.mfr_name,
-                    item.process_flag,
-                    item.station,
-                    item.group_name,
-                    item.work_time,
-                    item.ref_des,
-                    item.test_code,
-                    item.test_group
-                ]);
-            });
-
-            // Tạo worksheet cho sheet 1
-            const ws1 = XLSX.utils.aoa_to_sheet(totalData);
-            // Tạo worksheet cho sheet 2
-            const ws2 = XLSX.utils.aoa_to_sheet(snData);
-
-            // Tạo workbook và thêm các sheet
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws1, "Total_Data");
-            XLSX.utils.book_append_sheet(wb, ws2, "SN_Data");
-
-            // Xuất file Excel
-            XLSX.writeFile(wb, 'yrdc_lc_data_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            const worksheet = XLSX.utils.json_to_sheet(snDataCache);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'YR-DC-LC');
+            XLSX.writeFile(workbook, `YR_DC_LC_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
     </script>
 }

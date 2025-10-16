@@ -1,6 +1,20 @@
 ﻿let selectedInternalTasks = new Set(); // Lưu các InternalTask đã chọn (cho TASK_STOCK_STATUS)
 let selectedSNs = new Set(); // Lưu các SN đã chọn (cho SEARCH_STATUS)
 
+function htmlEscape(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function displayValue(value) {
+    const normalized = value === undefined || value === null || value === '' ? 'N/A' : value;
+    return htmlEscape(normalized);
+}
+
 // Hàm để ẩn tất cả các form và khu vực kết quả
 function hideAllElements() {
     const forms = ["task-stock-status-form", "search-status-form", "search-history-form"]; // bo  "update-status-form",
@@ -111,8 +125,8 @@ function renderTableWithPagination(data, resultDiv, tableHeaders, rowTemplate, e
         const paginatedData = data.slice(start, end);
 
         let tableHtml = `
-            <div class="table-container">
-                <table>
+            <div class="table-container soft-scroll">
+                <table class="stacked-result-table">
                     <thead>
                         <tr>
                             ${tableHeaders}
@@ -124,6 +138,15 @@ function renderTableWithPagination(data, resultDiv, tableHeaders, rowTemplate, e
         paginatedData.forEach(item => {
             tableHtml += rowTemplate(item);
         });
+
+        if (!paginatedData.length) {
+            const columnCount = (tableHeaders.match(/<th/g) || []).length || 1;
+            tableHtml += `
+                <tr>
+                    <td colspan="${columnCount}" class="text-center text-muted">Không có dữ liệu để hiển thị</td>
+                </tr>
+            `;
+        }
 
         tableHtml += `
                     </tbody>
@@ -328,45 +351,63 @@ async function searchStatus(searchType, searchValues) {
             // Định nghĩa rowTemplate không có cột checkbox
             const rowTemplate = (item) => `
                 <tr>
-                    <td>${item.sn ?? "N/A"}</td>
-                    <td>${item.internalTask ?? "N/A"}</td>
-                    <td>${item.description ?? "N/A"}</td>
-                    <td>${item.approveScrapPerson ?? "N/A"}</td>
-                    <td>${item.kanBanStatus ?? "N/A"}</td>
-                    <td>${item.sloc ?? "N/A"}</td>
-                    <td>${item.taskNumber ?? "N/A"}</td>
-                    <td>${item.po ?? "N/A"}</td>
-                    <td>${item.cost ?? "N/A"}</td>
-                    <td>${item.remark ?? "N/A"}</td>
-                    <td>${item.createdBy ?? "N/A"}</td>
-                    <td>${item.createTime ?? "N/A"}</td>
-                    <td>${item.applyTime ?? "N/A"}</td>
-                    <td>${item.applyTaskStatus ?? "N/A"}</td>
-                    <td>${item.findBoardStatus ?? "N/A"}</td>
-                    <td>${item.purpose ?? "N/A"}</td>
-                    <td>${item.category ?? "N/A"}</td>
-                    <td>${item.speApproveTime ?? "N/A"}</td>
+                    <td>${displayValue(item.sn)}</td>
+                    <td>${displayValue(item.internalTask)}</td>
+                    <td>${displayValue(item.description)}</td>
+                    <td>${displayValue(item.approveScrapPerson)}</td>
+                    <td>${displayValue(item.kanBanStatus)}</td>
+                    <td>${displayValue(item.sloc)}</td>
+                    <td>${displayValue(item.taskNumber)}</td>
+                    <td>${displayValue(item.po)}</td>
+                    <td>${displayValue(item.cost)}</td>
+                    <td>${displayValue(item.remark)}</td>
+                    <td>${displayValue(item.createdBy)}</td>
+                    <td>${displayValue(item.createTime)}</td>
+                    <td>${displayValue(item.applyTime)}</td>
+                    <td>${displayValue(item.applyTaskStatus)}</td>
+                    <td>${displayValue(item.findBoardStatus)}</td>
+                    <td>${displayValue(item.purpose)}</td>
+                    <td>${displayValue(item.category)}</td>
+                    <td>${displayValue(item.speApproveTime)}</td>
                 </tr>
             `;
 
             // Tạo HTML cho thông báo SN không tìm thấy (nếu có)
             let unmatchedSNsHtml = "";
             if (unmatchedSNs.length > 0) {
+                const escapedSNs = unmatchedSNs.map(htmlEscape).join(', ');
                 unmatchedSNsHtml = `
                     <div class="alert alert-warning mt-3">
-                        <strong>Cảnh báo:</strong> Có ${unmatchedSNs.length} SN không tồn tại trong ScrapList: ${unmatchedSNs.join(", ")}
+                        <strong>Cảnh báo:</strong> Có ${unmatchedSNs.length} SN không tồn tại trong ScrapList: ${escapedSNs}
                     </div>
                 `;
             }
 
             // Xóa nội dung cũ và thêm các div con với ID duy nhất, bao gồm số lượng
             resultDiv.innerHTML = `
-                <h6>Chưa có Internal Task (${noInternalTaskData.length} bản ghi)</h6>
-                <div id="search-status-result-no-internal-task"></div>
-                <h6>Đã có Internal Task nhưng chưa có Task Number (${hasInternalTaskNoTaskNumberData.length} bản ghi)</h6>
-                <div id="search-status-result-has-internal-no-task-number"></div>
-                <h6>Đã có Task Number (${hasTaskNumberData.length} bản ghi)</h6>
-                <div id="search-status-result-has-task-number"></div>
+                <div class="grouped-result-grid">
+                    <div class="scrap-card grouped-result">
+                        <div class="grouped-result-header">
+                            <h6>Chưa có Internal Task</h6>
+                            <span class="badge bg-success-subtle">${noInternalTaskData.length}</span>
+                        </div>
+                        <div id="search-status-result-no-internal-task" class="grouped-result-table"></div>
+                    </div>
+                    <div class="scrap-card grouped-result">
+                        <div class="grouped-result-header">
+                            <h6>Đã có Internal Task nhưng chưa có Task Number</h6>
+                            <span class="badge bg-success-subtle">${hasInternalTaskNoTaskNumberData.length}</span>
+                        </div>
+                        <div id="search-status-result-has-internal-no-task-number" class="grouped-result-table"></div>
+                    </div>
+                    <div class="scrap-card grouped-result">
+                        <div class="grouped-result-header">
+                            <h6>Đã có Task Number</h6>
+                            <span class="badge bg-success-subtle">${hasTaskNumberData.length}</span>
+                        </div>
+                        <div id="search-status-result-has-task-number" class="grouped-result-table"></div>
+                    </div>
+                </div>
                 ${unmatchedSNsHtml}
             `;
 
@@ -519,34 +560,35 @@ async function searchHistoryBySN(snValues) {
 
             const rowTemplate = (item) => `
                 <tr>
-                    <td>${item.rowNumber}</td>
-                    <td>${item.id ?? "N/A"}</td>
-                    <td>${item.sn ?? "N/A"}</td>
-                    <td>${item.internalTask ?? "N/A"}</td>
-                    <td>${item.description ?? "N/A"}</td>
-                    <td>${item.kanBanStatus ?? "N/A"}</td>
-                    <td>${item.sloc ?? "N/A"}</td>
-                    <td>${item.taskNumber ?? "N/A"}</td>
-                    <td>${item.po ?? "N/A"}</td>
-                    <td>${item.cost ?? "N/A"}</td>
-                    <td>${item.createdBy ?? "N/A"}</td>
-                    <td>${item.createTime ?? "N/A"}</td>
-                    <td>${item.approveScrapPerson ?? "N/A"}</td>
-                    <td>${item.applyTaskStatus ?? "N/A"}</td>
-                    <td>${item.findBoardStatus ?? "N/A"}</td>
-                    <td>${item.remark ?? "N/A"}</td>
-                    <td>${item.purpose ?? "N/A"}</td>
-                    <td>${item.category ?? "N/A"}</td>
-                    <td>${item.applyTime ?? "N/A"}</td>
-                    <td>${item.speApproveTime ?? "N/A"}</td>
+                    <td>${displayValue(item.rowNumber)}</td>
+                    <td>${displayValue(item.id)}</td>
+                    <td>${displayValue(item.sn)}</td>
+                    <td>${displayValue(item.internalTask)}</td>
+                    <td>${displayValue(item.description)}</td>
+                    <td>${displayValue(item.kanBanStatus)}</td>
+                    <td>${displayValue(item.sloc)}</td>
+                    <td>${displayValue(item.taskNumber)}</td>
+                    <td>${displayValue(item.po)}</td>
+                    <td>${displayValue(item.cost)}</td>
+                    <td>${displayValue(item.createdBy)}</td>
+                    <td>${displayValue(item.createTime)}</td>
+                    <td>${displayValue(item.approveScrapPerson)}</td>
+                    <td>${displayValue(item.applyTaskStatus)}</td>
+                    <td>${displayValue(item.findBoardStatus)}</td>
+                    <td>${displayValue(item.remark)}</td>
+                    <td>${displayValue(item.purpose)}</td>
+                    <td>${displayValue(item.category)}</td>
+                    <td>${displayValue(item.applyTime)}</td>
+                    <td>${displayValue(item.speApproveTime)}</td>
                 </tr>
             `;
 
             let extraHtml = "";
             if (missingSNs.length > 0) {
+                const escapedMissing = missingSNs.map(htmlEscape).join(', ');
                 extraHtml = `
                     <div class="alert alert-warning mt-3">
-                        <strong>Cảnh báo:</strong> Không tìm thấy lịch sử cho ${missingSNs.length} SN: ${missingSNs.join(", ")}
+                        <strong>Cảnh báo:</strong> Không tìm thấy lịch sử cho ${missingSNs.length} SN: ${escapedMissing}
                     </div>
                 `;
             }

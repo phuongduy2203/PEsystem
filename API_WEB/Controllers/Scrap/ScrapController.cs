@@ -439,34 +439,45 @@ namespace API_WEB.Controllers.Scrap
             }
         }
 
-        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 0 hoặc 10
+        // API: Lấy dữ liệu từ ScrapList theo InternalTask trong 3 tháng gần nhất
         [HttpGet("get-scrap-status-zero")]
         public async Task<IActionResult> GetScrapStatusZero()
         {
             try
             {
-                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 0 hoặc 10
-                var scrapData = await _sqlContext.ScrapLists
-                    .Where(s => s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 10) // Lọc theo ApplyTaskStatus = 0 hoặc 10
-                    .GroupBy(s => s.InternalTask) // Nhóm theo InternalTask
-                    .Select(g => new
-                    {
-                        InternalTask = g.Key,
-                        Description = g.First().Desc, // Lấy giá trị đầu tiên của Description
-                        ApproveScrapPerson = g.First().ApproveScrapperson, // Lấy giá trị đầu tiên
-                        KanBanStatus = g.First().KanBanStatus, // Lấy giá trị đầu tiên
-                        Category = g.First().Category,
-                        Remark = g.First().Remark,
-                        CreateTime = g.First().CreateTime.ToString("yyyy-MM-dd"), // Chỉ lấy ngày tháng năm
-                        CreateBy = g.First().CreatedBy, // Lấy giá trị đầu tiên
-                        ApplyTaskStatus = g.First().ApplyTaskStatus, // Lấy giá trị đầu tiên
-                        TotalQty = g.Count() // Đếm số lượng SN trong mỗi InternalTask
-                    })
+                var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
+                // Lấy dữ liệu từ bảng ScrapList với InternalTask hợp lệ
+                var scrapRecords = await _sqlContext.ScrapLists
+                    .Where(s => s.InternalTask != null && s.InternalTask != "N/A")
                     .ToListAsync();
+
+                var scrapData = scrapRecords
+                    .Where(s => s.CreateTime != default && s.CreateTime >= threeMonthsAgo)
+                    .GroupBy(s => s.InternalTask)
+                    .Select(g =>
+                    {
+                        var first = g.First();
+                        return new
+                        {
+                            InternalTask = g.Key,
+                            Description = first.Desc,
+                            ApproveScrapPerson = first.ApproveScrapperson,
+                            KanBanStatus = first.KanBanStatus,
+                            Category = first.Category,
+                            Remark = first.Remark,
+                            CreateTime = first.CreateTime.ToString("yyyy-MM-dd"),
+                            CreateBy = first.CreatedBy,
+                            ApplyTaskStatus = first.ApplyTaskStatus,
+                            Purpose = first.Purpose,
+                            TotalQty = g.Count()
+                        };
+                    })
+                    .ToList();
 
                 if (!scrapData.Any())
                 {
-                    return NotFound(new { message = "Không tìm thấy dữ liệu với ApplyTaskStatus = 0 hoặc 3." });
+                    return NotFound(new { message = "Không tìm thấy dữ liệu phù hợp trong 3 tháng gần nhất." });
                 }
 
                 return Ok(scrapData);
@@ -489,11 +500,6 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = "Danh sách InternalTasks không được để trống." });
                 }
 
-                if (string.IsNullOrEmpty(request.SaveApplyStatus) || (request.SaveApplyStatus != "0" && request.SaveApplyStatus != "1"))
-                {
-                    return BadRequest(new { message = "SaveApplyStatus phải là '0' hoặc '1'." });
-                }
-
                 // Lấy tất cả SN từ ScrapList dựa trên InternalTasks
                 var scrapRecords = await _sqlContext.ScrapLists
                     .Where(s => request.InternalTasks.Contains(s.InternalTask))
@@ -502,6 +508,27 @@ namespace API_WEB.Controllers.Scrap
                 if (!scrapRecords.Any())
                 {
                     return NotFound(new { message = "Không tìm thấy dữ liệu cho các InternalTasks được cung cấp." });
+                }
+
+                var rejectedStatuses = new[] { 2, 4, 8 };
+                var rejectedSNs = scrapRecords
+                    .Where(s => rejectedStatuses.Contains(s.ApplyTaskStatus))
+                    .Select(s =>
+                    {
+                        var reason = s.ApplyTaskStatus switch
+                        {
+                            2 => "đang chờ SPE approve scrap",
+                            4 => "đang chờ approved thay BGA",
+                            8 => "lỗi process, không thể sửa chữa",
+                            _ => $"trạng thái không hợp lệ ({s.ApplyTaskStatus})"
+                        };
+                        return $"{s.SN} ({reason})";
+                    })
+                    .ToList();
+
+                if (rejectedSNs.Any())
+                {
+                    return BadRequest(new { message = $"Các SN sau không hợp lệ để tạo task: {string.Join(", ", rejectedSNs)}" });
                 }
 
                 // Tạo danh sách SN để gửi đến API bên thứ ba
@@ -609,24 +636,6 @@ namespace API_WEB.Controllers.Scrap
                     message = $"Không tìm thấy dữ liệu từ API bên thứ ba cho các SN: {string.Join(", ", unmatchedSNs)}";
                 }
 
-                // Xử lý cập nhật ApplyTaskStatus và ApplyTime nếu SaveApplyStatus = "1"
-                if (request.SaveApplyStatus == "1")
-                {
-                    var currentTime = DateTime.Now; // Lấy thời gian hiện tại
-                    var recordsToUpdate = await _sqlContext.ScrapLists
-                        .Where(s => request.InternalTasks.Contains(s.InternalTask) && s.ApplyTaskStatus == 0)
-                        .ToListAsync();
-
-                    foreach (var record in recordsToUpdate)
-                    {
-                        record.ApplyTaskStatus = 1;
-                        record.ApplyTime = currentTime; // Cập nhật ApplyTime
-                    }
-
-                    await AddHistoryEntriesAsync(recordsToUpdate);
-                    await _sqlContext.SaveChangesAsync();
-                }
-
                 return Ok(new { message, data = result });
             }
             catch (Exception ex)
@@ -647,11 +656,6 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = "Danh sách SNs không được để trống." });
                 }
 
-                if (string.IsNullOrEmpty(request.SaveApplyStatus) || (request.SaveApplyStatus != "0" && request.SaveApplyStatus != "1"))
-                {
-                    return BadRequest(new { message = "SaveApplyStatus phải là '0' hoặc '1'." });
-                }
-
                 // Kiểm tra xem tất cả SNs có tồn tại trong bảng ScrapList không
                 var existingSNs = await _sqlContext.ScrapLists
                     .Where(s => request.SNs.Contains(s.SN))
@@ -663,18 +667,19 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = $"Các SN sau không tồn tại trong bảng ScrapList: {string.Join(", ", nonExistingSNs)}" });
                 }
 
-                // Kiểm tra trạng thái ApplyTaskStatus của các SN
+                // Kiểm tra trạng thái ApplyTaskStatus của các SN: chỉ chấp nhận các giá trị khác 2, 4, 8
                 var rejectedSNs = new List<string>();
                 var validSNs = new List<ScrapList>();
 
                 foreach (var sn in existingSNs)
                 {
-                    if (sn.ApplyTaskStatus != 0 && sn.ApplyTaskStatus != 3)
+                    if (sn.ApplyTaskStatus == 2 || sn.ApplyTaskStatus == 4 || sn.ApplyTaskStatus == 8)
                     {
                         string reason = sn.ApplyTaskStatus switch
                         {
-                            1 => "đã có task",
                             2 => "đang chờ SPE approve scrap",
+                            4 => "đang chờ approved thay BGA",
+                            8 => "lỗi process, không thể sửa chữa",
                             _ => $"trạng thái không hợp lệ ({sn.ApplyTaskStatus})"
                         };
                         rejectedSNs.Add($"{sn.SN} ({reason})");
@@ -692,7 +697,7 @@ namespace API_WEB.Controllers.Scrap
 
                 if (!validSNs.Any())
                 {
-                    return BadRequest(new { message = "Không có SN nào hợp lệ để tạo task (yêu cầu ApplyTaskStatus = 0 hoặc 3)." });
+                    return BadRequest(new { message = "Không có SN nào hợp lệ để tạo task." });
                 }
 
                 // Tạo danh sách SN để gửi đến API bên thứ ba
@@ -798,24 +803,6 @@ namespace API_WEB.Controllers.Scrap
                 if (unmatchedSNs.Any())
                 {
                     message = $"Không tìm thấy dữ liệu từ API bên thứ ba cho các SN: {string.Join(", ", unmatchedSNs)}";
-                }
-
-                // Xử lý cập nhật ApplyTaskStatus và ApplyTime nếu SaveApplyStatus = "1"
-                if (request.SaveApplyStatus == "1")
-                {
-                    var currentTime = DateTime.Now; // Lấy thời gian hiện tại
-                    var recordsToUpdate = await _sqlContext.ScrapLists
-                        .Where(s => request.SNs.Contains(s.SN) && s.ApplyTaskStatus == 0)
-                        .ToListAsync();
-
-                    foreach (var record in recordsToUpdate)
-                    {
-                        record.ApplyTaskStatus = 1;
-                        record.ApplyTime = currentTime; // Cập nhật ApplyTime
-                    }
-
-                    await AddHistoryEntriesAsync(recordsToUpdate);
-                    await _sqlContext.SaveChangesAsync();
                 }
 
                 return Ok(new { message, data = result });

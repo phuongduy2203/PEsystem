@@ -1,5 +1,35 @@
-﻿let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
+let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
 let selectedHistoryInternalTasks = new Set(); // Cho HISTORY_APPLY
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function formatPurpose(purpose) {
+    if (purpose === null || purpose === undefined) {
+        return "N/A";
+    }
+
+    const normalized = String(purpose).trim();
+    if (!normalized) {
+        return "N/A";
+    }
+
+    const purposeMap = {
+        "0": "SPE approve to scrap",
+        "1": "Scrap to quarterly",
+        "2": "Approved to engineer sample",
+        "3": "Approved to master board",
+        "4": "Approved to BGA"
+    };
+
+    return purposeMap[normalized] ?? normalized;
+}
 
 // Hàm ẩn tất cả form và khu vực kết quả
 function hideAllElements() {
@@ -40,11 +70,17 @@ function exportToExcel(data, filename) {
 }
 
 // Xử lý tạo task
-async function processCreateTask(internalTasks, saveApplyStatus, resultDivId) {
+async function processCreateTask(internalTasks, resultDivId) {
     const resultDiv = document.getElementById(resultDivId);
-    resultDiv.innerHTML = `<div class="alert alert-info"><strong>Thông báo:</strong> Đang tải xuống dữ liệu...</div>`;
+    let statusContainer = resultDiv.querySelector('.action-feedback');
+    if (!statusContainer) {
+        statusContainer = document.createElement('div');
+        statusContainer.className = 'action-feedback mb-2';
+        resultDiv.prepend(statusContainer);
+    }
+    statusContainer.innerHTML = `<div class="alert alert-info"><strong>Thông báo:</strong> Đang tải xuống dữ liệu...</div>`;
 
-    const requestData = { internalTasks, saveApplyStatus };
+    const requestData = { internalTasks };
 
     try {
         const response = await fetch("http://10.220.130.119:9090/api/Scrap/create-task", {
@@ -55,7 +91,13 @@ async function processCreateTask(internalTasks, saveApplyStatus, resultDivId) {
 
         const result = await response.json();
         if (response.ok) {
-            const excelData = result.data.map(item => ({
+            const payload = Array.isArray(result.data) ? result.data : [];
+            if (!payload.length) {
+                statusContainer.innerHTML = `<div class="alert alert-warning"><strong>Thông báo:</strong> Không có dữ liệu để tải xuống.</div>`;
+                return;
+            }
+
+            const excelData = payload.map(item => ({
                 InternalTask: item.internalTask ?? "N/A", 
                 Item: item.item ?? "N/A",
                 Project: item.project ?? "N/A",
@@ -104,22 +146,33 @@ async function processCreateTask(internalTasks, saveApplyStatus, resultDivId) {
 
             // Write the workbook to file
             XLSX.writeFile(workbook, filename);
-            setTimeout(() => location.reload(), 1000);
+
+            const successMessage = result.message
+                ? `<div class="alert alert-warning">${escapeHtml(result.message)}</div>`
+                : `<div class="alert alert-success"><strong>Thành công:</strong> Dữ liệu đã được tải xuống.</div>`;
+
+            statusContainer.innerHTML = successMessage;
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${result.message}</div>`;
+            statusContainer.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${result.message}</div>`;
         }
     } catch (error) {
-        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.</div>`;
+        statusContainer.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.</div>`;
         console.error("Error:", error);
     }
 }
 
 // Xử lý tạo task bằng SN
-async function processCreateTaskBySN(sNs, saveApplyStatus, resultDivId) {
+async function processCreateTaskBySN(sNs, resultDivId) {
     const resultDiv = document.getElementById(resultDivId);
-    resultDiv.innerHTML = `<div class="alert alert-info"><strong>Thông báo:</strong> Đang tải xuống dữ liệu...</div>`;
+    let statusContainer = resultDiv.querySelector('.action-feedback');
+    if (!statusContainer) {
+        statusContainer = document.createElement('div');
+        statusContainer.className = 'action-feedback mb-2';
+        resultDiv.prepend(statusContainer);
+    }
+    statusContainer.innerHTML = `<div class="alert alert-info"><strong>Thông báo:</strong> Đang tải xuống dữ liệu...</div>`;
 
-    const requestData = { sNs, saveApplyStatus };
+    const requestData = { sNs };
 
     try {
         const response = await fetch("http://10.220.130.119:9090/api/Scrap/create-task-sn", {
@@ -130,7 +183,13 @@ async function processCreateTaskBySN(sNs, saveApplyStatus, resultDivId) {
 
         const result = await response.json();
         if (response.ok) {
-            const excelData = result.data.map(item => ({
+            const payload = Array.isArray(result.data) ? result.data : [];
+            if (!payload.length) {
+                statusContainer.innerHTML = `<div class="alert alert-warning"><strong>Thông báo:</strong> Không có dữ liệu để tải xuống.</div>`;
+                return;
+            }
+
+            const excelData = payload.map(item => ({
                 InternalTask: item.internalTask ?? "N/A", 
                 Item: item.item ?? "N/A",
                 Project: item.project ?? "N/A",
@@ -179,12 +238,17 @@ async function processCreateTaskBySN(sNs, saveApplyStatus, resultDivId) {
 
             // Write the workbook to file
             XLSX.writeFile(workbook, filename);
-            setTimeout(() => location.reload(), 1000);
+
+            const successMessage = result.message
+                ? `<div class="alert alert-warning">${escapeHtml(result.message)}</div>`
+                : `<div class="alert alert-success"><strong>Thành công:</strong> Dữ liệu đã được tải xuống.</div>`;
+
+            statusContainer.innerHTML = successMessage;
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${result.message}</div>`;
+            statusContainer.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${escapeHtml(result.message)}</div>`;
         }
     } catch (error) {
-        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.</div>`;
+        statusContainer.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.</div>`;
         console.error("Error:", error);
     }
 }
@@ -197,20 +261,46 @@ function renderTableWithDataTable(data, tableId, checkboxName, selectAllId) {
 
     data.forEach(item => {
         const isChecked = currentSelectedSet.has(item.internalTask) ? 'checked' : '';
+        const isHistory = checkboxName === "history-task-checkbox";
+        const purposeText = formatPurpose(item.purpose);
+        const timelineValue = isHistory ? (item.applyTime || "N/A") : (item.applyTaskStatus || "N/A");
+        const statusOrQty = isHistory ? (item.applyTaskStatus || "N/A") : (item.totalQty || "N/A");
+
+        const safeInternalTask = escapeHtml(item.internalTask ?? "N/A");
+        const safeDescription = escapeHtml(item.description ?? "N/A");
+        const safeApprove = escapeHtml(item.approveScrapPerson ?? "N/A");
+        const safeKanban = escapeHtml(item.kanBanStatus ?? "N/A");
+        const safeCategory = escapeHtml(item.category ?? "N/A");
+        const safeRemark = escapeHtml(item.remark ?? "N/A");
+        const safePurpose = escapeHtml(purposeText);
+        const safeCreateTime = escapeHtml(item.createTime ?? "N/A");
+        const safeCreateBy = escapeHtml(item.createBy ?? "N/A");
+        const safeTimeline = escapeHtml(timelineValue ?? "N/A");
+        const safeStatusOrQty = escapeHtml(statusOrQty ?? "N/A");
+        const safeTotalQty = escapeHtml(item.totalQty ?? "N/A");
+
+        const purposeColumn = isHistory
+            ? ""
+            : `<td data-bs-toggle="tooltip" data-bs-title="${safePurpose}">${safePurpose}</td>`;
+        const extraQtyColumn = isHistory
+            ? `<td data-bs-toggle="tooltip" data-bs-title="${safeTotalQty}">${safeTotalQty}</td>`
+            : "";
+
         const row = `
             <tr>
-                <td class="checkbox-column"><input type="checkbox" name="${checkboxName}" value="${item.internalTask}" ${isChecked}></td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.internalTask || 'N/A'}">${item.internalTask || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.description || 'N/A'}">${item.description || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.approveScrapPerson || 'N/A'}">${item.approveScrapPerson || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.kanBanStatus || 'N/A'}">${item.kanBanStatus || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.category || 'N/A'}">${item.category || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.remark || 'N/A'}">${item.remark || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.createTime || 'N/A'}">${item.createTime || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${item.createBy || 'N/A'}">${item.createBy || "N/A"}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTime || 'N/A') : (item.applyTaskStatus || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTime || "N/A") : (item.applyTaskStatus || "N/A")}</td>
-                <td data-bs-toggle="tooltip" data-bs-title="${checkboxName === 'history-task-checkbox' ? (item.applyTaskStatus || 'N/A') : (item.totalQty || 'N/A')}">${checkboxName === "history-task-checkbox" ? (item.applyTaskStatus || "N/A") : (item.totalQty || "N/A")}</td>
-                ${checkboxName === "history-task-checkbox" ? `<td data-bs-toggle="tooltip" data-bs-title="${item.totalQty || 'N/A'}">${item.totalQty || "N/A"}</td>` : ""}
+                <td class="checkbox-column"><input type="checkbox" name="${checkboxName}" value="${escapeHtml(item.internalTask ?? '')}" ${isChecked}></td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeInternalTask}">${safeInternalTask}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeDescription}">${safeDescription}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeApprove}">${safeApprove}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeKanban}">${safeKanban}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeCategory}">${safeCategory}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeRemark}">${safeRemark}</td>
+                ${purposeColumn}
+                <td data-bs-toggle="tooltip" data-bs-title="${safeCreateTime}">${safeCreateTime}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeCreateBy}">${safeCreateBy}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeTimeline}">${safeTimeline}</td>
+                <td data-bs-toggle="tooltip" data-bs-title="${safeStatusOrQty}">${safeStatusOrQty}</td>
+                ${extraQtyColumn}
             </tr>
         `;
         tableBody.insertAdjacentHTML('beforeend', row);
@@ -366,40 +456,13 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Vui lòng chọn ít nhất một Internal Task.");
             return;
         }
-
-        const modalHtml = `
-            <div id="custom-modal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; text-align: center;">
-                    <p>Bạn có muốn lưu lại những InternalTask này vào list đã gửi cho khách hàng?</p>
-                    <button id="modal-yes-btn" style="margin-right: 10px;">Có</button>
-                    <button id="modal-no-btn">Không</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        document.getElementById("modal-yes-btn").addEventListener("click", async function () {
-            document.getElementById("custom-modal").remove();
-            await processCreateTask(selectedTasksArray, "1", "create-task-result");
-            selectedInternalTasks.clear();
-        });
-
-        document.getElementById("modal-no-btn").addEventListener("click", async function () {
-            document.getElementById("custom-modal").remove();
-            await processCreateTask(selectedTasksArray, "0", "create-task-result");
-            selectedInternalTasks.clear();
-        });
-    });
-
-    // Xử lý nút "Tạo History Task"
-    document.getElementById("create-history-task-btn").addEventListener("click", async function () {
-        const selectedHistoryTasksArray = Array.from(selectedHistoryInternalTasks);
-        if (selectedHistoryTasksArray.length === 0) {
-            alert("Vui lòng chọn ít nhất một Internal Task.");
-            return;
+        await processCreateTask(selectedTasksArray, "create-task-result");
+        selectedInternalTasks.clear();
+        document.querySelectorAll('input[name="task-checkbox"]').forEach(cb => cb.checked = false);
+        const selectAll = document.getElementById('select-all');
+        if (selectAll) {
+            selectAll.checked = false;
         }
-        await processCreateTask(selectedHistoryTasksArray, "1", "history-apply-result");
-        selectedHistoryInternalTasks.clear();
     });
 
     // Xử lý nút "Tạo Task bằng SN"
@@ -410,27 +473,8 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Vui lòng nhập ít nhất một Serial Number hợp lệ.");
             return;
         }
-
-        const modalHtml = `
-            <div id="custom-modal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; text-align: center;">
-                    <p>Bạn có muốn lưu lại những InternalTask này vào list đã gửi cho khách hàng?</p>
-                    <button id="modal-yes-btn" style="margin-right: 10px;">Có</button>
-                    <button id="modal-no-btn">Không</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        document.getElementById("modal-yes-btn").addEventListener("click", async function () {
-            document.getElementById("custom-modal").remove();
-            await processCreateTaskBySN(sNs, "1", "create-task-result-sn");
-        });
-
-        document.getElementById("modal-no-btn").addEventListener("click", async function () {
-            document.getElementById("custom-modal").remove();
-            await processCreateTaskBySN(sNs, "0", "create-task-result-sn");
-        });
+        await processCreateTaskBySN(sNs, "create-task-result-sn");
+        document.getElementById("create-task-btn-sn-box").value = "";
     });
 
     // Xử lý nút "Cập nhật Task PO"

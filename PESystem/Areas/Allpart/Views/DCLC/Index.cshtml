@@ -1,54 +1,76 @@
-﻿@{
+@{
     ViewData["Title"] = "Allpart DC-LC";
 }
 @{
     Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
 }
 
-<link href="~/assets/css/dclc.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-nvidia-green text-white">
-        <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin Linh Kiện</h1>
+<div class="allpart-interface nvidia-section">
+    <div class="section-heading text-center text-lg-start">
+        <h1 class="display-6">Tìm kiếm thông tin linh kiện DC/LC</h1>
+        <p>Tra cứu nhanh và tải xuống dữ liệu DC/LC với giao diện hiện đại mang sắc xanh NVIDIA.</p>
     </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-4">
-                <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
-            </div>
-            <div class="col-md-4">
-                <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
-            </div>
-            <div class="col-md-2">
-                <button onclick="search()" class="btn btn-nvidia-green w-100">Tìm kiếm</button>
-            </div>
-            <div class="col-md-2">
-                <button onclick="downloadExcel()" class="btn btn-nvidia-green w-100">Tải xuống Excel</button>
+
+    <div class="row g-4 align-items-stretch">
+        <div class="col-12">
+            <div class="nvidia-card h-100">
+                <div class="nvidia-card-header">
+                    <h2>Bộ lọc tìm kiếm</h2>
+                    <span class="badge-nvidia">DC-LC</span>
+                </div>
+                <div class="nvidia-card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="serialNumber" class="form-label">Serial Number</label>
+                            <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="refDes" class="form-label">Vị trí</label>
+                            <textarea id="refDes" class="form-control" rows="3" placeholder="Nhập vị trí (mỗi dòng một giá trị)..."></textarea>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="search()" class="btn btn-ne w-100">Tìm kiếm</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="downloadExcel()" class="btn btn-ne w-100">Tải xuống Excel</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-5">
-            <div class="table-responsive align-items-center">
-                <table id="dcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>P_SN</th>
-                            <th>MODEL_NAME</th>
-                            <th>MÃ_LIỆU</th>
-                            <th>VENDOR_CODE</th>
-                            <th>VENDOR_NAME</th>
-                            <th>REF_DES</th>
-                            <th>DATE_CODE</th>
-                            <th>LOT_CODE</th>
-                            <th>PROCESS_FLAG</th>
-                            <th>STATION</th>
-                            <th>GROUP_NAME</th>
-                            <th>WORK_TIME</th>
-                            <th>WO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dcLcTableBody"></tbody>
-                </table>
+        <div class="col-12">
+            <div class="nvidia-card">
+                <div class="nvidia-card-header">
+                    <h2>Kết quả tra cứu</h2>
+                </div>
+                <div class="nvidia-card-body">
+                    <div class="table-responsive">
+                        <table id="dcLcTable" class="display table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>P_SN</th>
+                                    <th>MODEL_NAME</th>
+                                    <th>MÃ_LIỆU</th>
+                                    <th>VENDOR_CODE</th>
+                                    <th>VENDOR_NAME</th>
+                                    <th>REF_DES</th>
+                                    <th>DATE_CODE</th>
+                                    <th>LOT_CODE</th>
+                                    <th>PROCESS_FLAG</th>
+                                    <th>STATION</th>
+                                    <th>GROUP_NAME</th>
+                                    <th>WORK_TIME</th>
+                                    <th>WO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dcLcTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -56,17 +78,38 @@
 
 @section Scripts {
     <script>
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
         let dcLcTable;
 
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
+        }
+
+        function htmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
         function createTooltipCell(data) {
-            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+            const text = htmlEscape(data);
+            return `<span class="tooltip-trigger" data-tooltip="${text}">${text}</span>`;
         }
 
         function attachTooltipEvents() {
-            $(document).on('mouseover', '.tooltip-trigger', function (e) {
-                const $this = $(this);
-                const tooltipText = $this.data('tooltip');
-                if (tooltipText) {
+            $(document)
+                .off('.tooltipHover')
+                .on('mouseover.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltipText = $(this).data('tooltip');
+                    if (!tooltipText) return;
+
                     let tooltip = document.querySelector('.custom-tooltip');
                     if (!tooltip) {
                         tooltip = document.createElement('div');
@@ -75,30 +118,30 @@
                     }
                     tooltip.textContent = tooltipText;
                     tooltip.style.display = 'block';
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mousemove', '.tooltip-trigger', function (e) {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip && tooltip.style.display === 'block') {
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 20) + 'px';
-                }
-            }).on('mouseout', '.tooltip-trigger', function () {
-                const tooltip = document.querySelector('.custom-tooltip');
-                if (tooltip) {
-                    tooltip.style.display = 'none';
-                }
-            });
+                    positionTooltip(e, tooltip);
+                })
+                .on('mousemove.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        positionTooltip(e, tooltip);
+                    }
+                })
+                .on('mouseout.tooltipHover', '.tooltip-trigger', function () {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
         }
 
         $(document).ready(function () {
             dcLcTable = $('#dcLcTable').DataTable({
                 pageLength: 10,
                 scrollX: true,
-                responsive: true,
+                responsive: false,
+                autoWidth: false,
                 columnDefs: [
-                    { targets: '_all', width: '150px' }
+                    { targets: '_all', width: '210px' }
                 ]
             });
 
@@ -127,6 +170,7 @@
                         <div class="spinner"></div>
                         <div>Đang tải dữ liệu, vui lòng chờ...</div>
                     `;
+            loadingOverlay.style.display = 'flex';
             document.body.appendChild(loadingOverlay);
 
             try {
@@ -198,34 +242,31 @@
         function downloadExcel() {
             const allData = dcLcTable.rows().data().toArray();
 
-            const excelData = [
-                ['P_SN', 'MODEL_NAME', 'MÃ_LIỆU', 'VENDOR_CODE', 'VENDOR_NAME', 'REF_DES', 'DATE_CODE', 'LOT_CODE', 'PROCESS_FLAG', 'STATION', 'GROUP_NAME', 'WORK_TIME', 'WO']
-            ];
+            if (allData.length === 0) {
+                alert('Không có dữ liệu để tải xuống.');
+                return;
+            }
 
-            allData.forEach(row => {
-                const rowData = Array.from(row).map(cell => {
-                    const div = document.createElement('div');
-                    div.innerHTML = cell;
-                    return div.textContent || '';
-                });
-                excelData.push(rowData);
-            });
+            const exportData = allData.map(row => ({
+                P_SN: $(row[0]).text(),
+                MODEL_NAME: $(row[1]).text(),
+                MÃ_LIỆU: $(row[2]).text(),
+                VENDOR_CODE: $(row[3]).text(),
+                VENDOR_NAME: $(row[4]).text(),
+                REF_DES: $(row[5]).text(),
+                DATE_CODE: $(row[6]).text(),
+                LOT_CODE: $(row[7]).text(),
+                PROCESS_FLAG: $(row[8]).text(),
+                STATION: $(row[9]).text(),
+                GROUP_NAME: $(row[10]).text(),
+                WORK_TIME: $(row[11]).text(),
+                WO: $(row[12]).text()
+            }));
 
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'data_dclc_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'DCLC');
+            XLSX.writeFile(workbook, `DCLC_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
     </script>
 }
