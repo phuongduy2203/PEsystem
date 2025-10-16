@@ -213,6 +213,33 @@
     padding: 1rem 1.85rem;
 }
 
+.nvidia-table--spacious thead th,
+.nvidia-table--spacious tbody td {
+    padding-left: 1.9rem;
+    padding-right: 1.9rem;
+}
+
+.nvidia-table--compact {
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+}
+
+.nvidia-table--compact thead th,
+.nvidia-table--compact tbody td {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    padding-left: 0.95rem;
+    padding-right: 0.95rem;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
 .nvidia-table thead th {
     background: linear-gradient(115deg, var(--nvidia-forest), rgba(118, 185, 0, 0.85));
     color: #eafdd8;
@@ -281,24 +308,29 @@
 }
 
 .stacked-result-table {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: separate;
-    border-spacing: 0 0.65rem;
+    border-spacing: 0 0.35rem;
+    table-layout: auto;
     color: var(--nvidia-ink);
 }
 
 .stacked-result-table thead th {
     background: linear-gradient(105deg, rgba(15, 46, 18, 0.95), rgba(118, 185, 0, 0.9));
     color: #f2ffda;
-    padding: 0.8rem 1.45rem;
+    padding: 0.65rem 1rem;
     border: none;
+    white-space: nowrap;
 }
 
 .stacked-result-table tbody td {
     background: rgba(255, 255, 255, 0.9);
-    padding: 0.8rem 1.45rem;
+    padding: 0.65rem 1rem;
     border: 1px solid rgba(118, 185, 0, 0.18);
     border-radius: 8px;
+    line-height: 1.4;
+    white-space: nowrap;
 }
 
 .stacked-result-table tbody tr {
