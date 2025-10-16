@@ -214,13 +214,26 @@
 }
 
 .nvidia-table--spacious {
-    border-spacing: 1.2rem 0.65rem;
+    border-spacing: 1.45rem 0.65rem;
 }
 
 .nvidia-table--spacious thead th,
 .nvidia-table--spacious tbody td {
-    padding-left: 1.4rem;
-    padding-right: 1.4rem;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+}
+
+.scrap-table--comfortable {
+    border-collapse: separate;
+    border-spacing: 1.25rem 0.55rem;
+}
+
+.scrap-table--comfortable thead th,
+.scrap-table--comfortable tbody td {
+    padding-top: 0.95rem;
+    padding-bottom: 0.95rem;
+    padding-left: 1.85rem;
+    padding-right: 1.85rem;
 }
 
 .nvidia-table--compact {
