@@ -44,6 +44,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CheckListAccess", p => p.Requirements.Add(new AreaAccessRequirement("CheckList")));
     options.AddPolicy("ScrapAccess", p => p.Requirements.Add(new AreaAccessRequirement("Scrap")));
     options.AddPolicy("MaterialSystemAccess", p => p.Requirements.Add(new AreaAccessRequirement("MaterialSystem")));
+    options.AddPolicy("NpiAccess", p => p.Requirements.Add(new AreaAccessRequirement("Npi")));
 });
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
