@@ -157,7 +157,7 @@ namespace API_WEB.Controllers.Repositories
                     .Select((_, index) => $"p{offset + index}")
                     .ToArray();
 
-                var query = $@
+                var query = $@"
 SELECT SERIAL_NUMBER
   FROM SFISM4.R_REPAIR_TASK_T
  WHERE DATA18 IS NOT NULL

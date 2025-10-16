@@ -42,6 +42,7 @@ builder.Services.AddCors(options =>
 
 // Thêm các dịch vụ
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
