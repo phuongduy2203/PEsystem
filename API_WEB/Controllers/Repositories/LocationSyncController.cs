@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Oracle.ManagedDataAccess.Client;
+using System.Linq;
 using System.Text;
 
 namespace API_WEB.Controllers.Repositories
@@ -131,12 +132,63 @@ namespace API_WEB.Controllers.Repositories
         // Giữ nguyên: gửi trạng thái nhận kho (đường cập nhật Oracle chuẩn của bạn)
         private async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string location, string tag)
         {
-            if (serialNumbers == null || !serialNumbers.Any()) return;
+            if (serialNumbers == null) return;
+
+            var cleanedSerials = serialNumbers
+                .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                .Select(sn => sn.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (cleanedSerials.Count == 0) return;
+
+            var serialsWithLocation = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            await using var conn = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            await conn.OpenAsync();
+
+            const int oracleParameterLimit = 900; // tránh vượt quá giới hạn 1000 phần tử của Oracle
+            for (var offset = 0; offset < cleanedSerials.Count; offset += oracleParameterLimit)
+            {
+                var batch = cleanedSerials.Skip(offset).Take(oracleParameterLimit).ToList();
+                if (batch.Count == 0) continue;
+
+                var parameterNames = batch
+                    .Select((_, index) => $"p{offset + index}")
+                    .ToArray();
+
+                var query = $@
+SELECT SERIAL_NUMBER
+  FROM SFISM4.R_REPAIR_TASK_T
+ WHERE DATA18 IS NOT NULL
+   AND TRIM(DATA18) <> ''
+   AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
+
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = query;
+
+                for (var i = 0; i < batch.Count; i++)
+                {
+                    cmd.Parameters.Add(new OracleParameter(parameterNames[i], batch[i]));
+                }
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var sn = reader["SERIAL_NUMBER"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(sn))
+                    {
+                        serialsWithLocation.Add(sn.Trim());
+                    }
+                }
+            }
+
+            if (serialsWithLocation.Count == 0) return;
 
             var client = _httpClientFactory.CreateClient();
             var payload = new
             {
-                serialnumbers = string.Join(",", serialNumbers),
+                serialnumbers = string.Join(",", serialsWithLocation),
                 owner,
                 location,
                 tag
@@ -145,7 +197,6 @@ namespace API_WEB.Controllers.Repositories
             var json = JsonConvert.SerializeObject(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // Endpoint nội bộ cập nhật Oracle
             var resp = await client.PostAsync("http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
             resp.EnsureSuccessStatusCode();
         }

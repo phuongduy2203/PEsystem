@@ -50,7 +50,7 @@ namespace API_WEB.Controllers.SmartFA
                 from task in _oracleDbContext.OracleDataRepairTask
                 join r107 in _oracleDbContext.OracleDataR107
                 on task.SERIAL_NUMBER equals r107.SERIAL_NUMBER
-                where !string.IsNullOrEmpty(task.DATA18) && 
+                where !string.IsNullOrEmpty(task.DATA18) && !(task.DATA18.Contains("HIẾU ĐÓNG PHẾ")) &&
                     !(r107.WIP_GROUP.Contains("BR2C") || r107.WIP_GROUP.Contains("BCFA"))
                 join err in _oracleDbContext.ErrorCodes
                     on task.TEST_CODE equals err.ERROR_CODE into errJoin

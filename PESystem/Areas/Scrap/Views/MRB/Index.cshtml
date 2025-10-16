@@ -40,45 +40,19 @@
                 <form id="wait-re-move-mrb" method="post" class="hidden scrap-card" data-search-type="wait-re-move-mrb">
                     <h3 class="h5 mb-3 text-uppercase fw-semibold">Chờ RE chuyển MRB</h3>
                     <div class="d-flex justify-content-end">
-                        @{
-                            var allowedAreas = HttpContextAccessor.HttpContext.User.Claims
-                                .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
-                            var Scrap = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "Scrap");
-                        }
-                        @if (Scrap)
-                        {
-                            <button id="move-mrb-btn" class="btn btn-ne" type="button">Move MRB</button>
-                        }
-                        else
-                        {
-                            <button id="move-mrb-btn" class="btn btn-ne hidden" type="button">Move MRB</button>
-                        }
                     </div>
                 </form>
 
                 <form id="wait-mrb-confirm" method="post" class="hidden scrap-card" data-search-type="wait-mrb-confirm">
                     <h3 class="h5 mb-3 text-uppercase fw-semibold">Chờ kho MRB xác nhận</h3>
                     <div class="d-flex justify-content-end">
-                        @{
-                            var allowedAreas1 = HttpContextAccessor.HttpContext.User.Claims
-                                .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
-                            var Mrb = allowedAreas1 != null && allowedAreas1.Any(area => area.Trim() == "Mrb");
-                        }
-                        @if (Mrb)
-                        {
-                            <button id="confirm-mrb-btn" class="btn btn-ne" type="button">Confirm</button>
-                        }
-                        else
-                        {
-                            <button id="confirm-mrb-btn" class="btn btn-ne hidden" type="button">Confirm</button>
-                        }
                     </div>
                 </form>
 
                 <form id="moved-mrb-form" method="post" class="hidden scrap-card" data-search-type="moved-mrb">
                     <h3 class="h5 mb-3 text-uppercase fw-semibold">Đã vào kho MRB</h3>
                     <div class="d-flex justify-content-end">
-                        <button id="moved-mrb-btn" class="btn btn-ne" type="button">Load data</button>
+                        <button id="moved-mrb-btn" class="btn btn-ne" type="button">Data</button>
                     </div>
                 </form>
             </div>

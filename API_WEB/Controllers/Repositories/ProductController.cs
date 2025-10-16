@@ -1021,7 +1021,7 @@ namespace API_WEB.Controllers
                 return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
-        private async Task LogAction (string action, string serialNumber, string user, string note = null)
+        private async Task LogAction(string action, string serialNumber, string user, string note = null)
         {
             _sqlContext.Logs.Add(new LogKhoScrap
             {
@@ -1034,7 +1034,6 @@ namespace API_WEB.Controllers
             await _sqlContext.SaveChangesAsync();
         }
 
-
         [NonAction]
         public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
         {
@@ -1043,7 +1042,7 @@ namespace API_WEB.Controllers
 
             try
             {
-                // 🔧 Làm sạch từng serial: trim và loại bỏ xuống dòng, khoảng trắng
+                // Làm sạch serials
                 var cleanedSerials = serialNumbers
                     .Where(sn => !string.IsNullOrWhiteSpace(sn))
                     .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
@@ -1053,18 +1052,68 @@ namespace API_WEB.Controllers
                 if (!cleanedSerials.Any())
                     return;
 
+                var serialsWithData18 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // ✅ Dùng connection từ DbContext, không dispose
+                var connection = (OracleConnection)_oracleContext.Database.GetDbConnection();
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                const int oracleParameterLimit = 900; // tránh vượt quá giới hạn 1000 phần tử
+                for (var offset = 0; offset < cleanedSerials.Count; offset += oracleParameterLimit)
+                {
+                    var batch = cleanedSerials.Skip(offset).Take(oracleParameterLimit).ToList();
+                    if (batch.Count == 0)
+                        continue;
+
+                    var parameterNames = batch.Select((_, index) => $"p{offset + index}").ToArray();
+
+                    var query = $@"
+                    SELECT SERIAL_NUMBER
+                      FROM SFISM4.R_REPAIR_TASK_T
+                     WHERE DATA18 IS NOT NULL
+                       AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
+
+                    using var command = connection.CreateCommand();
+                    command.CommandText = query;
+
+                    for (var i = 0; i < batch.Count; i++)
+                        command.Parameters.Add(new OracleParameter(parameterNames[i], batch[i]));
+
+                    using var reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var serial = reader["SERIAL_NUMBER"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(serial))
+                            serialsWithData18.Add(serial.Trim());
+                    }
+                }
+
+                if (!serialsWithData18.Any())
+                    return;
+
+                // Gửi location rỗng tới API receiving-status
+                location = string.Empty;
+
                 var payload = new
                 {
-                    serialnumbers = string.Join(",", cleanedSerials),
+                    serialnumbers = string.Join(",", serialsWithData18),
                     owner = owner?.Trim() ?? string.Empty,
-                    location = location?.Trim() ?? string.Empty,
+                    location,
                     tag = tag?.Trim() ?? string.Empty
                 };
 
                 var json = JsonConvert.SerializeObject(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync(
+                // 🚫 Bỏ proxy để request đi thẳng qua mạng nội bộ LAN
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false
+                };
+                using var client = new HttpClient(handler);
+
+                var response = await client.PostAsync(
                     "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
 
                 if (!response.IsSuccessStatusCode)
@@ -1074,7 +1123,7 @@ namespace API_WEB.Controllers
                 }
                 else
                 {
-                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {cleanedSerials.Count} serials. Tag={tag}");
+                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {serialsWithData18.Count} serials. Tag={tag}");
                 }
             }
             catch (Exception ex)
