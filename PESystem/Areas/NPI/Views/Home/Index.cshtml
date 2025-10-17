@@ -1,0 +1,256 @@
+@model NpiIndexViewModel
+@using System.Linq
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h2 class="mb-0">NPI Document</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            Tạo project mới
+        </button>
+    </div>
+
+    @if (ViewData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (ViewData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-4 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">Danh sách project</span>
+                    <span class="badge bg-secondary">@Model.Projects.Count</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    @if (!Model.Projects.Any())
+                    {
+                        <div class="list-group-item text-muted">Chưa có project nào.</div>
+                    }
+                    else
+                    {
+                        foreach (var project in Model.Projects)
+                        {
+                            var isActive = Model.SelectedProject?.Project.ProjectKey == project.ProjectKey;
+                            <a class="list-group-item list-group-item-action @(isActive ? "active" : string.Empty)"
+                               asp-action="Index"
+                               asp-route-projectKey="@project.ProjectKey">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">@project.Name</div>
+                                        <div class="small text-muted">Owner: @project.Owner</div>
+                                    </div>
+                                    <span class="text-muted">›</span>
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 col-xl-9">
+            @if (Model.SelectedProject is { } projectDetail)
+            {
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                @foreach (var crumb in projectDetail.Breadcrumbs)
+                                {
+                                    var isLast = crumb == projectDetail.Breadcrumbs.Last();
+                                    if (isLast)
+                                    {
+                                        <li class="breadcrumb-item active" aria-current="page">@crumb.Title</li>
+                                    }
+                                    else
+                                    {
+                                        <li class="breadcrumb-item">
+                                            <a asp-action="Index"
+                                               asp-route-projectKey="@projectDetail.Project.ProjectKey"
+                                               asp-route-path="@crumb.RelativePath">@crumb.Title</a>
+                                        </li>
+                                    }
+                                }
+                            </ol>
+                        </nav>
+                        <div class="text-muted small mt-1">
+                            Owner: <strong>@projectDetail.Project.Owner</strong> ·
+                            Tạo ngày: @projectDetail.Project.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold">Tải tài liệu lên</div>
+                    <div class="card-body">
+                        <form asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="projectKey" value="@projectDetail.Project.ProjectKey" />
+                            <input type="hidden" name="path" value="@projectDetail.RelativePath" />
+                            <div class="col-md-8">
+                                <label for="file" class="form-label">Chọn tài liệu</label>
+                                <input class="form-control" type="file" id="file" name="file" required />
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button type="submit" class="btn btn-success w-100">
+                                    Tải lên
+                                </button>
+                            </div>
+                        </form>
+                        <div class="form-text mt-2">Hệ thống tự động đánh version dựa trên số lần cập nhật.</div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold">Thư mục</div>
+                    <div class="list-group list-group-flush">
+                        @if (!projectDetail.Folders.Any())
+                        {
+                            <div class="list-group-item text-muted">Không có thư mục con.</div>
+                        }
+                        else
+                        {
+                            foreach (var folder in projectDetail.Folders)
+                            {
+                                <a class="list-group-item list-group-item-action"
+                                   asp-action="Index"
+                                   asp-route-projectKey="@projectDetail.Project.ProjectKey"
+                                   asp-route-path="@folder.RelativePath">
+                                    <span class="me-2">📁</span>@folder.Name
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Tài liệu</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Tên tài liệu</th>
+                                    <th scope="col" class="text-center">Version</th>
+                                    <th scope="col">Người cập nhật</th>
+                                    <th scope="col">Ngày cập nhật</th>
+                                    <th scope="col" class="text-end">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!projectDetail.Documents.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Chưa có tài liệu nào trong thư mục này.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var document in projectDetail.Documents)
+                                    {
+                                        <tr>
+                                            <td>@document.DisplayName</td>
+                                            <td class="text-center">v@document.Version.ToString("000")</td>
+                                            <td>@document.UploadedBy</td>
+                                            <td>@document.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <a class="btn btn-outline-primary btn-sm"
+                                                       asp-action="DownloadDocument"
+                                                       asp-route-projectKey="@projectDetail.Project.ProjectKey"
+                                                       asp-route-documentId="@document.Id"
+                                                       asp-route-path="@document.RelativePath">
+                                                        Tải xuống
+                                                    </a>
+                                                    <form asp-action="DeleteDocument" method="post" class="d-inline"
+                                                          onsubmit="return confirm('Bạn có chắc chắn muốn xoá tài liệu này?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="projectKey" value="@projectDetail.Project.ProjectKey" />
+                                                        <input type="hidden" name="documentId" value="@document.Id" />
+                                                        <input type="hidden" name="path" value="@document.RelativePath" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            Xoá
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center text-muted">
+                        <div class="display-4 mb-3">📂</div>
+                        <p class="mb-0">Hãy chọn một project ở bên trái để xem và quản lý tài liệu.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectLabel">Tạo project mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <form asp-action="CreateProject" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label asp-for="CreateProject.Name" class="form-label"></label>
+                        <input asp-for="CreateProject.Name" class="form-control" />
+                        <span asp-validation-for="CreateProject.Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="CreateProject.Owner" class="form-label"></label>
+                        <input asp-for="CreateProject.Owner" class="form-control" />
+                        <span asp-validation-for="CreateProject.Owner" class="text-danger"></span>
+                    </div>
+                    <div class="form-text">Sau khi tạo, hệ thống tự động sinh các thư mục chuẩn cho project.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                    <button type="submit" class="btn btn-primary">Tạo project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (ViewBag.ShowCreateModal == true)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var modalEl = document.getElementById('createProjectModal');
+                if (modalEl) {
+                    var modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
+            });
+        </script>
+    }
+}

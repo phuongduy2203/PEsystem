@@ -8,6 +8,9 @@
       "Microsoft.AspNetCore": "Warning"
     }
   },
-  "AllowedHosts": "*"
-  ,"ApiBaseUrl": "http://10.220.130.119:9090"
+  "AllowedHosts": "*",
+  "ApiBaseUrl": "http://10.220.130.119:9090",
+  "NpiDocument": {
+    "RootPath": "D:\\NpiDocument"
+  }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PESystem.Areas.NPI.Services;
 using PESystem.Models;
 using PESystem.Policies;
 
@@ -31,6 +32,8 @@ builder.Services.AddHttpClient("ApiClient", client =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("cnn")));
 
+builder.Services.AddSingleton<NpiDocumentService>();
+
 // ---- Authorization theo Area ----
 builder.Services.AddSingleton<IAuthorizationHandler, AreaAccessHandler>();
 builder.Services.AddAuthorization(options =>
@@ -44,7 +47,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CheckListAccess", p => p.Requirements.Add(new AreaAccessRequirement("CheckList")));
     options.AddPolicy("ScrapAccess", p => p.Requirements.Add(new AreaAccessRequirement("Scrap")));
     options.AddPolicy("MaterialSystemAccess", p => p.Requirements.Add(new AreaAccessRequirement("MaterialSystem")));
-    options.AddPolicy("NpiAccess", p => p.Requirements.Add(new AreaAccessRequirement("Npi")));
+    options.AddPolicy("NpiAccess", p => p.Requirements.Add(new AreaAccessRequirement("NPI")));
 });
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
