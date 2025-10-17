@@ -8,7 +8,7 @@
 <div class="container-fluid py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <h2 class="mb-0">NPI Document</h2>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal" data-npi-trigger="open-create-modal">
             Tạo project mới
         </button>
     </div>
@@ -36,7 +36,7 @@
                     <span class="fw-semibold">Danh sách project</span>
                     <span class="badge bg-secondary">@Model.Projects.Count</span>
                 </div>
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush" data-npi-project-list>
                     @if (!Model.Projects.Any())
                     {
                         <div class="list-group-item text-muted">Chưa có project nào.</div>
@@ -48,7 +48,8 @@
                             var isActive = Model.SelectedProject?.Project.ProjectKey == project.ProjectKey;
                             <a class="list-group-item list-group-item-action @(isActive ? "active" : string.Empty)"
                                asp-action="Index"
-                               asp-route-projectKey="@project.ProjectKey">
+                               asp-route-projectKey="@project.ProjectKey"
+                               data-npi-link="project">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <div class="fw-semibold">@project.Name</div>
@@ -97,7 +98,11 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header fw-semibold">Tải tài liệu lên</div>
                     <div class="card-body">
-                        <form asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+                        <form asp-action="UploadDocument"
+                              method="post"
+                              enctype="multipart/form-data"
+                              class="row g-3 align-items-end"
+                              data-npi-form="upload-document">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="projectKey" value="@projectDetail.Project.ProjectKey" />
                             <input type="hidden" name="path" value="@projectDetail.RelativePath" />
@@ -129,7 +134,8 @@
                                 <a class="list-group-item list-group-item-action"
                                    asp-action="Index"
                                    asp-route-projectKey="@projectDetail.Project.ProjectKey"
-                                   asp-route-path="@folder.RelativePath">
+                                   asp-route-path="@folder.RelativePath"
+                                   data-npi-link="folder">
                                     <span class="me-2">📁</span>@folder.Name
                                 </a>
                             }
@@ -175,8 +181,11 @@
                                                        asp-route-path="@document.RelativePath">
                                                         Tải xuống
                                                     </a>
-                                                    <form asp-action="DeleteDocument" method="post" class="d-inline"
-                                                          onsubmit="return confirm('Bạn có chắc chắn muốn xoá tài liệu này?');">
+                                                    <form asp-action="DeleteDocument"
+                                                          method="post"
+                                                          class="d-inline"
+                                                          data-npi-form="delete-document"
+                                                          data-confirm-message="Bạn có chắc chắn muốn xoá tài liệu này?">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="projectKey" value="@projectDetail.Project.ProjectKey" />
                                                         <input type="hidden" name="documentId" value="@document.Id" />
@@ -215,7 +224,7 @@
                 <h5 class="modal-title" id="createProjectLabel">Tạo project mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
-            <form asp-action="CreateProject" method="post">
+            <form asp-action="CreateProject" method="post" data-npi-form="create-project">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="mb-3">
@@ -241,6 +250,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/assets/Areas/NPI/js/npi.js" asp-append-version="true"></script>
     @if (ViewBag.ShowCreateModal == true)
     {
         <script>
