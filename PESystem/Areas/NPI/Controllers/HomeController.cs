@@ -137,23 +137,25 @@ namespace PESystem.Areas.NPI.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var document = await _documentService.GetDocumentAsync(projectKey, documentId, path);
-            if (document == null)
+            var documentResult = await _documentService.GetDocumentAsync(projectKey, documentId, path);
+            if (documentResult == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy tài liệu.";
                 return RedirectToAction(nameof(Index), new { projectKey, path });
             }
 
+            var (metadata, physicalPath) = documentResult.Value;
+
             var provider = new FileExtensionContentTypeProvider();
-            if (!provider.TryGetContentType(document.Metadata.StoredFileName, out var contentType))
+            if (!provider.TryGetContentType(metadata.StoredFileName, out var contentType))
             {
                 contentType = "application/octet-stream";
             }
 
-            var originalName = Path.GetFileNameWithoutExtension(document.Metadata.OriginalName);
-            var extension = Path.GetExtension(document.Metadata.OriginalName);
-            var downloadName = $"{originalName}_v{document.Metadata.Version:000}{extension}";
-            return PhysicalFile(document.PhysicalPath, contentType, downloadName);
+            var originalName = Path.GetFileNameWithoutExtension(metadata.OriginalName);
+            var extension = Path.GetExtension(metadata.OriginalName);
+            var downloadName = $"{originalName}_v{metadata.Version:000}{extension}";
+            return PhysicalFile(physicalPath, contentType, downloadName);
         }
 
         [HttpPost]
