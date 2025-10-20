@@ -1,0 +1,234 @@
+@using System.Linq
+@model PESystem.Areas.NPI.Models.NpiProjectDetailsViewModel
+@{
+    ViewData["Title"] = Model.Project.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@functions {
+    string FormatSize(long bytes)
+    {
+        if (bytes < 1024)
+        {
+            return $"{bytes} B";
+        }
+
+        var kb = bytes / 1024d;
+        if (kb < 1024)
+        {
+            return $"{kb:0.##} KB";
+        }
+
+        var mb = kb / 1024d;
+        if (mb < 1024)
+        {
+            return $"{mb:0.##} MB";
+        }
+
+        var gb = mb / 1024d;
+        return $"{gb:0.##} GB";
+    }
+}
+
+<div class="container py-4">
+    <div class="mb-3">
+        <a asp-action="Index" class="text-decoration-none">&larr; Back to project list</a>
+    </div>
+
+    <div class="d-flex flex-column flex-lg-row gap-3 mb-4">
+        <div class="card flex-fill shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="card-title mb-1">@Model.Project.Name</h2>
+                        <p class="text-muted mb-0">Owner: <strong>@Model.Project.Owner</strong></p>
+                    </div>
+                    <span class="badge bg-primary">@Model.Project.DocumentCount tài liệu</span>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Ngày tạo</dt>
+                    <dd class="col-sm-8">@Model.Project.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm" style="min-width: 320px;">
+            <div class="card-header bg-white">
+                <strong>Upload tài liệu</strong>
+            </div>
+            <div class="card-body">
+                <form asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UploadModel.ProjectId" />
+                    <div class="col-12">
+                        <label asp-for="UploadModel.Category" class="form-label"></label>
+                        <select asp-for="UploadModel.Category" class="form-select" id="categorySelect">
+                            @foreach (var category in Model.Structure)
+                            {
+                                <option value="@category.Category" @(category.Category == Model.UploadModel.Category ? "selected" : null)>@category.Category</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="UploadModel.Item" class="form-label"></label>
+                        <select asp-for="UploadModel.Item" class="form-select" id="itemSelect">
+                            @foreach (var category in Model.Structure)
+                            {
+                                foreach (var item in category.Items)
+                                {
+                                    var selected = category.Category == Model.UploadModel.Category && item.Name == Model.UploadModel.Item;
+                                    <option value="@item.Name" data-category="@category.Category" @(selected ? "selected" : null)>@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="UploadModel.DocumentName" class="form-label"></label>
+                        <input asp-for="UploadModel.DocumentName" class="form-control" placeholder="Tên tài liệu" />
+                        <span asp-validation-for="UploadModel.DocumentName" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="UploadModel.File" class="form-label"></label>
+                        <input asp-for="UploadModel.File" class="form-control" type="file" />
+                        <span asp-validation-for="UploadModel.File" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewData["Error"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (ViewData["Success"] is string successMessage && !string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @foreach (var category in Model.Structure)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <strong>@category.Category</strong>
+            </div>
+            <div class="card-body">
+                @foreach (var item in category.Items)
+                {
+                    var documents = Model.Documents
+                        .Where(d => string.Equals(d.Category, category.Category, StringComparison.OrdinalIgnoreCase) &&
+                                    string.Equals(d.Item, item.Name, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    <div class="mb-4">
+                        <h5 class="mb-3">@item.Name</h5>
+                        @if (documents.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">Document</th>
+                                            <th scope="col" class="text-center">Version</th>
+                                            <th scope="col">Uploaded at</th>
+                                            <th scope="col">Uploaded by</th>
+                                            <th scope="col" class="text-end">Size</th>
+                                            <th scope="col" class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var document in documents.OrderBy(d => d.DocumentName))
+                                        {
+                                            foreach (var version in document.Versions)
+                                            {
+                                                <tr>
+                                                    <td>@document.DocumentName</td>
+                                                    <td class="text-center">v@version.VersionNumber</td>
+                                                    <td>@version.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                    <td>@version.UploadedBy</td>
+                                                    <td class="text-end">@FormatSize(version.FileSize)</td>
+                                                    <td class="text-end">
+                                                        <div class="btn-group" role="group">
+                                                            <a class="btn btn-sm btn-outline-success" asp-action="Download" asp-route-projectId="@Model.Project.Id" asp-route-documentId="@document.DocumentId" asp-route-versionId="@version.VersionId">Download</a>
+                                                            <form asp-action="DeleteVersion" method="post" class="d-inline delete-version-form ms-1">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="projectId" value="@Model.Project.Id" />
+                                                                <input type="hidden" name="documentId" value="@document.DocumentId" />
+                                                                <input type="hidden" name="versionId" value="@version.VersionId" />
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted fst-italic">Chưa có tài liệu nào.</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const categorySelect = document.getElementById('categorySelect');
+            const itemSelect = document.getElementById('itemSelect');
+
+            function filterItems() {
+                if (!categorySelect || !itemSelect) {
+                    return;
+                }
+
+                const selectedCategory = categorySelect.value;
+                let firstVisible = null;
+                Array.from(itemSelect.options).forEach(option => {
+                    const match = option.dataset.category === selectedCategory;
+                    option.hidden = !match;
+                    if (match && firstVisible === null) {
+                        firstVisible = option;
+                    }
+                    if (!match && option.selected) {
+                        option.selected = false;
+                    }
+                });
+
+                if (firstVisible && !Array.from(itemSelect.options).some(o => o.selected && !o.hidden)) {
+                    firstVisible.selected = true;
+                }
+            }
+
+            if (categorySelect && itemSelect) {
+                categorySelect.addEventListener('change', filterItems);
+                filterItems();
+            }
+
+            document.querySelectorAll('.delete-version-form').forEach(form => {
+                form.addEventListener('submit', function (event) {
+                    if (!confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
+                        event.preventDefault();
+                    }
+                });
+            });
+        })();
+    </script>
+}

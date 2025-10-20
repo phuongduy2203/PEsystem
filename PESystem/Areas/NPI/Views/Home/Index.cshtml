@@ -1,0 +1,89 @@
+@using System.Linq
+@model PESystem.Areas.NPI.Models.NpiHomeIndexViewModel
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">NPI Document projects</h2>
+        <a class="btn btn-outline-secondary" asp-action="Index">Refresh</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <strong>Create new project</strong>
+        </div>
+        <div class="card-body">
+            <form asp-action="CreateProject" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="col-md-6">
+                    <label asp-for="NewProject.Name" class="form-label"></label>
+                    <input asp-for="NewProject.Name" class="form-control" placeholder="Project name" />
+                    <span asp-validation-for="NewProject.Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="NewProject.Owner" class="form-label"></label>
+                    <input asp-for="NewProject.Owner" class="form-control" placeholder="Owner" />
+                    <span asp-validation-for="NewProject.Owner" class="text-danger"></span>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">Create project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>Existing projects</strong>
+            <span class="badge bg-light text-dark">@Model.Projects.Count project(s)</span>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Projects.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Project</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col">Created</th>
+                                <th scope="col" class="text-center">Documents</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model.Projects.OrderByDescending(p => p.CreatedAt))
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@project.Id" class="fw-semibold text-decoration-none">@project.Name</a>
+                                    </td>
+                                    <td>@project.Owner</td>
+                                    <td>@project.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-center">@project.DocumentCount</td>
+                                    <td class="text-end">
+                                        <a asp-action="Details" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">Open</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-4 text-center text-muted">
+                    Chưa có project nào. Hãy tạo project mới để bắt đầu quản lý tài liệu NPI.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

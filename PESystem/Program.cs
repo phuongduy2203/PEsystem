@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PESystem.Models;
+using PESystem.Options;
 using PESystem.Policies;
+using PESystem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,9 @@ var configuration = new ConfigurationBuilder()
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllersWithViews();
+
+builder.Services.Configure<NpiDocumentOptions>(configuration.GetSection("NpiDocument"));
+builder.Services.AddSingleton<INpiDocumentService, NpiDocumentService>();
 
 // ---- HttpClient: gộp làm 1, vừa có BaseAddress vừa bypass proxy ----
 builder.Services.AddHttpClient("ApiClient", client =>
@@ -45,6 +50,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ScrapAccess", p => p.Requirements.Add(new AreaAccessRequirement("Scrap")));
     options.AddPolicy("MaterialSystemAccess", p => p.Requirements.Add(new AreaAccessRequirement("MaterialSystem")));
     options.AddPolicy("SFCAccess", p => p.Requirements.Add(new AreaAccessRequirement("SFC")));
+    options.AddPolicy("NPIAccess", p => p.Requirements.Add(new AreaAccessRequirement("NPI")));
 });
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
