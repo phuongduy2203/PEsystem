@@ -15,9 +15,6 @@ using System.Runtime.Intrinsics.X86;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace API_WEB.Controllers.Repositories
 {
@@ -28,21 +25,11 @@ namespace API_WEB.Controllers.Repositories
 
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
-        private readonly IMemoryCache _cache;
 
-        private const string BonepileAfterCacheKey = "bonepile-after-kanban-basic";
-        private const string ExcludedSerialsCacheKey = "bonepile-after-excluded-serials";
-        private const string ExcelRecordsCacheKey = "bonepile-after-excel-records";
-
-        private static readonly SemaphoreSlim _bonepileAfterCacheLock = new(1, 1);
-        private static readonly object _excludedSerialsCacheLock = new();
-        private static readonly object _excelRecordsCacheLock = new();
-
-        public Bonepile2Controller(CSDL_NE sqlContext, OracleDbContext oracleContext, IMemoryCache cache)
+        public Bonepile2Controller(CSDL_NE sqlContext, OracleDbContext oracleContext)
         {
             _sqlContext = sqlContext;
             _oracleContext = oracleContext;
-            _cache = cache;
         }
 
         [HttpPost("data")]
@@ -63,7 +50,7 @@ namespace API_WEB.Controllers.Repositories
                 if (!DateTime.TryParseExact(request.StartDate, "yyyy/MM/dd HH:mm", null, System.Globalization.DateTimeStyles.None, out _)
                     || !DateTime.TryParseExact(request.EndDate, "yyyy/MM/dd HH:mm", null, System.Globalization.DateTimeStyles.None, out _))
                 {
-                    return BadRequest(new { message = "??nh d?ng StartDate ho?c EndDate khong h?p l?. Vui long s? d?ng ??nh d?ng yyyy/MM/dd HH:mm." });
+                    return BadRequest(new { message = "Dinh dang ngay gio khong hop le!!" });
                 }
 
                 //THuc thien truy van Oracle
@@ -95,14 +82,14 @@ namespace API_WEB.Controllers.Repositories
                     }
                     else
                     {
-                        // Khong co d? li?u trong ScrapLists, dung ERROR_FLAG
+                        // Khong co du lieu trong ScrapLists, dung ERROR_FLAG
                         status = b.ERROR_FLAG switch
                         {
                             "7" => "Repair",
                             "8" => "CheckOut",
                             "1" => "CheckIn",
                             "0" => b.WIP_GROUP.Contains("KANBAN_IN") ? "WaitingKanBanIn" : "Online",
-                            _ => "Unknown" // X? ly cac gia tr? ERROR_FLAG khong xac ??nh
+                            _ => "Repair" //
                         };
                     }
                     return new
@@ -167,10 +154,9 @@ namespace API_WEB.Controllers.Repositories
                 if (!DateTime.TryParseExact(request.StartDate, "yyyy/MM/dd HH:mm", null, System.Globalization.DateTimeStyles.None, out _)
                     || !DateTime.TryParseExact(request.EndDate, "yyyy/MM/dd HH:mm", null, System.Globalization.DateTimeStyles.None, out _))
                 {
-                    return BadRequest(new { message = "??nh d?ng StartDate ho?c EndDate khong h?p l?. Vui long s? d?ng ??nh d?ng yyyy/MM/dd HH:mm." });
+                    return BadRequest(new { message = "Dinh dang ngay gio khong hop le!!" });
                 }
 
-                // Th?c hi?n truy v?n Oracle
                 var bonepileData = await ExecuteOracleQuery(request);
 
                 if (!bonepileData.Any())
@@ -535,9 +521,9 @@ namespace API_WEB.Controllers.Repositories
 
                         if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
                             status = "ScrapHasTask";
-                        else if(applyTaskStatus == 0 || applyTaskStatus == 1)
+                        else if (applyTaskStatus == 0 || applyTaskStatus == 1)
                         {
-                            if(string.IsNullOrEmpty(taskNumber) || taskNumber == "N/A")
+                            if (string.IsNullOrEmpty(taskNumber) || taskNumber == "N/A")
                                 status = "ScrapLackTask";
                             else status = "ScrapHasTask";
                         }
@@ -1091,16 +1077,12 @@ namespace API_WEB.Controllers.Repositories
         {
             try
             {
-                var cancellationToken = HttpContext.RequestAborted;
-                var allData = await ExecuteBonepileAfterKanbanBasicQuery(cancellationToken);
+                var allData = await ExecuteBonepileAfterKanbanBasicQuery();
 
                 var excludedSNs = GetExcludedSerialNumbers();
-                if (excludedSNs.Count > 0)
+                if (excludedSNs.Any())
                 {
-                    var excludedSet = new HashSet<string>(excludedSNs, StringComparer.OrdinalIgnoreCase);
-                    allData = allData
-                        .Where(d => !excludedSet.Contains(d.SERIAL_NUMBER?.Trim().ToUpperInvariant() ?? string.Empty))
-                        .ToList();
+                    allData = allData.Where(d => !excludedSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper())).ToList();
                 }
 
                 var snList = allData
@@ -1108,25 +1090,20 @@ namespace API_WEB.Controllers.Repositories
                     .Where(s => !string.IsNullOrEmpty(s))
                     .ToList();
 
-                var scrapTask = _sqlContext.ScrapLists
+                var scrapCategories = await _sqlContext.ScrapLists
                     .Where(s => snList.Contains(s.SN.Trim().ToUpper()))
                     .Select(s => new { SN = s.SN, ApplyTaskStatus = s.ApplyTaskStatus, TaskNumber = s.TaskNumber })
-                    .ToListAsync(cancellationToken);
-
-                var exportTask = _sqlContext.Exports
-                    .Where(e => snList.Contains(e.SerialNumber.Trim().ToUpper()) && e.CheckingB36R > 0 && e.CheckingB36R <= 4)
-                    .ToListAsync(cancellationToken);
-
-                await Task.WhenAll(scrapTask, exportTask);
-
-                var scrapCategories = await scrapTask;
-                var exportRecords = await exportTask;
+                    .ToListAsync();
 
                 var scrapDict = scrapCategories.ToDictionary(
                     c => c.SN?.Trim().ToUpper() ?? "",
                     c => (ApplyTaskStatus: c.ApplyTaskStatus, TaskNumber: c.TaskNumber),
                     StringComparer.OrdinalIgnoreCase
                 );
+
+                var exportRecords = await _sqlContext.Exports
+                    .Where(e => snList.Contains(e.SerialNumber.Trim().ToUpper()) && e.CheckingB36R > 0 && e.CheckingB36R <= 4)
+                    .ToListAsync();
 
                 var exportDict = exportRecords
                     .GroupBy(e => e.SerialNumber?.Trim().ToUpper() ?? "")
@@ -1173,8 +1150,8 @@ namespace API_WEB.Controllers.Repositories
                         }
                         else if (applyTaskStatus == 0 || applyTaskStatus == 1)
                         {
-                            if(string.IsNullOrEmpty(scrapInfo.TaskNumber) || scrapInfo.TaskNumber == "N/A")
-                            status = "ScrapLackTask";
+                            if (string.IsNullOrEmpty(scrapInfo.TaskNumber) || scrapInfo.TaskNumber == "N/A")
+                                status = "ScrapLackTask";
                             else status = "ScrapHasTask";
 
                             statusV2 = "Scrap";
@@ -1336,16 +1313,12 @@ namespace API_WEB.Controllers.Repositories
         {
             try
             {
-                var cancellationToken = HttpContext.RequestAborted;
-                var basicData = await ExecuteBonepileAfterKanbanBasicQuery(cancellationToken);
+                var basicData = await ExecuteBonepileAfterKanbanBasicQuery();
 
                 var excludedSNs = GetExcludedSerialNumbers();
-                if (excludedSNs.Count > 0)
+                if (excludedSNs.Any())
                 {
-                    var excludedSet = new HashSet<string>(excludedSNs, StringComparer.OrdinalIgnoreCase);
-                    basicData = basicData
-                        .Where(d => !excludedSet.Contains(d.SERIAL_NUMBER?.Trim().ToUpperInvariant() ?? string.Empty))
-                        .ToList();
+                    basicData = basicData.Where(d => !excludedSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper())).ToList();
                 }
 
                 var snList = basicData
@@ -1357,13 +1330,12 @@ namespace API_WEB.Controllers.Repositories
                     .Where(s => snList.Contains(s.SN.Trim().ToUpper()) &&
                                 (s.ApplyTaskStatus == 0 || s.ApplyTaskStatus == 1 || s.ApplyTaskStatus == 5 || s.ApplyTaskStatus == 6 || s.ApplyTaskStatus == 7))
                     .Select(s => s.SN.Trim().ToUpper())
-                    .ToListAsync(cancellationToken);
+                    .ToListAsync();
 
                 if (invalidSNs.Any())
                 {
-                    var invalidSet = new HashSet<string>(invalidSNs, StringComparer.OrdinalIgnoreCase);
                     basicData = basicData
-                        .Where(d => !invalidSet.Contains(d.SERIAL_NUMBER?.Trim().ToUpperInvariant() ?? string.Empty))
+                        .Where(d => !invalidSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper()))
                         .ToList();
                 }
 
@@ -1446,27 +1418,14 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
-        private async Task<List<BonepileAfterKanbanResult>> ExecuteBonepileAfterKanbanBasicQuery(CancellationToken cancellationToken)
+        private async Task<List<BonepileAfterKanbanResult>> ExecuteBonepileAfterKanbanBasicQuery()
         {
-            if (_cache.TryGetValue(BonepileAfterCacheKey, out List<BonepileAfterKanbanResult> cached))
-            {
-                return new List<BonepileAfterKanbanResult>(cached);
-            }
+            var result = new List<BonepileAfterKanbanResult>();
 
-            await _bonepileAfterCacheLock.WaitAsync(cancellationToken);
-            try
-            {
-                if (_cache.TryGetValue(BonepileAfterCacheKey, out cached))
-                {
-                    return new List<BonepileAfterKanbanResult>(cached);
-                }
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            await connection.OpenAsync();
 
-                var result = new List<BonepileAfterKanbanResult>();
-
-                await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
-                await connection.OpenAsync(cancellationToken);
-
-                const string query = @"
+            string query = @"
 SELECT
     A.SERIAL_NUMBER,
     R107.MO_NUMBER,
@@ -1532,40 +1491,29 @@ WHERE
     AND R107.WIP_GROUP NOT LIKE '%BR2C%'
     AND R107.WIP_GROUP NOT LIKE '%BCFA%'";
 
-                await using var command = new OracleCommand(query, connection);
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    result.Add(new BonepileAfterKanbanResult
-                    {
-                        SERIAL_NUMBER = reader["SERIAL_NUMBER"]?.ToString(),
-                        MO_NUMBER = reader["MO_NUMBER"]?.ToString(),
-                        MODEL_NAME = reader["MODEL_NAME"]?.ToString(),
-                        PRODUCT_LINE = reader["PRODUCT_LINE"]?.ToString(),
-                        WIP_GROUP_KANBAN = reader["WIP_GROUP_KANBAN"]?.ToString(),
-                        WIP_GROUP_SFC = reader["WIP_GROUP_SFC"]?.ToString(),
-                        ERROR_FLAG = reader["ERROR_FLAG"]?.ToString(),
-                        WORK_FLAG = reader["WORK_FLAG"]?.ToString(),
-                        TEST_GROUP = reader["TEST_GROUP"]?.ToString(),
-                        TEST_TIME = reader["TEST_TIME"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["TEST_TIME"]),
-                        TEST_CODE = reader["TEST_CODE"]?.ToString(),
-                        ERROR_ITEM_CODE = reader["ERROR_ITEM_CODE"]?.ToString(),
-                        ERROR_DESC = reader["ERROR_DESC"]?.ToString(),
-                        AGING = reader["AGING"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING"])
-                    });
-                }
-
-                _cache.Set(BonepileAfterCacheKey, result, new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-                });
-
-                return new List<BonepileAfterKanbanResult>(result);
-            }
-            finally
+            using var command = new OracleCommand(query, connection);
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
-                _bonepileAfterCacheLock.Release();
+                result.Add(new BonepileAfterKanbanResult
+                {
+                    SERIAL_NUMBER = reader["SERIAL_NUMBER"]?.ToString(),
+                    MO_NUMBER = reader["MO_NUMBER"]?.ToString(),
+                    MODEL_NAME = reader["MODEL_NAME"]?.ToString(),
+                    PRODUCT_LINE = reader["PRODUCT_LINE"]?.ToString(),
+                    WIP_GROUP_KANBAN = reader["WIP_GROUP_KANBAN"]?.ToString(),
+                    WIP_GROUP_SFC = reader["WIP_GROUP_SFC"]?.ToString(),
+                    ERROR_FLAG = reader["ERROR_FLAG"]?.ToString(),
+                    WORK_FLAG = reader["WORK_FLAG"]?.ToString(),
+                    TEST_GROUP = reader["TEST_GROUP"]?.ToString(),
+                    TEST_TIME = reader["TEST_TIME"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["TEST_TIME"]),
+                    TEST_CODE = reader["TEST_CODE"]?.ToString(),
+                    ERROR_ITEM_CODE = reader["ERROR_ITEM_CODE"]?.ToString(),
+                    ERROR_DESC = reader["ERROR_DESC"]?.ToString(),
+                    AGING = reader["AGING"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING"])
+                });
             }
+            return result;
         }
 
         //Lay nhung SN scrap trong file excel.
@@ -1784,11 +1732,6 @@ WHERE
 
             return records;
         }
-
-
-        private sealed record CachedSerialNumbers(DateTime LastWriteTimeUtc, IReadOnlyList<string> Serials);
-
-        private sealed record CachedExcelRecords(DateTime LastWriteTimeUtc, IReadOnlyList<BonepileAfterKanbanBasicRecord> Records);
 
         private static string DetermineStatusV2(string testCode)
         {

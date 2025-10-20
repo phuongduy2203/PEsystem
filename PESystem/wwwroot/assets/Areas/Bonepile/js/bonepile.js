@@ -58,7 +58,7 @@
     let dataTable;
     let modalTable;
 
-    // Load KPI + Donut chart
+    // Load KPI + Bar chart for status + Donut for aging
     async function loadDashboardData() {
         try {
             showSpinner();
@@ -82,28 +82,50 @@
             document.getElementById("approvedBGACount").innerText = statusCounts.find(s => s.status === "ApprovedBGA")?.count || 0;
             document.getElementById("notRepairProcessCount").innerText = statusCounts.find(s => s.status === "Can'tRepairProcess")?.count || 0;
 
-            // Tính phần trăm cho biểu đồ
-            const total = statusCounts.reduce((sum, s) => sum + s.count, 0);
-            const percentages = statusCounts.map(s => total > 0 ? ((s.count / total) * 100).toFixed(1) : 0);
+            // **SẮP XẾP TRẠNG THÁI THEO CHIỀU GIẢM DẦN**
+            const sortedStatusCounts = [...statusCounts].sort((a, b) => b.count - a.count);
 
-            // Vẽ Donut chart với phần trăm
+            // Tính phần trăm cho biểu đồ (sau khi sắp xếp)
+            const total = sortedStatusCounts.reduce((sum, s) => sum + s.count, 0);
+            const percentages = sortedStatusCounts.map(s => total > 0 ? ((s.count / total) * 100).toFixed(1) : 0);
+
+            // Vẽ Bar chart (biểu đồ cột) cho trạng thái với phần trăm - ĐÃ SẮP XẾP
             const donutCtx = document.getElementById("statusDonutChart").getContext("2d");
             new Chart(donutCtx, {
-                type: "doughnut",
+                type: "bar",
                 data: {
-                    labels: statusCounts.map(s => s.status),
+                    labels: sortedStatusCounts.map(s => s.status), // Sử dụng dữ liệu đã sắp xếp
                     datasets: [{
-                        data: statusCounts.map(s => s.count),
-                        backgroundColor: statusCounts.map(s => statusColorMap[s.status] || "#ccc"),
+                        data: sortedStatusCounts.map(s => s.count), // Sử dụng dữ liệu đã sắp xếp
+                        backgroundColor: sortedStatusCounts.map(s => statusColorMap[s.status] || "#ccc"),
+                        borderWidth: 1,
+                        borderSkipped: false,
                     }]
                 },
                 options: {
                     responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function (value) {
+                                    return value;
+                                }
+                            },
+                            grid: {
+                                display: true
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: "bottom",
-
-
                             labels: {
                                 boxWidth: 20,
                                 boxHeight: 20,
@@ -133,21 +155,25 @@
                             }
                         },
                         datalabels: {
+                            anchor: 'end',
+                            align: 'top',
                             formatter: (value, ctx) => {
-                                const total = statusCounts.reduce((sum, d) => sum + d.count, 0);
+                                const total = sortedStatusCounts.reduce((sum, d) => sum + d.count, 0);
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                                 return `${percentage}%`;
                             },
-                            color: '#000', // Màu chữ
-                            font: { weight: 'bold', size: 12 }
+                            color: '#000',
+                            font: { weight: 'bold', size: 12 },
+                            display: function (context) {
+                                return context.dataset.data[context.dataIndex] > 0;
+                            }
                         }
-
                     }
                 },
                 plugins: [ChartDataLabels]
             });
 
-            // Vẽ biểu đồ AGING_DAY
+            // Vẽ biểu đồ AGING_DAY (giữ nguyên donut)
             const agingTotal = agingCounts.reduce((sum, a) => sum + a.count, 0);
             const agingPercentages = agingCounts.map(a => agingTotal > 0 ? ((a.count / agingTotal) * 100).toFixed(1) : 0);
             const agingCtx = document.getElementById("agingDonutChart").getContext("2d");
@@ -228,12 +254,10 @@
         }
     }
 
-    // Load dữ liệu bảng dựa trên trạng thái
+    // Các hàm còn lại giữ nguyên...
     async function loadTableData(statuses) {
         try {
-            // Hiển thị spinner
             showSpinner();
-            // Log payload để debug
             console.log("Sending payload:", { statuses });
 
             const response = await axios.post(apiDetailUrl, {
@@ -289,10 +313,10 @@
                         {
                             extend: 'excelHtml5',
                             text: '<img src="/assets/img/excel.png" class="excel-icon excel-button"/>',
-                            title: '', // Loại bỏ tiêu đề mặc định
+                            title: '',
                             filename: function () {
                                 const now = new Date();
-                                const offset = 7 * 60; // +07:00
+                                const offset = 7 * 60;
                                 const localDate = new Date(now.getTime() + offset * 60 * 1000);
                                 const dateStr = localDate.toISOString().slice(0, 10).replace(/-/g, '');
                                 const timeStr = localDate.toTimeString().slice(0, 8).replace(/:/g, '');
@@ -305,7 +329,6 @@
                                 },
                                 format: {
                                     header: function (data, columnIdx) {
-                                        // Loại bỏ khoảng trắng hoặc ký tự không mong muốn
                                         return data.trim();
                                     }
                                 }
@@ -319,37 +342,32 @@
                         zeroRecords: "Không tìm thấy bản ghi phù hợp"
                     },
                     initComplete: function () {
-                        // Tạo select filter
                         var selectHtml = `
-                                                                    <div class="form-group mb-0" style="min-width: 200px;">
-                                                                        <select id="statusFilterDt" class="form-control">
-                                                                            <option value="">Tất cả</option>
-                                                                            <option value="ScrapHasTask">Scrap Has Task</option>
-                                                                            <option value="ScrapLackTask">Scrap Lack Task</option>
-                                                                            <option value="WaitingApprovalScrap">Pending Scrap SPE Approval</option>
-                                                                            <option value="ApprovedBGA">SPE Approved BGA</option>
-                                                                            <option value="WaitingApprovalBGA">Pending BGA SPE Approval</option>
-                                                                            <option value="ReworkFG">Rework FG</option>
-                                                                            <option value="RepairInRE">Repair In RE</option>
-                                                                            <option value="WaitingCheckOut">Waiting Check Out</option>
-                                                                            <option value="RepairInPD">Repair In PD</option>
-                                                                            <option value="Can'tRepairProcess">Can't Repair Process</option>
-                                                                        </select>
-                                                                    </div>
-                                                                `;
+                            <div class="form-group mb-0" style="min-width: 200px;">
+                                <select id="statusFilterDt" class="form-control">
+                                    <option value="">Tất cả</option>
+                                    <option value="ScrapHasTask">Scrap Has Task</option>
+                                    <option value="ScrapLackTask">Scrap Lack Task</option>
+                                    <option value="WaitingApprovalScrap">Pending Scrap SPE Approval</option>
+                                    <option value="ApprovedBGA">SPE Approved BGA</option>
+                                    <option value="WaitingApprovalBGA">Pending BGA SPE Approval</option>
+                                    <option value="ReworkFG">Rework FG</option>
+                                    <option value="RepairInRE">Repair In RE</option>
+                                    <option value="WaitingCheckOut">Waiting Check Out</option>
+                                    <option value="RepairInPD">Repair In PD</option>
+                                    <option value="Can'tRepairProcess">Can't Repair Process</option>
+                                </select>
+                            </div>
+                        `;
 
-                        // Chèn vào phần `top` bên trái (trước nút excel)
                         $('.dataTables_wrapper .top').prepend(selectHtml);
 
-                        // Gắn sự kiện
                         $('#statusFilterDt').on('change', async function () {
                             const selectedStatus = this.value;
                             const statuses = selectedStatus ? [selectedStatus] : validStatuses;
                             await loadTableData(statuses);
                         });
 
-
-                        // Set placeholder cho ô search
                         $('.dataTables_filter input[type="search"]').attr('placeholder', 'Tìm kiếm');
                     }
                 });
@@ -358,7 +376,6 @@
             console.error("Lỗi khi tải dữ liệu bảng:", error);
             alert("Không thể tải dữ liệu bảng. Vui lòng thử lại!");
         } finally {
-            //document.getElementById("spinner-overlay").style.display = "none";
             hideSpinner();
         }
     }
@@ -392,7 +409,7 @@
                         { data: "wipGroup" },
                         { data: "testGroup" },
                         { data: "testCode" },
-                        { data: "errorCodeItem"},
+                        { data: "errorCodeItem" },
                         { data: "testTime" },
                         { data: "errorDesc" },
                         { data: "workFlag" },
@@ -441,11 +458,4 @@
 
     // Khởi tạo dashboard
     await loadDashboardData();
-
-    //// Xử lý sự kiện thay đổi trạng thái
-    //document.getElementById("statusFilter").addEventListener("change", async function () {
-    //    const selectedStatus = this.value;
-    //    const statuses = selectedStatus ? [selectedStatus] : validStatuses;
-    //    await loadTableData(statuses);
-    //});
 });

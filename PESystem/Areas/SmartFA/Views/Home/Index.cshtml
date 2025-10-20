@@ -13,7 +13,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title text-center font-weight-bold">TRẠNG THÁI</h5>
                     </div>
-                    <div id="statusChart" style="width: 100%; height: 400px;"></div>
+                    <div id="statusChart" class="chart-container"></div>
                 </div>
             </div>
         </div>
@@ -23,7 +23,21 @@
             <div class="card shadow-lg rounded-lg border-0">
                 <div class="card-body p-4">
                     <h5 class="d-flex justify-content-between align-items-center">SỐ LƯỢNG SERIAL NUMBER VÀO SAP</h5>
-                    <div id="sapInOutChart" style="width: 100%; height: 400px;"></div>
+                    <div id="sapInOutChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-lg rounded-lg border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title font-weight-bold mb-0 text-uppercase">PHÂN BỐ STATUS TỒN KHO</h5>
+                        <small class="text-muted" id="inventoryStatusSummary">Tổng: 0</small>
+                    </div>
+                    <div id="inventoryStatusChart" class="chart-container"></div>
                 </div>
             </div>
         </div>
@@ -32,7 +46,7 @@
     <div class="row d-flex flex-wrap mt-4">
         <!-- Form chọn ngày -->
         <div class="row mb-3">
-            <i class="fa fa-calendar fa-2x" id="pickDateBtn" aria-hidden="true" style="cursor:pointer;"></i>
+            <i class="fa fa-calendar fa-2x cursor-pointer" id="pickDateBtn" aria-hidden="true"></i>
             <input type="datetime-local" id="cioStartDate" hidden />
             <input type="datetime-local" id="cioEndDate" hidden />
         </div>
@@ -41,7 +55,7 @@
             <div class="card shadow-lg rounded-lg border-0 h-100">
                 <div class="card-body p-4">
                     <h5 class="card-title font-weight-bold mb-3">CHECK IN/OUT &amp; TỒN KHO (BEFORE KANBAN)</h5>
-                    <div id="checkInOutChart" style="width: 100%; height: 400px;"></div>
+                    <div id="checkInOutChart" class="chart-container"></div>
                 </div>
             </div>
         </div>
@@ -50,7 +64,7 @@
             <div class="card shadow-lg rounded-lg border-0 h-100">
                 <div class="card-body p-4">
                     <h5 class="card-title font-weight-bold mb-3">CHECK IN BEFORE/AFTER KANBAN</h5>
-                    <div id="checkInBeforeAfer" style="width: 100%; height: 400px;"></div>
+                    <div id="checkInBeforeAfer" class="chart-container"></div>
                 </div>
             </div>
         </div>
@@ -62,7 +76,7 @@
             <div class="card shadow-lg rounded-lg border-0 h-100">
                 <div class="card-body p-4">
                     <h5 class="card-title font-weight-bold mb-3">TỒN KHO CHƯA CÓ VỊ TRÍ - 3 NGÀY GẦN NHẤT</h5>
-                    <div id="noLocationTrendChart" style="width: 100%; height: 400px;"></div>
+                    <div id="noLocationTrendChart" class="chart-container"></div>
                 </div>
             </div>
         </div>
@@ -116,7 +130,7 @@
                 <div class="card-body p-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                         <h5 class="card-title font-weight-bold mb-0">Tồn kho chưa có vị trí</h5>
-                        <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportNoLocationExcelBtn" style="width:32px; height:32px;">
+                        <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportNoLocationExcelBtn" class="export-icon">
                     </div>
                     <div class="table-responsive">
                         <table id="cio-no-location-table" class="table table-bordered datatable-table table-striped mb-0">
@@ -161,6 +175,7 @@
                                 <th>ERROR_CODE</th>
                                 <th>ERROR_DESC</th>
                                 <th>STATUS_FA</th>
+                                <th>AGING STATUS</th>
                                 <th>PERSON_CONFIRM</th>
                                 <th>TIME_CONFIRM</th>
                                 <th>HANDLER</th>
@@ -174,7 +189,7 @@
                     </table>
                 </div>
                 <div class="modal-footer">
-                        <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportExcelBtn" style="width:32px; height:32px;">
+                        <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportExcelBtn" class="export-icon">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
@@ -216,7 +231,7 @@
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportCioExcelBtn" style="width:32px; height:32px;">
+                    <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportCioExcelBtn" class="export-icon">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
@@ -224,8 +239,23 @@
     </div>
 </section>
 <style>
-     .modal-lg-custom {
+    .modal-lg-custom {
         max-width: 90% !important;
+    }
+
+    .chart-container {
+        width: 100%;
+        height: 400px;
+    }
+
+    .export-icon {
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
     }
 </style>
 @section Scripts {

@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 using Microsoft.CodeAnalysis;
+using API_WEB.Helpers.Repositories;
 
 namespace API_WEB.Controllers.Repositories
 {
@@ -156,9 +157,9 @@ namespace API_WEB.Controllers.Repositories
                             await _sqlContext.SaveChangesAsync();
                             serialsToUpdateOracle.Add(serialNumber);
 
-                            results.Add(new { serialNumber, success = true, message = "Sản phẩm đã được cập nhật vị trí." });
+                            results.Add(new { serialNumber, success = true, message = "SN đã được cập nhật vị trí." });
                         }
-                        else { results.Add(new { serialNumber, success = false, message = $"SerialNumber{serialNumber} da ton tai trong he thong" }); }
+                        else { results.Add(new { serialNumber, success = false, message = $"SN {serialNumber} da ton tai trong he thong" }); }
                         continue;
                     }
 
@@ -197,14 +198,13 @@ namespace API_WEB.Controllers.Repositories
                     {
                         serialNumber,
                         success = true,
-                        message = "Da them san pham thanh cong"
+                        message = "Success!"
                     });
                 }
                 await _sqlContext.SaveChangesAsync();
 
-                // Update Oracle location via RepairStatus API
                 //string location = $"{request.Shelf}{request.Column}-{request.Level}-K{request.Tray}";
-                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Phế)");
+                await RemoveLocationHelper.SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Phế)", _oracleContext);
 
                 await transaction.CommitAsync();
                 return Ok(new { success = true, results });
@@ -483,104 +483,6 @@ namespace API_WEB.Controllers.Repositories
             await _sqlContext.SaveChangesAsync();
         }
 
-        [NonAction]
-        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
-        {
-            if (serialNumbers == null || !serialNumbers.Any())
-                return;
-
-            try
-            {
-                // Làm sạch serials
-                var cleanedSerials = serialNumbers
-                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                if (!cleanedSerials.Any())
-                    return;
-
-                var serialsWithData18 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                // ✅ Dùng connection từ DbContext, không dispose
-                var connection = (OracleConnection)_oracleContext.Database.GetDbConnection();
-                if (connection.State != System.Data.ConnectionState.Open)
-                    await connection.OpenAsync();
-
-                const int oracleParameterLimit = 900; // tránh vượt quá giới hạn 1000 phần tử
-                for (var offset = 0; offset < cleanedSerials.Count; offset += oracleParameterLimit)
-                {
-                    var batch = cleanedSerials.Skip(offset).Take(oracleParameterLimit).ToList();
-                    if (batch.Count == 0)
-                        continue;
-
-                    var parameterNames = batch.Select((_, index) => $"p{offset + index}").ToArray();
-
-                    var query = $@"
-                    SELECT SERIAL_NUMBER
-                      FROM SFISM4.R_REPAIR_TASK_T
-                     WHERE DATA18 IS NOT NULL
-                       AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
-
-                    using var command = connection.CreateCommand();
-                    command.CommandText = query;
-
-                    for (var i = 0; i < batch.Count; i++)
-                        command.Parameters.Add(new OracleParameter(parameterNames[i], batch[i]));
-
-                    using var reader = await command.ExecuteReaderAsync();
-                    while (await reader.ReadAsync())
-                    {
-                        var serial = reader["SERIAL_NUMBER"]?.ToString();
-                        if (!string.IsNullOrWhiteSpace(serial))
-                            serialsWithData18.Add(serial.Trim());
-                    }
-                }
-
-                if (!serialsWithData18.Any())
-                    return;
-
-                // Gửi location rỗng tới API receiving-status
-                location = string.Empty;
-
-                var payload = new
-                {
-                    serialnumbers = string.Join(",", serialsWithData18),
-                    owner = owner?.Trim() ?? string.Empty,
-                    location,
-                    tag = tag?.Trim() ?? string.Empty
-                };
-
-                var json = JsonConvert.SerializeObject(payload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // 🚫 Bỏ proxy để request đi thẳng qua mạng nội bộ LAN
-                var handler = new HttpClientHandler
-                {
-                    UseProxy = false
-                };
-                using var client = new HttpClient(handler);
-
-                var response = await client.PostAsync(
-                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var msg = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
-                }
-                else
-                {
-                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {serialsWithData18.Count} serials. Tag={tag}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
-            }
-        }
-
 
         [HttpPost("BorrowKhoScrap")]
         public async Task<IActionResult> BorrowKhoScrapSN([FromBody] BorrowSNListRequest request)
@@ -692,20 +594,20 @@ namespace API_WEB.Controllers.Repositories
                     return BadRequest(new { success = false, message = "Danh sách Serial Number không hợp lệ." });
                 }
 
-                //Kiem tra SerialNumber trong ScrapList
-                var validSerials = await _sqlContext.ScrapLists
-                    .Where(sl => request.SerialNumbers.Contains(sl.SN))
-                    .Select(sl => sl.SN)
-                    .ToListAsync();
-                if (validSerials.Any())
+                var invalidSerials = await _sqlContext.ScrapLists.Where(sl => request.SerialNumbers
+                    .Contains(sl.SN) && (sl.ApplyTaskStatus != 17 && sl.ApplyTaskStatus != 18))
+                    .Select(sl => sl.SN).ToListAsync();
+
+                if (invalidSerials.Any())
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Một số Serial Number đã tồn tại trong ScrapList — không thể nhập Kho OK.",
-                        invalidSerials = validSerials
+                        message = "Serial Number tồn tại trong ScrapList — không thể nhập Kho OK.",
+                        invalidSerials = invalidSerials
                     });
                 }
+                
                 var results = new List<object>();
                 var serialsToUpdateOracle = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var processedSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -840,9 +742,9 @@ namespace API_WEB.Controllers.Repositories
                     });
                 }
                 await _sqlContext.SaveChangesAsync();
-                // Update Oracle location via RepairStatus API
+
                 //string location = $"{request.Shelf}{request.Column}-{request.Level}";
-                await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Ok)");
+                await RemoveLocationHelper.SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Ok)", _oracleContext);
 
                 await transaction.CommitAsync();
                 return Ok(new { success = true, results });

@@ -25,7 +25,6 @@ namespace API_WEB.Controllers.SmartFA
             _sqlContext = sqlContext;
         }
 
-        // Use a distinct request model name to avoid Swagger schema clashes
         public class CheckInOutRequest
         {
             public DateTime StartDate { get; set; }
@@ -94,7 +93,6 @@ namespace API_WEB.Controllers.SmartFA
             public string MO_NUMBER { get; set; } = string.Empty;
         }
 
-
         public class SAPRecord
         {
             public string SERIAL_NUMBER { get; set; }
@@ -124,7 +122,7 @@ namespace API_WEB.Controllers.SmartFA
                 var end = endDate ?? defaultEnd;
                 var start = startDate ?? end.AddDays(-1);
 
-                var checkInQuery = @"SELECT a.SERIAL_NUMBER,
+                var checkInQuery = @"SELECT a.SERIAL_NUMBER AS SFG,
                                             a.MO_NUMBER,
                                             a.MODEL_NAME,
                                             b.PRODUCT_LINE,
@@ -144,7 +142,7 @@ namespace API_WEB.Controllers.SmartFA
                                        INNER JOIN SFISM4.R107 r107 ON a.serial_number = r107.serial_number
                                        INNER JOIN SFIS1.C_ERROR_CODE_T c ON a.REMARK = c.ERROR_CODE
                                        WHERE b.MODEL_SERIAL = 'ADAPTER'
-                                         AND a.P_SENDER IN ('V0904136','V3209541', 'V0945375', 'V0928908', 'V3245384', 'V3211693')
+                                         AND a.P_SENDER IN ('V0904136','V3209541', 'V0945375', 'V0928908', 'V3245384', 'V3211693','V1097872')
                                          AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                                          AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
                                          AND a.REMARK NOT IN ('CK00')
@@ -164,7 +162,7 @@ namespace API_WEB.Controllers.SmartFA
                     {
                         checkInList.Add(new CheckInRecord
                         {
-                            SERIAL_NUMBER = reader["SERIAL_NUMBER"].ToString() ?? string.Empty,
+                            SERIAL_NUMBER = reader["SFG"].ToString() ?? string.Empty,
                             MO_NUMBER = reader["MO_NUMBER"].ToString() ?? string.Empty,
                             MODEL_NAME = reader["MODEL_NAME"].ToString() ?? string.Empty,
                             WIP_GROUP = reader["WIP_GROUP"].ToString() ?? string.Empty,
@@ -180,7 +178,7 @@ namespace API_WEB.Controllers.SmartFA
                     }
                 }
 
-                var checkOutQuery = @"SELECT a.SERIAL_NUMBER,
+                var checkOutQuery = @"SELECT a.SERIAL_NUMBER AS SFG,
                                              a.MODEL_NAME,
                                              b.PRODUCT_LINE,
                                              a.P_SENDER,
@@ -202,7 +200,7 @@ namespace API_WEB.Controllers.SmartFA
                                         INNER JOIN sfis1.c_error_code_t c ON a.REMARK = c.ERROR_CODE
                                         INNER JOIN SFISM4.R107 r107 ON a.serial_number = r107.serial_number
                                         WHERE b.MODEL_SERIAL = 'ADAPTER'
-                                          AND a.P_SENDER IN ('V0904136', 'V0945375','V3209541', 'V0928908', 'V3245384', 'V3211693')
+                                          AND a.P_SENDER IN ('V0904136', 'V0945375','V3209541', 'V0928908', 'V3245384', 'V3211693', 'V1097872')
                                           AND a.REPAIRER IS NOT NULL
                                           AND r107.ERROR_FLAG  != '8'
                                           AND a.REMARK NOT IN ('CK00')
@@ -211,8 +209,7 @@ namespace API_WEB.Controllers.SmartFA
                                           AND NOT EXISTS (
                                               SELECT 1
                                               FROM sfism4.z_kanban_tracking_t z
-                                              WHERE z.serial_number = a.serial_number
-                                          )";
+                                              WHERE z.serial_number = a.serial_number)";
 
                 var checkOutList = new List<CheckOutRecord>();
                 await using (var cmd = new OracleCommand(checkOutQuery, connection))
@@ -225,7 +222,7 @@ namespace API_WEB.Controllers.SmartFA
                     {
                         checkOutList.Add(new CheckOutRecord
                         {
-                            SERIAL_NUMBER = reader["SERIAL_NUMBER"].ToString() ?? string.Empty,
+                            SERIAL_NUMBER = reader["SFG"].ToString() ?? string.Empty,
                             MODEL_NAME = reader["MODEL_NAME"].ToString() ?? string.Empty,
                             WIP_GROUP = reader["WIP_GROUP"].ToString() ?? string.Empty,
                             MO_NUMBER = reader["MO_NUMBER"].ToString() ?? string.Empty,
@@ -402,7 +399,7 @@ namespace API_WEB.Controllers.SmartFA
                             SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
                                    ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
                                    FROM sfism4.P_WIP_KEYPARTS_T kp where kp.GROUP_NAME = 'SFG_LINK_FG' 
-                                   AND LENGTH(kp.SERIAL_NUMBER) in (12, 18, 21, 20) 
+                                   AND LENGTH(kp.SERIAL_NUMBER) in (12, 18, 21, 20, 23) 
                                    AND LENGTH(kp.KEY_PART_SN) in(14, 13)
                         )
                         WHERE rn = 1
@@ -414,7 +411,7 @@ namespace API_WEB.Controllers.SmartFA
                         SELECT kr.SERIAL_NUMBER, kr.KEY_PART_SN,
                             ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
                             FROM sfism4.R_WIP_KEYPARTS_T kr where kr.GROUP_NAME = 'SFG_LINK_FG' 
-                            AND LENGTH(kr.SERIAL_NUMBER) in (12, 18, 21, 20) 
+                            AND LENGTH(kr.SERIAL_NUMBER) in (12, 18, 21, 20, 23) 
                                    AND LENGTH(kr.KEY_PART_SN) in(14, 13)
                         )
                         WHERE rn = 1
@@ -424,13 +421,13 @@ namespace API_WEB.Controllers.SmartFA
                         (
                             (
                                 REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                                AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136')
+                                AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136', 'V1097872')
                             ) 
                             OR 
                             (
                                 a.MO_NUMBER LIKE '8%' 
                                 AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
-                                AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136')
+                                AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136', 'V1097872')
                             )
                         )
                       AND a.IN_DATETIME BETWEEN :startDate AND :endDate";
@@ -640,7 +637,7 @@ namespace API_WEB.Controllers.SmartFA
                                            ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
                                     FROM sfism4.P_WIP_KEYPARTS_T kp 
                                     WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
-                                      AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21) 
+                                      AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21,23) 
                                       AND LENGTH(kp.KEY_PART_SN) IN (13,14)
                                 )
                                 WHERE rn = 1
@@ -652,14 +649,14 @@ namespace API_WEB.Controllers.SmartFA
                                            ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
                                     FROM sfism4.R_WIP_KEYPARTS_T kr 
                                     WHERE kr.GROUP_NAME = 'SFG_LINK_FG'
-                                      AND LENGTH(kr.SERIAL_NUMBER) IN (12,18,20,21) 
+                                      AND LENGTH(kr.SERIAL_NUMBER) IN (12,18,20,21,23) 
                                       AND LENGTH(kr.KEY_PART_SN) IN (13,14)
                                 )
                                 WHERE rn = 1
                             ) kr ON a.SERIAL_NUMBER = kr.SERIAL_NUMBER
                             WHERE r107.WIP_GROUP NOT LIKE '%BR2C%'
                               AND r107.WIP_GROUP NOT LIKE '%BCFA%'
-                              AND a.P_SENDER IN ('V0904136','V0945375','V3245384','V3211693', 'V3209541', 'V0928908')
+                              AND a.P_SENDER IN ('V0904136','V0945375','V3245384','V3211693', 'V3209541', 'V0928908', 'V1097872')
                               AND a.REPAIRER IS NULL
 
                             UNION ALL
@@ -701,7 +698,7 @@ namespace API_WEB.Controllers.SmartFA
                                            ) rn
                                     FROM sfism4.P_WIP_KEYPARTS_T kp
                                     WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
-                                      AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21)
+                                      AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21, 23)
                                       AND LENGTH(kp.KEY_PART_SN) IN (13,14)
                                 )
                                 WHERE rn = 1
@@ -942,7 +939,7 @@ namespace API_WEB.Controllers.SmartFA
             await connection.OpenAsync();
 
             var checkInQuery = @"
-                SELECT a.SERIAL_NUMBER,
+                SELECT a.SERIAL_NUMBER AS SFG,
                        a.MO_NUMBER,
                        a.MODEL_NAME,
                        b.PRODUCT_LINE,
@@ -964,7 +961,7 @@ namespace API_WEB.Controllers.SmartFA
                 INNER JOIN SFIS1.C_ERROR_CODE_T c ON a.REMARK = c.ERROR_CODE
                 WHERE b.MODEL_SERIAL = 'ADAPTER'
                   AND r107.ERROR_FLAG not in ('0', '1')
-                  AND a.P_SENDER IN ('V0904136','V3209541','V0945375','V0928908','V3245384','V3211693')
+                  AND a.P_SENDER IN ('V0904136','V3209541','V0945375','V0928908','V3245384','V3211693', 'V1097872')
                   AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                   AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
                   AND a.REMARK NOT IN ('CK00')
@@ -983,7 +980,7 @@ namespace API_WEB.Controllers.SmartFA
                 {
                     checkInList.Add(new CheckInRecord
                     {
-                        SERIAL_NUMBER = reader["SERIAL_NUMBER"].ToString() ?? string.Empty,
+                        SFG = reader["SFG"].ToString() ?? string.Empty,
                         MO_NUMBER = reader["MO_NUMBER"].ToString() ?? string.Empty,
                         MODEL_NAME = reader["MODEL_NAME"].ToString() ?? string.Empty,
                         WIP_GROUP = reader["WIP_GROUP"].ToString() ?? string.Empty,
@@ -1021,7 +1018,11 @@ namespace API_WEB.Controllers.SmartFA
                              THEN COALESCE(kp.KEY_PART_SN, kr.KEY_PART_SN)
                         ELSE a.SERIAL_NUMBER
                     END AS SFG,
-                    a.SERIAL_NUMBER AS FG,
+                    CASE 
+                        WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
+                        THEN (kr.SERIAL_NUMBER)
+                             ELSE ''
+                        END AS FG,
                     a.MODEL_NAME,
                     d.PRODUCT_LINE,
                     a.MO_NUMBER,
@@ -1050,7 +1051,7 @@ namespace API_WEB.Controllers.SmartFA
                                ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
                         FROM sfism4.P_WIP_KEYPARTS_T kp 
                         WHERE kp.GROUP_NAME = 'SFG_LINK_FG' 
-                          AND LENGTH(kp.SERIAL_NUMBER) IN (11, 12, 18, 21, 20) 
+                          AND LENGTH(kp.SERIAL_NUMBER) IN (11, 12, 18, 21, 20, 23) 
                           AND LENGTH(kp.KEY_PART_SN) IN (14, 13)
                     )
                     WHERE rn = 1
@@ -1063,7 +1064,7 @@ namespace API_WEB.Controllers.SmartFA
                                ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
                         FROM sfism4.R_WIP_KEYPARTS_T kr 
                         WHERE kr.GROUP_NAME = 'SFG_LINK_FG' 
-                          AND LENGTH(kr.SERIAL_NUMBER) IN (12, 18, 21, 20) 
+                          AND LENGTH(kr.SERIAL_NUMBER) IN (12, 18, 21, 20, 23) 
                           AND LENGTH(kr.KEY_PART_SN) IN (14, 13)
                     )
                     WHERE rn = 1
@@ -1073,14 +1074,14 @@ namespace API_WEB.Controllers.SmartFA
                     (
                         (
                             REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                            AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136')
+                            AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136', 'V1097872')
                             AND (r107.ERROR_FLAG NOT IN ('0', '1') OR r107.SERIAL_NUMBER IS NULL)
                         ) 
                         OR 
                         (
                             a.MO_NUMBER LIKE '8%' 
                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
-                            AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136')
+                            AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136', 'V1097872')
                             AND r107.WIP_GROUP LIKE '%B36R%'
                         )
                     )
@@ -1144,7 +1145,6 @@ namespace API_WEB.Controllers.SmartFA
 
             return tonKhoAfter;
         }
-
 
 
         [HttpGet("GetSAPInOut")]

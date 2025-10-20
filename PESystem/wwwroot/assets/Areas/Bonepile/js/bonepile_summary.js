@@ -62,7 +62,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         'RepairInPD': '#fe8307',
         'WaitingCheckOut': '#fe8307',
         'WaitingLink': '#17a2b8',
-        'Linked': '#28a745'
+        'Linked': '#28a745',
+        'ApprovedBGA': '#17b86d',
+        'B36V': '#28a745',
+        'Can\'tRepairProcess': '#ffc107'
     };
 
     function uniq(arr) {
@@ -77,10 +80,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         return `${dateStr}_${timeStr}`;
     }
 
-    // ===== Chart (donut) =====
-    function renderDonut(statusCounts, total) {
-        const labels = statusCounts.map(s => s.status);
-        const dataVals = statusCounts.map(s => s.count);
+    // ===== Chart (BAR - SẮP XẾP GIẢM DẦN) =====
+    function renderBarChart(statusCounts, total) {
+        // ✅ SẮP XẾP GIẢM DẦN THEO COUNT
+        const sortedStatusCounts = [...statusCounts].sort((a, b) => b.count - a.count);
+        const labels = sortedStatusCounts.map(s => s.status);
+        const dataVals = sortedStatusCounts.map(s => s.count);
         const percentages = dataVals.map(v => total > 0 ? ((v / total) * 100).toFixed(1) : 0);
 
         const donutEl = document.getElementById('statusDonutChart');
@@ -88,21 +93,37 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const ctx = donutEl.getContext('2d');
         new Chart(ctx, {
-            type: 'doughnut',
+            type: 'bar', // ✅ THAY ĐỔI: Từ 'doughnut' sang 'bar'
             data: {
                 labels,
                 datasets: [{
                     data: dataVals,
-                    backgroundColor: labels.map(l => statusColorMap[l] || '#ccc')
+                    backgroundColor: labels.map(l => statusColorMap[l] || '#ccc'),
+                    borderWidth: 1,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            callback: value => value
+                        },
+                        grid: { display: true }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            boxWidth: 20, boxHeight: 20,
+                            boxWidth: 20,
+                            boxHeight: 20,
                             generateLabels: chart => {
                                 const d = chart.data;
                                 return d.labels.map((label, i) => ({
@@ -127,13 +148,25 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 return `${label}: ${value} (${percent}%)`;
                             }
                         }
+                    },
+                    datalabels: { // ✅ THÊM: Hiển thị % trên đỉnh cột
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value, ctx) => {
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${percentage}%`;
+                        },
+                        color: '#000',
+                        font: { weight: 'bold', size: 12 },
+                        display: context => context.dataset.data[context.dataIndex] > 0
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels] // ✅ YÊU CẦU plugin
         });
     }
 
-    // ===== Dashboard (KPI + donut) – run BEFORE/AFTER count concurrently =====
+    // ===== Dashboard (KPI + BAR CHART) – run BEFORE/AFTER count concurrently =====
     async function loadDashboardData() {
         try {
             showSpinner();
@@ -165,7 +198,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             const totalEl = document.getElementById('totalCount');
             if (totalEl) totalEl.innerText = total;
 
-            renderDonut(statusCounts, total);
+            // ✅ SỬ DỤNG BAR CHART THAY VÌ DONUT
+            renderBarChart(statusCounts, total);
 
             await loadTableData(afterBasic); // then render table
         } catch (e) {

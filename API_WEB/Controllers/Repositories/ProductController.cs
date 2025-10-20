@@ -16,6 +16,8 @@ using System.Text;
 using Newtonsoft.Json;
 using static API_WEB.Controllers.Repositories.KhoScrapController;
 using static API_WEB.Controllers.SmartFA.CheckInOutController;
+using System.Net;
+using API_WEB.Helpers.Repositories;
 
 namespace API_WEB.Controllers
 {
@@ -552,7 +554,7 @@ namespace API_WEB.Controllers
 
                 if (serialsToUpdateOracle.Any())
                 {
-                    await SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Product)");
+                    await RemoveLocationHelper.SendReceivingStatusAsync(serialsToUpdateOracle, request.EntryPerson ?? string.Empty, null, "Nhập(Kho Repair)", _oracleContext);
                 }
 
                 return Ok(new { success = true, results });
@@ -655,9 +657,7 @@ namespace API_WEB.Controllers
 
                 //3. So luong vi tri toi da trong khay
                 int maxSlots = shelf.Contains("XE") ? 20 : 8;
-                //int maxSlots = 8;
-                ////4. Tao danh sach serialnumber da su dung
-                //var occupiedSerialNumbers = productsInTray.Select(p => p.SerialNumber).ToList();
+
                 // 4. Tạo danh sách serials với vị trí
                 var occupiedPositions = productsInTray.Select(p => new
                 {
@@ -1033,105 +1033,6 @@ namespace API_WEB.Controllers
             });
             await _sqlContext.SaveChangesAsync();
         }
-
-        [NonAction]
-        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
-        {
-            if (serialNumbers == null || !serialNumbers.Any())
-                return;
-
-            try
-            {
-                // Làm sạch serials
-                var cleanedSerials = serialNumbers
-                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                if (!cleanedSerials.Any())
-                    return;
-
-                var serialsWithData18 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                // ✅ Dùng connection từ DbContext, không dispose
-                var connection = (OracleConnection)_oracleContext.Database.GetDbConnection();
-                if (connection.State != System.Data.ConnectionState.Open)
-                    await connection.OpenAsync();
-
-                const int oracleParameterLimit = 900; // tránh vượt quá giới hạn 1000 phần tử
-                for (var offset = 0; offset < cleanedSerials.Count; offset += oracleParameterLimit)
-                {
-                    var batch = cleanedSerials.Skip(offset).Take(oracleParameterLimit).ToList();
-                    if (batch.Count == 0)
-                        continue;
-
-                    var parameterNames = batch.Select((_, index) => $"p{offset + index}").ToArray();
-
-                    var query = $@"
-                    SELECT SERIAL_NUMBER
-                      FROM SFISM4.R_REPAIR_TASK_T
-                     WHERE DATA18 IS NOT NULL
-                       AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
-
-                    using var command = connection.CreateCommand();
-                    command.CommandText = query;
-
-                    for (var i = 0; i < batch.Count; i++)
-                        command.Parameters.Add(new OracleParameter(parameterNames[i], batch[i]));
-
-                    using var reader = await command.ExecuteReaderAsync();
-                    while (await reader.ReadAsync())
-                    {
-                        var serial = reader["SERIAL_NUMBER"]?.ToString();
-                        if (!string.IsNullOrWhiteSpace(serial))
-                            serialsWithData18.Add(serial.Trim());
-                    }
-                }
-
-                if (!serialsWithData18.Any())
-                    return;
-
-                // Gửi location rỗng tới API receiving-status
-                location = string.Empty;
-
-                var payload = new
-                {
-                    serialnumbers = string.Join(",", serialsWithData18),
-                    owner = owner?.Trim() ?? string.Empty,
-                    location,
-                    tag = tag?.Trim() ?? string.Empty
-                };
-
-                var json = JsonConvert.SerializeObject(payload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // 🚫 Bỏ proxy để request đi thẳng qua mạng nội bộ LAN
-                var handler = new HttpClientHandler
-                {
-                    UseProxy = false
-                };
-                using var client = new HttpClient(handler);
-
-                var response = await client.PostAsync(
-                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var msg = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
-                }
-                else
-                {
-                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {serialsWithData18.Count} serials. Tag={tag}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
-            }
-        }
-
         public class InforSN
         {
             public string wipGroup { get; set; } = string.Empty;

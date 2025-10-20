@@ -1,4 +1,5 @@
-﻿using API_WEB.ModelsDB;
+﻿using API_WEB.Helpers.Repositories;
+using API_WEB.ModelsDB;
 using API_WEB.ModelsOracle;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,42 +28,6 @@ namespace API_WEB.Controllers.Repositories
             _sqlContext = sqlContext ?? throw new ArgumentNullException(nameof(sqlContext));
             _oracleContext = oracleContext ?? throw new ArgumentNullException(nameof(oracleContext));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        }
-
-        private async Task<Dictionary<string, (string ProductLine, string ModelName)>> GetSnInfoAsync(IEnumerable<string> serialNumbers)
-        {
-            var result = new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var sn in serialNumbers)
-            {
-                try
-                {
-                    var response = await _httpClient.GetAsync($"http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber={sn}");
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine($"Failed to fetch SN info for {sn}: {response.StatusCode}");
-                        result[sn] = (string.Empty, string.Empty);
-                        continue;
-                    }
-
-                    var info = await response.Content.ReadFromJsonAsync<SnInfoResponse>();
-                    if (info != null && info.success)
-                    {
-                        result[sn] = (info.productLine ?? string.Empty, info.modelName ?? string.Empty);
-                    }
-                    else
-                    {
-                        result[sn] = (string.Empty, string.Empty);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error calling GetSNInfo for {sn}: {ex.Message}");
-                    result[sn] = (string.Empty, string.Empty);
-                }
-            }
-
-            return result;
         }
 
         private class SnInfoResponse
@@ -98,9 +63,11 @@ namespace API_WEB.Controllers.Repositories
                 var khoOks = await _sqlContext.KhoOks.Where(o => sns.Contains(o.SERIAL_NUMBER)).ToListAsync();
                 var khoScraps = await _sqlContext.KhoScraps.Where(s => sns.Contains(s.SERIAL_NUMBER)).ToListAsync();
 
-                // Lấy thêm thông tin Serial từ Oracle (nếu cần)
-                var snInfoMap = await GetSnInfoAsync(sns);
+                // Lấy thêm thông tin Serial từ Oracle
+                var connectionString = _oracleContext.Database.GetDbConnection().ConnectionString;
+                var snInfoMap = await InfoSerialNumberHelper.GetBatchSNInfoAsync(sns, connectionString);
 
+                // XÓA method GetBatchSNInfoAsync cũ!
                 var productBySn = products
                     .GroupBy(p => p.SerialNumber, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -138,11 +105,12 @@ namespace API_WEB.Controllers.Repositories
                 await _sqlContext.SaveChangesAsync();
                 await tx.CommitAsync();
 
-                // ✅ Sau khi commit thành công → gọi API RepairStatus để xoá location Oracle
+
+                //Goi API remove location (DATA18) = ''
                 try
                 {
-                    await SendReceivingStatusAsync(sns, request.ExportPerson ?? string.Empty, null, "Xuất(Kho Ok)");
-                    Console.WriteLine($"[ExportSN] Đã gọi API RepairStatus/receiving-status cho {sns.Count} serials.");
+                    await RemoveLocationHelper.SendReceivingStatusAsync(sns, request.ExportPerson ?? string.Empty, null, "Xuất(Kho Ok)", _oracleContext);
+                    Console.WriteLine($"[ExportSN] Đã gọi API receiving-status cho {sns.Count} serials.");
                 }
                 catch (Exception ex)
                 {
@@ -179,56 +147,6 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
-        [HttpPost("send-receiving-status")]
-        public async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string? location, string tag)
-        {
-            if (serialNumbers == null || !serialNumbers.Any())
-                return;
-
-            try
-            {
-                // 🔧 Làm sạch từng serial: trim và loại bỏ xuống dòng, khoảng trắng
-                var cleanedSerials = serialNumbers
-                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
-                    .Select(sn => sn.Trim().Replace("\r", "").Replace("\n", ""))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                if (!cleanedSerials.Any())
-                    return;
-
-                var payload = new
-                {
-                    serialnumbers = string.Join(",", cleanedSerials),
-                    owner = owner?.Trim() ?? string.Empty,
-                    location = location?.Trim() ?? string.Empty,
-                    tag = tag?.Trim() ?? string.Empty
-                };
-
-                var json = JsonConvert.SerializeObject(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync(
-                    "http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var msg = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[SendReceivingStatusAsync] ❌ Failed: {response.StatusCode} - {msg}");
-                }
-                else
-                {
-                    Console.WriteLine($"[SendReceivingStatusAsync] ✅ Success for {cleanedSerials.Count} serials. Tag={tag}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SendReceivingStatusAsync] ⚠️ Error: {ex.Message}");
-            }
-        }
-
-
-
         [HttpPost("UpdateMissingInfo")]
         public async Task<IActionResult> UpdateMissingInfo()
         {
@@ -241,34 +159,26 @@ namespace API_WEB.Controllers.Repositories
                 return Ok(new { success = true, updated = 0 });
             }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var connectipnString = _oracleContext.Database.GetDbConnection().ConnectionString;
+            var serialNumbers = exports.Select(e => e.SerialNumber).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var snInfoMap = await InfoSerialNumberHelper.GetBatchSNInfoAsync(serialNumbers, connectipnString);
+
             var updated = 0;
 
             foreach (var export in exports)
             {
-                try
+                if (snInfoMap.TryGetValue(export.SerialNumber, out var info))
                 {
-                    var url = $"{baseUrl}/api/Product/GetSNInfo?serialNumber={Uri.EscapeDataString(export.SerialNumber)}";
-                    var response = await _httpClient.GetAsync(url);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var info = await response.Content.ReadFromJsonAsync<SnInfoResponse>();
-                        if (info != null && info.success)
-                        {
-                            if (string.IsNullOrEmpty(export.ModelName))
-                                export.ModelName = info.modelName;
-                            if (string.IsNullOrEmpty(export.ProductLine))
-                                export.ProductLine = info.productLine;
-                            updated++;
-                        }
-                    }
-                }
-                catch
-                {
-                    // ignore errors, leave fields unchanged
+                    if (string.IsNullOrEmpty(export.ModelName))
+                        export.ModelName = info.ModelName;
+
+                    if (string.IsNullOrEmpty(export.ProductLine))
+                        export.ProductLine = info.ProductLine;
+
+                    updated++;
+
                 }
             }
-
             await _sqlContext.SaveChangesAsync();
             return Ok(new { success = true, updated });
         }

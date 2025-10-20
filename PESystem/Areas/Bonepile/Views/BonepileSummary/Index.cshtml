@@ -15,44 +15,36 @@
         </div>
     </div>
 </div>
-<div class="row my-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Trạng Thái</h5>
-                <canvas id="statusDonutChart"></canvas>
-            </div>
-        </div>
+<div class="parent">
+    <div class="div1">
+        <h5 class="card-title">Trạng Thái</h5>
+        <canvas id="statusDonutChart"></canvas>
     </div>
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <table id="summaryTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>TYPE</th>
-                            <th>SERIAL_NUMBER</th>
-                            <th>PRODUCT_LINE</th>
-                            <th>MODEL_NAME</th>
-                            <th>MO_NUMBER</th>
-                            <th>WIP_GROUP</th>
-                            <th>WIP_GROUP_KANBAN</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_CODE</th>
-                            <th>ERROR_CODE_ITEM</th>
-                            <th>TEST_TIME</th>
-                            <th>ERROR_DESC</th>
-                            <th>STATUS</th>
-                            <th>STATUS_V2</th>
-                            <th>AGING</th>
-                            <th>LOCATION</th>
-                            <th>REPAIR</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+    <div class="div2">
+        <table id="summaryTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>TYPE</th>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>WIP_GROUP_KANBAN</th>
+                    <th>TEST_GROUP</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_CODE_ITEM</th>
+                    <th>TEST_TIME</th>
+                    <th>ERROR_DESC</th>
+                    <th>STATUS</th>
+                    <th>STATUS_V2</th>
+                    <th>AGING</th>
+                    <th>LOCATION</th>
+                    <th>REPAIR</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 @section Scripts {
@@ -65,5 +57,25 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+
+        .parent {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .div1 {
+            grid-column: span 4 / span 4;
+            grid-row: span 4 / span 4;
+        }
+
+        .div2 {
+            grid-column: span 3 / span 3;
+            grid-row: span 4 / span 4;
+            grid-column-start: 5;
+        }
     </style>
+
 }
