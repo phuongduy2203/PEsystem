@@ -1230,6 +1230,24 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
+        private static string BuildLocation(string shelf, int? column, int? level, int? tray, int? position)
+
+        {
+            if (string.IsNullOrEmpty(shelf) && column == null && level == null && tray == null)
+            {
+                return string.Empty;
+            }
+            string baseLoc;
+            if (tray == null)
+            {
+                baseLoc = $"{shelf}{column}-{level}";
+            }
+            else
+            {
+                baseLoc = $"{shelf}{column}-{level}-K{tray}";
+            }
+            return position.HasValue ? $"{baseLoc}-{position}" : baseLoc;
+        }
 
         //=======================XUẤT EXCEL SCRAP====================
         [HttpGet("ExportExcelScrap")]
@@ -1434,25 +1452,6 @@ namespace API_WEB.Controllers.Repositories
                 return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
-        private static string BuildLocation(string shelf, int? column, int? level, int? tray, int? position)
-
-        {
-            if (string.IsNullOrEmpty(shelf) && column == null && level == null && tray == null)
-            {
-                return string.Empty;
-            }
-            string baseLoc;
-            if (tray == null)
-            {
-                baseLoc = $"{shelf}{column}-{level}";
-            }
-            else
-            {
-                baseLoc = $"{shelf}{column}-{level}-K{tray}";
-            }
-            return position.HasValue ? $"{baseLoc}-{position}" : baseLoc;
-        }
-
         private async Task<Dictionary<string, InforProduct>> GetOracleDataAsync(OracleConnection connection, List<string> serialNumbers)
         {
             var productData = new Dictionary<string, InforProduct>();
@@ -2560,7 +2559,6 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
-
         public class SaveSearchListRequest
         {
             public string ListName { get; set; }
@@ -2590,7 +2588,6 @@ namespace API_WEB.Controllers.Repositories
                 return StatusCode(500, new { success = false, message = "Đã xảy ra lỗi hệ thống." });
             }
         }
-
         public class UpdateScannedStatusRequest
         {
             public int SearchListId { get; set; }

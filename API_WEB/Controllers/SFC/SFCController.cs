@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ClosedXML.Excel;
+using Microsoft.AspNetCore.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -127,6 +129,144 @@ namespace API_WEB.Controllers.SFC
             catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost("export-ft-fail")]
+        public async Task<IActionResult> ExportFtFailAsync([FromBody] SerialNumbersExportRequest request)
+        {
+            try
+            {
+                if (request?.SerialNumbers == null || !request.SerialNumbers.Any())
+                {
+                    return BadRequest("SerialNumbers is required.");
+                }
+
+                var serialNumbers = request.SerialNumbers
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Select(sn => sn.Trim().ToUpperInvariant())
+                    .Distinct()
+                    .ToList();
+
+                if (!serialNumbers.Any())
+                {
+                    return BadRequest("SerialNumbers is required.");
+                }
+
+                var results = new List<FtFailRecord>();
+
+                using (var connection = new OracleConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    const int batchSize = 900; // Oracle supports maximum 1000 parameters per query
+
+                    for (var i = 0; i < serialNumbers.Count; i += batchSize)
+                    {
+                        var batch = serialNumbers.Skip(i).Take(batchSize).ToList();
+                        var parameterPlaceholders = batch.Select((_, index) => $":sn{index}").ToArray();
+
+                        var query = $@"
+                            SELECT 
+                                COALESCE(a.serial_number, b.SERIAL_NUMBER) as serial_number,
+                                a.mo_number, 
+                                a.model_name, 
+                                a.group_name, 
+                                a.error_code, 
+                                a.data4, 
+                                a.data1 as retest_code, 
+                                a.IN_STATION_TIME, 
+                                b.WIP_GROUP
+                            FROM SFISM4.R107 b
+                            LEFT JOIN SFISM4.R_FAIL_ATEDATA_T a
+                                ON b.SERIAL_NUMBER = a.SERIAL_NUMBER
+                                AND a.GROUP_NAME = 'FT'
+                                AND a.DATA1 = 'Fail'
+                                AND a.RETEST_COUNT = 1
+                            WHERE b.SERIAL_NUMBER IN ({string.Join(", ", parameterPlaceholders)})";
+
+                        using (var command = new OracleCommand(query, connection))
+                        {
+                            for (var j = 0; j < batch.Count; j++)
+                            {
+                                command.Parameters.Add(new OracleParameter($"sn{j}", OracleDbType.Varchar2)
+                                {
+                                    Value = batch[j]
+                                });
+                            }
+
+                            using (var reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    results.Add(new FtFailRecord
+                                    {
+                                        SerialNumber = reader["SERIAL_NUMBER"]?.ToString() ?? string.Empty,
+                                        MoNumber = reader["MO_NUMBER"]?.ToString() ?? string.Empty,
+                                        ModelName = reader["MODEL_NAME"]?.ToString() ?? string.Empty,
+                                        GroupName = reader["GROUP_NAME"]?.ToString() ?? string.Empty,
+                                        ErrorCode = reader["ERROR_CODE"]?.ToString() ?? string.Empty,
+                                        Data4 = reader["DATA4"]?.ToString() ?? string.Empty,
+                                        RetestCode = reader["RETEST_CODE"]?.ToString() ?? string.Empty,
+                                        TimeTest = reader["IN_STATION_TIME"] as DateTime?,
+                                        WipGroup = reader["WIP_GROUP"]?.ToString() ?? string.Empty
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!results.Any())
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy dữ liệu phù hợp." });
+                }
+
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("FT_Fail");
+                    var row = 1;
+
+                    worksheet.Cell(row, 1).Value = "SERIAL_NUMBER";
+                    worksheet.Cell(row, 2).Value = "MO_NUMBER";
+                    worksheet.Cell(row, 3).Value = "MODEL_NAME";
+                    worksheet.Cell(row, 4).Value = "GROUP_NAME";
+                    worksheet.Cell(row, 5).Value = "ERROR_CODE";
+                    worksheet.Cell(row, 6).Value = "DATA4";
+                    worksheet.Cell(row, 7).Value = "RETEST_CODE";
+                    worksheet.Cell(row, 8).Value = "IN_STATION_TIME";
+                    worksheet.Cell(row, 9).Value = "WIP_GROUP";
+
+                    foreach (var item in results)
+                    {
+                        row++;
+                        worksheet.Cell(row, 1).Value = item.SerialNumber;
+                        worksheet.Cell(row, 2).Value = item.MoNumber;
+                        worksheet.Cell(row, 3).Value = item.ModelName;
+                        worksheet.Cell(row, 4).Value = item.GroupName;
+                        worksheet.Cell(row, 5).Value = item.ErrorCode;
+                        worksheet.Cell(row, 6).Value = item.Data4;
+                        worksheet.Cell(row, 7).Value = item.RetestCode;
+                        worksheet.Cell(row, 8).Value = item.TimeTest;
+                        worksheet.Cell(row, 9).Value = item.WipGroup;
+                    }
+
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        var content = stream.ToArray();
+                        var fileName = $"ft_fail_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+                        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                    }
+                }
+            }
+            catch (OracleException ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi Oracle: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
 
@@ -417,5 +557,23 @@ namespace API_WEB.Controllers.SFC
     {
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+    }
+
+    public class SerialNumbersExportRequest
+    {
+        public List<string> SerialNumbers { get; set; }
+    }
+
+    public class FtFailRecord
+    {
+        public string SerialNumber { get; set; }
+        public string MoNumber { get; set; }
+        public string ModelName { get; set; }
+        public string GroupName { get; set; }
+        public string ErrorCode { get; set; }
+        public string Data4 { get; set; }
+        public string RetestCode { get; set; }
+        public DateTime? TimeTest { get; set; }
+        public string WipGroup { get; set; }
     }
 }

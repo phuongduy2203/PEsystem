@@ -286,6 +286,69 @@ function setupBorrowFeature() {
         }
     });
 
+    //borrowBtn.addEventListener("click", () => {
+    //    if (selectedSerialNumbers.length === 0) {
+    //        showError("Vui lòng chọn ít nhất một Serial Number!");
+    //        return;
+    //    }
+
+    //    Swal.fire({
+    //        title: "Xác nhận cho mượn",
+    //        input: "text",
+    //        inputLabel: "Chú ý: Nhập tên người mượn hoặc mã thẻ. Không được nhập 1 ký tự!",
+    //        inputPlaceholder: "",
+    //        showCancelButton: true,
+    //        confirmButtonText: "Xác Nhận",
+    //        cancelButtonText: "Hủy",
+    //        showLoaderOnConfirm: true,
+    //        preConfirm: async (borrower) => {
+    //            if (!borrower || borrower.trim() === "") {
+    //                Swal.showValidationMessage("Vui lòng nhập tên người mượn!");
+    //                return false;
+    //            }
+    //            if (!borrower || borrower.trim().length < 8) {
+    //                Swal.showValidationMessage("❌ Người mượn phải có ÍT NHẤT 8 ký tự!");
+    //                return false;
+    //            }
+    //            try {
+    //                showSpinner();
+    //                const borrowResponse = await fetch("http://10.220.130.119:9090/api/Borrow/Borrow", {
+    //                    method: "POST",
+    //                    headers: { "Content-Type": "application/json" },
+    //                    body: JSON.stringify({ Borrower: borrower.trim(), serialNumbers: selectedSerialNumbers }),
+    //                });
+
+    //                if (!borrowResponse.ok) throw new Error("Lỗi khi gửi yêu cầu mượn");
+
+    //                const handOverResponse = await fetch("http://10.220.130.119:9090/api/RepairStatus/hand-over-status", {
+    //                    method: "POST",
+    //                    headers: { "Content-Type": "application/json" },
+    //                    body: JSON.stringify({
+    //                        serialNumbers: selectedSerialNumbers.join(","),
+    //                        handOverStatus: "WAITING_HAND_OVER",
+    //                        tag: "Giao(Cho mượn từ Kho)"
+    //                    }),
+    //                });
+
+    //                const result = await handOverResponse.json();
+    //                if (result.message.replace(/"/g, '') !== "OK") throw new Error("Lỗi cập nhật trạng thái bàn giao");
+
+    //                return { success: true };
+    //            } catch (error) {
+    //                Swal.showValidationMessage(`Lỗi: ${error.message}`);
+    //                return false;
+    //            } finally {
+    //                hideSpinner();
+    //            }
+    //        },
+    //        allowOutsideClick: () => !Swal.isLoading()
+    //    }).then((result) => {
+    //        if (result.isConfirmed && result.value.success) {
+    //            showSuccess("Cho mượn thành công!");
+    //            location.reload(); // Tải lại trang nếu cần
+    //        }
+    //    });
+    //});
     borrowBtn.addEventListener("click", () => {
         if (selectedSerialNumbers.length === 0) {
             showError("Vui lòng chọn ít nhất một Serial Number!");
@@ -295,15 +358,74 @@ function setupBorrowFeature() {
         Swal.fire({
             title: "Xác nhận cho mượn",
             input: "text",
-            inputLabel: "Tên người mượn",
-            inputPlaceholder: "Nhập tên người mượn",
+            inputLabel: "Chú ý: Tên người mượn PHẢI có ÍT NHẤT 8 ký tự!",
+            inputPlaceholder: "VD: Nguyễn Văn A, ABC12345...",
             showCancelButton: true,
-            confirmButtonText: "Xác nhận",
+            confirmButtonText: "Xác Nhận",
             cancelButtonText: "Hủy",
             showLoaderOnConfirm: true,
+
+            // ✅ REAL-TIME VALIDATION - Ngăn lặp ký tự
+            inputValidator: (value) => {
+                const trimmed = value?.trim();
+                if (!trimmed || trimmed.length < 8) {
+                    return `❌ Cần ÍT NHẤT 8 ký tự! (${trimmed?.length || 0}/8)`;
+                }
+
+                // ✅ KIỂM TRA LẶP 1 KÝ TỰ 8 LẦN
+                if (/^(.)\1{7,}$/.test(trimmed)) {
+                    return `❌ Không được nhập lặp 1 ký tự! VD: "yyyyyyyy" ❌`;
+                }
+
+                return null; // OK
+            },
+
+            // ✅ COUNTER + REAL-TIME CHECK
+            didOpen: () => {
+                const input = Swal.getInput();
+                const label = Swal.getInputLabel();
+
+                // Tạo counter
+                const counter = document.createElement('div');
+                counter.id = 'char-counter';
+                counter.style.cssText = `
+                text-align: right; 
+                font-size: 12px; 
+                margin: 10px;
+                font-weight: bold;`;
+                label.parentNode.appendChild(counter);
+
+                // Real-time update
+                input.addEventListener('input', () => {
+                    const trimmed = input.value.trim();
+                    const len = trimmed.length;
+                    const isRepeated = /^(.)\1{7,}$/.test(trimmed);
+
+                    counter.textContent = `${len}/8 ký tự`;
+                    counter.style.color = len >= 8 && !isRepeated ? '#28a745' : '#dc3545';
+
+                    // Highlight input nếu lặp ký tự
+                    if (isRepeated && len >= 8) {
+                        input.style.borderColor = '#dc3545';
+                        input.style.backgroundColor = '#f8d7da';
+                    } else {
+                        input.style.borderColor = '';
+                        input.style.backgroundColor = '';
+                    }
+                });
+            },
+
             preConfirm: async (borrower) => {
-                if (!borrower || borrower.trim() === "") {
-                    Swal.showValidationMessage("Vui lòng nhập tên người mượn!");
+                const trimmed = borrower.trim();
+
+                // ✅ VALIDATION CUỐI CÙNG
+                if (trimmed.length < 8) {
+                    Swal.showValidationMessage(`❌ Cần ÍT NHẤT 8 ký tự! (${trimmed.length}/8)`);
+                    return false;
+                }
+
+                if (/^(.)\1{7,}$/.test(trimmed)) {
+                    Swal.showValidationMessage(`❌ Không được nhập lặp 1 ký tự! VD: "${trimmed}" ❌`);
                     return false;
                 }
 
@@ -312,7 +434,7 @@ function setupBorrowFeature() {
                     const borrowResponse = await fetch("http://10.220.130.119:9090/api/Borrow/Borrow", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ Borrower: borrower.trim(), serialNumbers: selectedSerialNumbers }),
+                        body: JSON.stringify({ Borrower: trimmed, serialNumbers: selectedSerialNumbers }),
                     });
 
                     if (!borrowResponse.ok) throw new Error("Lỗi khi gửi yêu cầu mượn");
@@ -342,7 +464,7 @@ function setupBorrowFeature() {
         }).then((result) => {
             if (result.isConfirmed && result.value.success) {
                 showSuccess("Cho mượn thành công!");
-                location.reload(); // Tải lại trang nếu cần
+                location.reload();
             }
         });
     });

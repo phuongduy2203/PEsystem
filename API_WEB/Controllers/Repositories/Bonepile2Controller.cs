@@ -832,7 +832,6 @@ namespace API_WEB.Controllers.Repositories
                     GROUP BY d.SERIAL_NUMBER
                 ) rep_detail
                   ON rep_detail.SERIAL_NUMBER = r107.SERIAL_NUMBER
-
                 LEFT JOIN (
                     SELECT SERIAL_NUMBER, TEST_CODE, TEST_TIME, TEST_GROUP, ERROR_ITEM_CODE
                     FROM (
@@ -844,7 +843,7 @@ namespace API_WEB.Controllers.Repositories
                             R109.ERROR_ITEM_CODE,
                             ROW_NUMBER() OVER(
                                 PARTITION BY R109.SERIAL_NUMBER
-                                ORDER BY R109.TEST_TIME DESC, R109.TEST_CODE DESC
+                                ORDER BY R109.TEST_TIME DESC
                             ) rn
                         FROM SFISM4.R109 R109
                     )
@@ -852,10 +851,9 @@ namespace API_WEB.Controllers.Repositories
                 ) r109_latest
                   ON r109_latest.SERIAL_NUMBER = r107.SERIAL_NUMBER
                 LEFT JOIN (
-                    SELECT SERIAL_NUMBER, GROUP_NAME, PASS_TIME, DATA2, PASS_DATE, DATA5
+                    SELECT SERIAL_NUMBER, GROUP_NAME, PASS_TIME, DATA2, DATA5
                     FROM (
-                        SELECT 
-                            t.*,
+                        SELECT t.SERIAL_NUMBER, t.GROUP_NAME, t.PASS_TIME, t.DATA2, t.DATA5,
                             ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY PASS_TIME DESC) rn
                         FROM SFISM4.R_ULT_RESULT_T t
                         WHERE GROUP_NAME LIKE '%_OFF%'
@@ -870,19 +868,56 @@ namespace API_WEB.Controllers.Repositories
                 WHERE 
                     model_desc.MODEL_SERIAL = 'ADAPTER'
                     AND z.SERIAL_NUMBER IS NULL                
-                    AND NOT REGEXP_LIKE(r107.MODEL_NAME, '^(900|930|692)')
+                    AND r107.MODEL_NAME NOT LIKE '900%'
+                    AND r107.MODEL_NAME NOT LIKE '930%'
+                    AND r107.MODEL_NAME NOT LIKE '692%'
                     AND r107.WIP_GROUP NOT LIKE '%BR2C%'
                     AND (
                         r107.ERROR_FLAG IN ('7','8')
-                        OR REGEXP_LIKE(r107.WIP_GROUP, 'B(28M|30M)$')
+                        OR (r107.WIP_GROUP LIKE '%B28M' OR r107.WIP_GROUP LIKE '%B30M')
                         OR r107.WORK_FLAG IN ('2','5')
                         OR (r107.ERROR_FLAG = '1' AND r109_latest.TEST_TIME <= SYSDATE - (8/24))
                     )
-                    AND r109_latest.TEST_CODE NOT IN (
-                        'BV00','PP10','BRK00','HSK00','SCR00','C028','TA00','CAR0','C010','C012',
-                        'LBxx','GB00','CLExx','GL00','BHSK00','DIR02','DIR03','DR00','GF06',
-                        'CLE02','CLE03','CLE04','CLE05','CLE06','CLE07','CLE08',
-                        'LB01','LB02','LB03','LB04','LB05','LB06','LB07','CK00')";
+                    AND NOT EXISTS (
+                SELECT code
+                FROM (
+                    SELECT 'BV00' AS code FROM DUAL UNION ALL
+                    SELECT 'PP10' FROM DUAL UNION ALL
+                    SELECT 'BRK00' FROM DUAL UNION ALL
+                    SELECT 'HSK00' FROM DUAL UNION ALL
+                    SELECT 'SCR00' FROM DUAL UNION ALL
+                    SELECT 'C028' FROM DUAL UNION ALL
+                    SELECT 'TA00' FROM DUAL UNION ALL
+                    SELECT 'CAR0' FROM DUAL UNION ALL
+                    SELECT 'C010' FROM DUAL UNION ALL
+                    SELECT 'C012' FROM DUAL UNION ALL
+                    SELECT 'LBxx' FROM DUAL UNION ALL
+                    SELECT 'GB00' FROM DUAL UNION ALL
+                    SELECT 'CLExx' FROM DUAL UNION ALL
+                    SELECT 'GL00' FROM DUAL UNION ALL
+                    SELECT 'BHSK00' FROM DUAL UNION ALL
+                    SELECT 'DIR02' FROM DUAL UNION ALL
+                    SELECT 'DIR03' FROM DUAL UNION ALL
+                    SELECT 'DR00' FROM DUAL UNION ALL
+                    SELECT 'GF06' FROM DUAL UNION ALL
+                    SELECT 'CLE02' FROM DUAL UNION ALL
+                    SELECT 'CLE03' FROM DUAL UNION ALL
+                    SELECT 'CLE04' FROM DUAL UNION ALL
+                    SELECT 'CLE05' FROM DUAL UNION ALL
+                    SELECT 'CLE06' FROM DUAL UNION ALL
+                    SELECT 'CLE07' FROM DUAL UNION ALL
+                    SELECT 'CLE08' FROM DUAL UNION ALL
+                    SELECT 'LB01' FROM DUAL UNION ALL
+                    SELECT 'LB02' FROM DUAL UNION ALL
+                    SELECT 'LB03' FROM DUAL UNION ALL
+                    SELECT 'LB04' FROM DUAL UNION ALL
+                    SELECT 'LB05' FROM DUAL UNION ALL
+                    SELECT 'LB06' FROM DUAL UNION ALL
+                    SELECT 'LB07' FROM DUAL UNION ALL
+                    SELECT 'CK00' FROM DUAL
+                ) excluded_codes
+                WHERE excluded_codes.code = r109_latest.TEST_CODE
+            )";
 
             using (var command = new OracleCommand(query, connection))
             {
