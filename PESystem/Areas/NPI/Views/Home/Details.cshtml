@@ -1,0 +1,116 @@
+@model NpiProjectDetailViewModel
+@{
+    ViewData["Title"] = Model.Project.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">@Model.Project.Name</h2>
+            <p class="text-muted mb-0">Owner: <strong>@Model.Project.Owner</strong> · Created: @Model.Project.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to projects</a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="alert alert-success" role="alert">@Model.StatusMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <div class="accordion" id="documentAccordion">
+        @for (var categoryIndex = 0; categoryIndex < Model.Categories.Count; categoryIndex++)
+        {
+            var category = Model.Categories[categoryIndex];
+            var collapseId = $"category-{categoryIndex}";
+            <div class="accordion-item mb-3">
+                <h2 class="accordion-header" id="heading-@collapseId">
+                    <button class="accordion-button @((categoryIndex == 0 ? "" : "collapsed"))" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@collapseId" aria-expanded="@(categoryIndex == 0)" aria-controls="collapse-@collapseId">
+                        @category.Name
+                    </button>
+                </h2>
+                <div id="collapse-@collapseId" class="accordion-collapse collapse @(categoryIndex == 0 ? "show" : string.Empty)" aria-labelledby="heading-@collapseId" data-bs-parent="#documentAccordion">
+                    <div class="accordion-body">
+                        @for (var itemIndex = 0; itemIndex < category.Items.Count; itemIndex++)
+                        {
+                            var item = category.Items[itemIndex];
+                            var controlId = $"cat{categoryIndex}-item{itemIndex}";
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">@item.Name</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form asp-action="Upload" method="post" enctype="multipart/form-data" class="row gy-2 gx-3 align-items-end mb-3">
+                                        <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+                                        <input type="hidden" name="Category" value="@category.Name" />
+                                        <input type="hidden" name="Item" value="@item.Name" />
+                                        <div class="col-md-5">
+                                            <label class="form-label" for="file-@controlId">Upload document</label>
+                                            <input type="file" class="form-control" id="file-@controlId" name="File" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="uploadedBy-@controlId">Updated by</label>
+                                            <input class="form-control" id="uploadedBy-@controlId" name="UploadedBy" value="@Model.Upload.UploadedBy" />
+                                        </div>
+                                        <div class="col-md-3 d-grid">
+                                            <button type="submit" class="btn btn-primary">Upload</button>
+                                        </div>
+                                    </form>
+
+                                    @if (item.Documents.Count > 0)
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th scope="col">Document</th>
+                                                        <th scope="col">Version</th>
+                                                        <th scope="col">Updated at</th>
+                                                        <th scope="col">Updated by</th>
+                                                        <th scope="col" class="text-end">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach (var document in item.Documents)
+                                                {
+                                                    <tr>
+                                                        <td>@document.OriginalFileName</td>
+                                                        <td>v@document.Version</td>
+                                                        <td>@document.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                        <td>@document.UploadedBy</td>
+                                                        <td class="text-end">
+                                                            <a asp-action="Download" asp-route-projectId="@Model.Project.Id" asp-route-documentId="@document.Id" class="btn btn-sm btn-outline-primary me-2">Download</a>
+                                                            <form asp-action="DeleteDocument" method="post" class="d-inline">
+                                                                <input type="hidden" name="projectId" value="@Model.Project.Id" />
+                                                                <input type="hidden" name="documentId" value="@document.Id" />
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this document?');">Delete</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted mb-0">No documents uploaded yet.</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

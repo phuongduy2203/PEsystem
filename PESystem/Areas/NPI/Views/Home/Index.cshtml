@@ -1,0 +1,94 @@
+@model NpiProjectIndexViewModel
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">NPI Document Projects</h2>
+            <p class="text-muted mb-0">Manage all NPI document repositories from a single place.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="alert alert-success" role="alert">@Model.StatusMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Create a new NPI project</strong>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" class="row g-3">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="col-md-6">
+                    <label asp-for="NewProject.Name" class="form-label"></label>
+                    <input asp-for="NewProject.Name" class="form-control" placeholder="Project name" />
+                    <span asp-validation-for="NewProject.Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="NewProject.Owner" class="form-label"></label>
+                    <input asp-for="NewProject.Owner" class="form-control" placeholder="Owner" />
+                    <span asp-validation-for="NewProject.Owner" class="text-danger"></span>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Create project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <strong>Existing projects</strong>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Projects.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col">Created</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var project in Model.Projects)
+                        {
+                            <tr>
+                                <td>@project.Name</td>
+                                <td>@project.Owner</td>
+                                <td>@project.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">Open</a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-4">
+                    <p class="mb-0 text-muted">No projects have been created yet. Use the form above to create the first one.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

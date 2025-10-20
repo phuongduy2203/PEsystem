@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PESystem.Areas.NPI.Services;
 using PESystem.Models;
 using PESystem.Policies;
 
@@ -15,6 +16,8 @@ var configuration = new ConfigurationBuilder()
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<NpiDocumentOptions>(configuration.GetSection("NpiDocument"));
+builder.Services.AddScoped<INpiDocumentService, NpiDocumentService>();
 
 // ---- HttpClient: gộp làm 1, vừa có BaseAddress vừa bypass proxy ----
 builder.Services.AddHttpClient("ApiClient", client =>
