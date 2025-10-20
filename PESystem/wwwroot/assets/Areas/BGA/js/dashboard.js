@@ -568,6 +568,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const labels = validData.map(item => item.sn ?? "");
         const values = validData.map(item => item.hours ?? 0);
+        const backgroundColors = validData.map(item => {
+            const hours = item.hours ?? 0;
+            return hours > 12
+                ? "rgba(220, 53, 69, 0.7)"
+                : "rgba(255, 159, 64, 0.6)";
+        });
+        const borderColors = validData.map(item => {
+            const hours = item.hours ?? 0;
+            return hours > 12
+                ? "rgba(220, 53, 69, 1)"
+                : "rgba(255, 159, 64, 1)";
+        });
         const tooltips = validData.map(item => {
             const applyTime = item.applyTime ? new Date(item.applyTime).toLocaleString() : "Không xác định";
             const hours = item.hours ?? 0;
@@ -606,8 +618,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [{
                     label: "Số giờ kể từ khi Barking",
                     data: values,
-                    backgroundColor: "rgba(255, 159, 64, 0.6)",
-                    borderColor: "rgba(255, 159, 64, 1)",
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
                     borderWidth: 1
                 }]
             },
