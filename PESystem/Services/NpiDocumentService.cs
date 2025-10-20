@@ -57,7 +57,10 @@ namespace PESystem.Services
 
         public async Task<NpiProjectSummary> CreateProjectAsync(string name, string owner, CancellationToken cancellationToken = default)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Project name is required.", nameof(name));
+            }
             owner ??= string.Empty;
 
             await _syncLock.WaitAsync(cancellationToken);
