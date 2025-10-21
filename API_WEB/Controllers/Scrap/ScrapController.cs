@@ -9,6 +9,7 @@ using API_WEB.ModelsOracle;
 using System.Net.Http;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Oracle.ManagedDataAccess.Client;
 
@@ -21,6 +22,7 @@ namespace API_WEB.Controllers.Scrap
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
         private readonly HttpClient _httpClient;
+        private readonly HttpClient _locationHttpClient;
 
         public ScrapController(CSDL_NE sqlContext, OracleDbContext oracleContext, IHttpClientFactory httpClientFactory)
         {
@@ -35,6 +37,55 @@ namespace API_WEB.Controllers.Scrap
             _httpClient = new HttpClient(handler);
             _httpClient.BaseAddress = new Uri("https://10.220.130.216:443/SfcSmartRepair/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            _locationHttpClient = new HttpClient
+            {
+                BaseAddress = new Uri("http://10.220.130.119:9090/")
+            };
+            _locationHttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        private async Task<Dictionary<string, LocationApiData>> FetchLocationDataAsync(IEnumerable<string> serialNumbers)
+        {
+            var serialNumberList = serialNumbers?
+                .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                .Select(sn => sn.Trim())
+                .Distinct()
+                .ToList() ?? new List<string>();
+
+            if (!serialNumberList.Any())
+            {
+                return new Dictionary<string, LocationApiData>();
+            }
+
+            try
+            {
+                var response = await _locationHttpClient.PostAsJsonAsync("api/Search/FindLocations", serialNumberList);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var locationResponse = JsonSerializer.Deserialize<LocationApiResponse>(content, options);
+                if (locationResponse?.Data == null || !locationResponse.Data.Any())
+                {
+                    return new Dictionary<string, LocationApiData>();
+                }
+
+                return locationResponse.Data
+                    .Where(item => !string.IsNullOrWhiteSpace(item.SerialNumber))
+                    .GroupBy(item => item.SerialNumber.Trim())
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.First());
+            }
+            catch (HttpRequestException)
+            {
+                return new Dictionary<string, LocationApiData>();
+            }
         }
 
         private async Task AddHistoryEntriesAsync(IEnumerable<ScrapList> records)
@@ -562,6 +613,8 @@ namespace API_WEB.Controllers.Scrap
                     return StatusCode(500, new { message = "Không thể kết nối đến API bên thứ ba.", error = ex.Message, innerException = ex.InnerException?.Message });
                 }
 
+                var locationLookup = await FetchLocationDataAsync(scrapRecords.Select(s => s.SN));
+
                 // Kết hợp dữ liệu từ ScrapList và API bên thứ ba
                 var unmatchedSNs = new List<string>();
                 var result = scrapRecords.Select(scrap =>
@@ -597,6 +650,8 @@ namespace API_WEB.Controllers.Scrap
                         }
                     }
 
+                    locationLookup.TryGetValue(normalizedScrapSN ?? string.Empty, out var locationInfo);
+
                     // Kiểm tra nếu Remark là "BP-20" thì gán Sloc = "FXV8" và Plant = "8620"
                     string slocValue = scrap.Remark == "BP-20" ? "FXV8" : scrap.Sloc;
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
@@ -624,6 +679,7 @@ namespace API_WEB.Controllers.Scrap
                         Cm = externalInfo?.Cm,
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
+                        Location = locationInfo?.Location,
                         Description = scrap.Desc,
                         SpeApproveTime = scrap.SpeApproveTime
                     };
@@ -731,6 +787,8 @@ namespace API_WEB.Controllers.Scrap
                     return StatusCode(500, new { message = "Không thể kết nối đến API bên thứ ba.", error = ex.Message, innerException = ex.InnerException?.Message });
                 }
 
+                var locationLookup = await FetchLocationDataAsync(validSNs.Select(s => s.SN));
+
                 // Kết hợp dữ liệu từ ScrapList và API bên thứ ba
                 var unmatchedSNs = new List<string>();
                 var result = validSNs.Select(scrap =>
@@ -766,6 +824,8 @@ namespace API_WEB.Controllers.Scrap
                         }
                     }
 
+                    locationLookup.TryGetValue(normalizedScrapSN ?? string.Empty, out var locationInfo);
+
                     // Kiểm tra nếu Remark là "BP-20" thì gán Sloc = "FXV8" và Plant = "8620"
                     string slocValue = scrap.Remark == "BP-20" ? "FXV8" : scrap.Sloc;
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
@@ -793,6 +853,7 @@ namespace API_WEB.Controllers.Scrap
                         Cm = externalInfo?.Cm,
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
+                        Location = locationInfo?.Location,
                         Description = scrap.Desc,
                         SpeApproveTime = scrap.SpeApproveTime
                     };
@@ -2098,6 +2159,33 @@ namespace API_WEB.Controllers.Scrap
     {
         public List<string> SNs { get; set; } = new List<string>();
         public string SaveApplyStatus { get; set; } = string.Empty;
+    }
+
+    public class LocationApiResponse
+    {
+        public bool Success { get; set; }
+        public List<LocationApiData> Data { get; set; } = new List<LocationApiData>();
+        public int TotalFound { get; set; }
+        public int TotalNotFound { get; set; }
+        public List<string> NotFoundSerialNumbers { get; set; } = new List<string>();
+    }
+
+    public class LocationApiData
+    {
+        [JsonPropertyName("serialNumber")]
+        public string SerialNumber { get; set; }
+
+        [JsonPropertyName("warehouse")]
+        public string Warehouse { get; set; }
+
+        [JsonPropertyName("location")]
+        public string Location { get; set; }
+
+        [JsonPropertyName("productLine")]
+        public string ProductLine { get; set; }
+
+        [JsonPropertyName("modelName")]
+        public string ModelName { get; set; }
     }
 
     // Class để nhận dữ liệu đầu vào cho API input-sn
