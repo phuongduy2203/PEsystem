@@ -4,7 +4,7 @@ namespace PESystem.Areas.NPI.ViewModels
 {
     public class NpiProjectDetailsViewModel
     {
-        public required NpiProject Project { get; init; }
+        public NpiProject Project { get; init; } = null!;
         public List<NpiFolderGroupViewModel> FolderGroups { get; init; } = new();
         public string? StatusMessage { get; set; }
         public string? ErrorMessage { get; set; }
