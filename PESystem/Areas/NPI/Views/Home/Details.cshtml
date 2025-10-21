@@ -1,0 +1,114 @@
+@model PESystem.Areas.NPI.ViewModels.NpiProjectDetailsViewModel
+@{
+    ViewData["Title"] = $"NPI - {Model.Project.Name}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <a asp-area="NPI" asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">
+                <i class="bi bi-arrow-left-circle me-1"></i>Quay lại danh sách project
+            </a>
+            <h2 class="mt-2 mb-1">@Model.Project.Name</h2>
+            <div class="text-muted">
+                <span class="me-3"><strong>Owner:</strong> @Model.Project.Owner</span>
+                <span><strong>Ngày tạo:</strong> @Model.Project.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="badge bg-secondary text-wrap">Project ID: @Model.Project.Id</div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@Model.StatusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @foreach (var group in Model.FolderGroups)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-semibold">
+                @group.Name
+            </div>
+            <div class="card-body">
+                @foreach (var folder in group.Folders)
+                {
+                    <div class="mb-4">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-2 gap-2">
+                            <h5 class="mb-0">@folder.DisplayName</h5>
+                            <form asp-area="NPI" asp-controller="Home" asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="w-100 w-lg-auto" style="max-width: 480px;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+                                <input type="hidden" name="RelativeFolder" value="@folder.RelativePath" />
+                                <div class="input-group input-group-sm">
+                                    <input type="file" name="File" class="form-control" required />
+                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th scope="col">Tài liệu</th>
+                                        <th scope="col" class="text-center">Version</th>
+                                        <th scope="col" class="text-center">Ngày update</th>
+                                        <th scope="col">Người update</th>
+                                        <th scope="col" class="text-end">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (folder.Documents.Any())
+                                    {
+                                        foreach (var doc in folder.Documents)
+                                        {
+                                            <tr>
+                                                <td>@doc.OriginalFileName</td>
+                                                <td class="text-center">v@doc.Version</td>
+                                                <td class="text-center">@doc.UploadedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@(string.IsNullOrWhiteSpace(doc.UploadedBy) ? "--" : doc.UploadedBy)</td>
+                                                <td class="text-end">
+                                                    <a class="btn btn-outline-secondary btn-sm me-2" asp-area="NPI" asp-controller="Home" asp-action="DownloadDocument" asp-route-projectId="@Model.Project.Id" asp-route-documentId="@doc.Id">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    <form asp-area="NPI" asp-controller="Home" asp-action="DeleteDocument" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+                                                        <input type="hidden" name="DocumentId" value="@doc.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">Chưa có tài liệu nào trong thư mục này.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

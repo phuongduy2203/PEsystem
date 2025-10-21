@@ -1,0 +1,109 @@
+@model PESystem.Areas.NPI.ViewModels.NpiProjectIndexViewModel
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">NPI Document Workspace</h2>
+            <p class="text-muted mb-0">Quản lý dự án và tài liệu cho quá trình NPI.</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            <i class="bi bi-plus-circle me-2"></i>Tạo project mới
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@Model.StatusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (Model.Projects.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Project</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col" class="text-nowrap">Ngày tạo</th>
+                                <th scope="col" class="text-center">Số tài liệu</th>
+                                <th scope="col" class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model.Projects)
+                            {
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="fw-semibold">@project.Name</div>
+                                        <small class="text-muted">@project.Id</small>
+                                    </td>
+                                    <td class="align-middle">@project.Owner</td>
+                                    <td class="align-middle">@project.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="align-middle text-center">@project.DocumentCount</td>
+                                    <td class="align-middle text-end">
+                                        <a class="btn btn-outline-primary btn-sm" asp-area="NPI" asp-controller="Home" asp-action="Details" asp-route-id="@project.Id">
+                                            Quản lý
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-inboxes display-6 d-block mb-3"></i>
+                    <p class="mb-0">Chưa có project nào. Hãy tạo project đầu tiên để bắt đầu quản lý tài liệu NPI.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectLabel">Tạo project NPI mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-area="NPI" asp-controller="Home" asp-action="CreateProject" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="project-name" class="form-label">Tên project</label>
+                        <input type="text" class="form-control" id="project-name" name="Name" maxlength="200" required />
+                        <div class="form-text">Tên project sẽ được dùng để tạo thư mục lưu trữ.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="project-owner" class="form-label">Owner</label>
+                        <input type="text" class="form-control" id="project-owner" name="Owner" maxlength="100" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Tạo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
