@@ -10,7 +10,7 @@ namespace PESystem.Areas.NPI.Services
 {
     public class NpiDocumentService
     {
-        private const string BasePath = @"D:\\NpiDocument";
+        private const string BasePath = @"D:\NpiDocument";
         private const string MetadataFileName = "metadata.json";
 
         private static readonly JsonSerializerOptions JsonOptions = new()
