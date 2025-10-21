@@ -10,6 +10,8 @@
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
 
+    @await RenderSectionAsync("Styles", required: false)
+
 </head>
 <body>
     <!-- Áp dụng trạng thái ban đầu từ localStorage -->
