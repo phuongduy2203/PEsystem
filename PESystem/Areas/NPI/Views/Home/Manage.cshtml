@@ -58,7 +58,7 @@
                                 {
                                     var path = BuildPath(category.Name, child.Name);
                                     var docs = GetDocuments(path);
-                                    <div class="col-12">
+                                    <div class="col-12 col-lg-6 col-xxl-4">
                                         @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
                                         {
                                             ProjectId = Model.Project.Id,
@@ -74,13 +74,17 @@
                         {
                             var path = BuildPath(category.Name);
                             var docs = GetDocuments(path);
-                            @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
-                            {
-                                ProjectId = Model.Project.Id,
-                                DisplayName = category.DisplayName,
-                                CategoryPath = path,
-                                Documents = docs.OrderBy(d => d.DocumentName).ToList()
-                            })
+                            <div class="row g-4">
+                                <div class="col-12 col-lg-6 col-xxl-4">
+                                    @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
+                                    {
+                                        ProjectId = Model.Project.Id,
+                                        DisplayName = category.DisplayName,
+                                        CategoryPath = path,
+                                        Documents = docs.OrderBy(d => d.DocumentName).ToList()
+                                    })
+                                </div>
+                            </div>
                         }
                     </div>
                 </div>

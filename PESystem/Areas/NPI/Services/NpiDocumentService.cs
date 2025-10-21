@@ -59,8 +59,7 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Key component",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "OPV component", DisplayName = "OPV component" },
-                    new NpiFolderDefinition { Name = "EPAD location", DisplayName = "EPAD location" }
+                    new NpiFolderDefinition { Name = "OPV data", DisplayName = "OPV data" }
                 }
             },
             new NpiFolderDefinition
@@ -70,8 +69,8 @@ namespace PESystem.Areas.NPI.Services
                 Children = new List<NpiFolderDefinition>
                 {
                     new NpiFolderDefinition { Name = "SOP polarity", DisplayName = "SOP polarity" },
-                    new NpiFolderDefinition { Name = "Label instruction", DisplayName = "Label instruction" },
-                    new NpiFolderDefinition { Name = "ESD data", DisplayName = "ESD data" }
+                    new NpiFolderDefinition { Name = "EPAD location", DisplayName = "EPAD location" },
+                    new NpiFolderDefinition { Name = "ESD location", DisplayName = "ESD location" }
                 }
             },
             new NpiFolderDefinition
@@ -80,9 +79,8 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Config NPI",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "OPV location", DisplayName = "OPV location" },
                     new NpiFolderDefinition { Name = "Config 27 for BI process", DisplayName = "Config 27 for BI process" },
-                    new NpiFolderDefinition { Name = "PCBA config", DisplayName = "PCBA config" }
+                    new NpiFolderDefinition { Name = "LCR config", DisplayName = "LCR config" }
                 }
             },
             new NpiFolderDefinition
@@ -91,8 +89,8 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "DFX",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "LFM", DisplayName = "LFM" },
-                    new NpiFolderDefinition { Name = "FA config", DisplayName = "FA config" }
+                    new NpiFolderDefinition { Name = "PFMEA", DisplayName = "PFMEA" },
+                    new NpiFolderDefinition { Name = "PMP", DisplayName = "PMP" }
                 }
             },
             new NpiFolderDefinition
@@ -101,8 +99,7 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Production plan",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "DEV + status", DisplayName = "DEV + status" },
-                    new NpiFolderDefinition { Name = "YR everyday (tracker)", DisplayName = "YR everyday (tracker)" }
+                    new NpiFolderDefinition { Name = "DEV + status", DisplayName = "DEV + status" }
                 }
             },
             new NpiFolderDefinition
@@ -111,7 +108,9 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Yield Rate NPI for each build",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "Only test station (engineer report)", DisplayName = "Only test station (engineer report)" }
+                    new NpiFolderDefinition { Name = "YR everyday (tracker)", DisplayName = "YR everyday (tracker)" },
+                    new NpiFolderDefinition { Name = "Only test station (engineer report)", DisplayName = "Only test station (engineer report)" },
+                    new NpiFolderDefinition { Name = "FA detail report", DisplayName = "FA detail report" }
                 }
             },
             new NpiFolderDefinition
@@ -123,7 +122,7 @@ namespace PESystem.Areas.NPI.Services
                     new NpiFolderDefinition { Name = "Cook book document", DisplayName = "Cook book document" },
                     new NpiFolderDefinition { Name = "Picture SFG + FG", DisplayName = "Picture SFG + FG" },
                     new NpiFolderDefinition { Name = "Picture AOI", DisplayName = "Picture AOI" },
-                    new NpiFolderDefinition { Name = "Picture SMT", DisplayName = "Picture SMT" }
+                    new NpiFolderDefinition { Name = "Profile SMT", DisplayName = "Profile SMT" }
                 }
             },
             new NpiFolderDefinition
@@ -132,7 +131,8 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Yield rate 1st MP",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "Only test station (engineer report)", DisplayName = "Only test station (engineer report)" }
+                    new NpiFolderDefinition { Name = "Only test station (engineer report)", DisplayName = "Only test station (engineer report)" },
+                    new NpiFolderDefinition { Name = "FA detail report", DisplayName = "FA detail report" }
                 }
             },
             new NpiFolderDefinition
@@ -141,7 +141,7 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = "Bone pile report",
                 Children = new List<NpiFolderDefinition>
                 {
-                    new NpiFolderDefinition { Name = "FA daily test report", DisplayName = "FA daily test report" }
+                    new NpiFolderDefinition { Name = "Bone pile report", DisplayName = "Bone pile report" }
                 }
             }
         };
