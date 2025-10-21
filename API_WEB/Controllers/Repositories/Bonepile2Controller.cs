@@ -794,7 +794,7 @@ namespace API_WEB.Controllers.Repositories
             await connection.OpenAsync();
 
             string query = @"
-                SELECT 
+SELECT 
                     r107.SERIAL_NUMBER,
                     r107.MODEL_NAME,
                     model_desc.PRODUCT_LINE,
@@ -813,23 +813,38 @@ namespace API_WEB.Controllers.Repositories
                     RE_TEST.DATA2,
                     RE_TEST.DATA5,
                     RE_TEST.PASS_TIME,
-                    rep_detail.FIRST_CHECKIN_DATE AS CHECKIN_DATE,
-                    TRUNC(SYSDATE - rep_detail.FIRST_CHECKIN_DATE) AS AGING_DAY
-                FROM sfism4.r107 r107
+                    CHECK_IN.IN_DATETIME AS CHECKIN_DATE,
+                    TRUNC(SYSDATE - CHECK_IN.IN_DATETIME) AS AGING_DAY
+                    FROM sfism4.r107 r107
                 JOIN sfis1.c_model_desc_t model_desc
                   ON r107.model_name = model_desc.model_name
                 LEFT JOIN sfism4.r_repair_task_t repair_task
                   ON r107.SERIAL_NUMBER = repair_task.SERIAL_NUMBER
                 LEFT JOIN (
-                    SELECT
-                        d.SERIAL_NUMBER,
-                        MIN(CASE WHEN d.DATA12 = 'CHECK_IN' THEN d.DATE3 END) AS FIRST_CHECKIN_DATE,
-                        LISTAGG(TRIM(d.DATA19), ' | ') 
-                            WITHIN GROUP (ORDER BY d.DATE3) AS DATA19_COMBINED
-                    FROM sfism4.R_REPAIR_TASK_DETAIL_T d
-                    WHERE d.DATA12 = 'CHECK_IN'
-                       OR (UPPER(d.DATA17) IN ('CONFIRM','SAVE') AND d.DATA19 IS NOT NULL)
-                    GROUP BY d.SERIAL_NUMBER
+                    SELECT SERIAL_NUMBER, MAX(IN_DATETIME) AS IN_DATETIME
+                    FROM SFISM4.R_REPAIR_IN_OUT_T 
+                    WHERE MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+                    AND MODEL_NAME NOT LIKE '900%' 
+                    AND MODEL_NAME NOT LIKE '930%' 
+                    AND MODEL_NAME NOT LIKE '692%'
+                    GROUP BY SERIAL_NUMBER
+                ) CHECK_IN
+                ON CHECK_IN.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                LEFT JOIN (
+                    SELECT SERIAL_NUMBER,
+                           LISTAGG(TRIM(DATA19), ' | ') 
+                             WITHIN GROUP (ORDER BY MIN_DATE) AS DATA19_COMBINED
+                    FROM (
+                        SELECT DISTINCT SERIAL_NUMBER, TRIM(DATA19) AS DATA19,
+                                        MIN(DATE3) AS MIN_DATE
+                        FROM sfism4.R_REPAIR_TASK_DETAIL_T
+                        WHERE UPPER(DATA17) IN ('CONFIRM', 'SAVE')
+                          AND DATA19 IS NOT NULL
+                          AND DATA19 != 'CONFIRM_PUT_B36R'
+                          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+                        GROUP BY SERIAL_NUMBER, TRIM(DATA19)
+                    )
+                    GROUP BY SERIAL_NUMBER
                 ) rep_detail
                   ON rep_detail.SERIAL_NUMBER = r107.SERIAL_NUMBER
                 LEFT JOIN (
@@ -846,6 +861,8 @@ namespace API_WEB.Controllers.Repositories
                                 ORDER BY R109.TEST_TIME DESC
                             ) rn
                         FROM SFISM4.R109 R109
+                        WHERE MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+                        AND MODEL_NAME NOT LIKE '900%' AND MODEL_NAME NOT LIKE '930%' AND MODEL_NAME NOT LIKE '692%'
                     )
                     WHERE rn = 1
                 ) r109_latest
@@ -856,7 +873,7 @@ namespace API_WEB.Controllers.Repositories
                         SELECT t.SERIAL_NUMBER, t.GROUP_NAME, t.PASS_TIME, t.DATA2, t.DATA5,
                             ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY PASS_TIME DESC) rn
                         FROM SFISM4.R_ULT_RESULT_T t
-                        WHERE GROUP_NAME LIKE '%_OFF%'
+                        WHERE GROUP_NAME LIKE '%_OFF%' AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
                     )
                     WHERE rn = 1
                 ) RE_TEST
@@ -864,60 +881,25 @@ namespace API_WEB.Controllers.Repositories
                 INNER JOIN sfis1.C_ERROR_CODE_T error_desc
                   ON r109_latest.TEST_CODE = error_desc.ERROR_CODE
                 LEFT JOIN SFISM4.Z_KANBAN_TRACKING_T z
-                  ON z.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                ON z.SERIAL_NUMBER = r107.SERIAL_NUMBER 
                 WHERE 
-                    model_desc.MODEL_SERIAL = 'ADAPTER'
-                    AND z.SERIAL_NUMBER IS NULL                
+                    z.SERIAL_NUMBER IS NULL                
                     AND r107.MODEL_NAME NOT LIKE '900%'
                     AND r107.MODEL_NAME NOT LIKE '930%'
                     AND r107.MODEL_NAME NOT LIKE '692%'
                     AND r107.WIP_GROUP NOT LIKE '%BR2C%'
                     AND (
                         r107.ERROR_FLAG IN ('7','8')
-                        OR (r107.WIP_GROUP LIKE '%B28M' OR r107.WIP_GROUP LIKE '%B30M')
-                        OR r107.WORK_FLAG IN ('2','5')
                         OR (r107.ERROR_FLAG = '1' AND r109_latest.TEST_TIME <= SYSDATE - (8/24))
+                        OR r107.WORK_FLAG IN ('2','5')
+                        OR (r107.WIP_GROUP LIKE '%B28M' OR r107.WIP_GROUP LIKE '%B30M')
                     )
-                    AND NOT EXISTS (
-                SELECT code
-                FROM (
-                    SELECT 'BV00' AS code FROM DUAL UNION ALL
-                    SELECT 'PP10' FROM DUAL UNION ALL
-                    SELECT 'BRK00' FROM DUAL UNION ALL
-                    SELECT 'HSK00' FROM DUAL UNION ALL
-                    SELECT 'SCR00' FROM DUAL UNION ALL
-                    SELECT 'C028' FROM DUAL UNION ALL
-                    SELECT 'TA00' FROM DUAL UNION ALL
-                    SELECT 'CAR0' FROM DUAL UNION ALL
-                    SELECT 'C010' FROM DUAL UNION ALL
-                    SELECT 'C012' FROM DUAL UNION ALL
-                    SELECT 'LBxx' FROM DUAL UNION ALL
-                    SELECT 'GB00' FROM DUAL UNION ALL
-                    SELECT 'CLExx' FROM DUAL UNION ALL
-                    SELECT 'GL00' FROM DUAL UNION ALL
-                    SELECT 'BHSK00' FROM DUAL UNION ALL
-                    SELECT 'DIR02' FROM DUAL UNION ALL
-                    SELECT 'DIR03' FROM DUAL UNION ALL
-                    SELECT 'DR00' FROM DUAL UNION ALL
-                    SELECT 'GF06' FROM DUAL UNION ALL
-                    SELECT 'CLE02' FROM DUAL UNION ALL
-                    SELECT 'CLE03' FROM DUAL UNION ALL
-                    SELECT 'CLE04' FROM DUAL UNION ALL
-                    SELECT 'CLE05' FROM DUAL UNION ALL
-                    SELECT 'CLE06' FROM DUAL UNION ALL
-                    SELECT 'CLE07' FROM DUAL UNION ALL
-                    SELECT 'CLE08' FROM DUAL UNION ALL
-                    SELECT 'LB01' FROM DUAL UNION ALL
-                    SELECT 'LB02' FROM DUAL UNION ALL
-                    SELECT 'LB03' FROM DUAL UNION ALL
-                    SELECT 'LB04' FROM DUAL UNION ALL
-                    SELECT 'LB05' FROM DUAL UNION ALL
-                    SELECT 'LB06' FROM DUAL UNION ALL
-                    SELECT 'LB07' FROM DUAL UNION ALL
-                    SELECT 'CK00' FROM DUAL
-                ) excluded_codes
-                WHERE excluded_codes.code = r109_latest.TEST_CODE
-            )";
+                   AND r109_latest.TEST_CODE NOT IN (
+                      'BV00','PP10','BRK00','HSK00','SCR00','C028','TA00','CAR0',
+                      'C010','C012','LBxx','GB00','CLExx','GL00','BHSK00','DIR02',
+                      'DIR03','DR00','GF06','CLE02','CLE03','CLE04','CLE05','CLE06',
+                      'CLE07','CLE08','LB01','LB02','LB03','LB04','LB05','LB06','LB07','CK00'
+                    )";
 
             using (var command = new OracleCommand(query, connection))
             {
@@ -963,7 +945,7 @@ namespace API_WEB.Controllers.Repositories
             await connection.OpenAsync();
 
             string query = @"
-                    SELECT 
+SELECT 
                         CASE 
                             WHEN REGEXP_LIKE(r107.MODEL_NAME, '^(900|692|930)') THEN kr.KEY_PART_SN
                             ELSE r107.SERIAL_NUMBER
@@ -985,8 +967,8 @@ namespace API_WEB.Controllers.Repositories
                         RE_TEST.DATA2 AS DATA2,
                         RE_TEST.DATA5 AS DATA5,
                         RE_TEST.PASS_TIME,
-                        chkin.first_checkin_date AS CHECKIN_DATE,
-                        TRUNC(SYSDATE - chkin.first_checkin_date) AS AGING_DAY
+                        CHECK_IN.IN_DATETIME AS CHECKIN_DATE,
+                        TRUNC(SYSDATE - CHECK_IN.IN_DATETIME) AS AGING_DAY
                     FROM sfism4.r107 r107
                     LEFT JOIN (
                         SELECT SERIAL_NUMBER, KEY_PART_SN
@@ -995,7 +977,7 @@ namespace API_WEB.Controllers.Repositories
                                    ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
                             FROM sfism4.R_WIP_KEYPARTS_T kr
                             WHERE kr.GROUP_NAME = 'SFG_LINK_FG' 
-                              AND LENGTH(kr.SERIAL_NUMBER) IN (12, 18, 21, 20)
+                            AND LENGTH(kr.SERIAL_NUMBER) IN (12, 18, 21, 20, 23)
                               AND LENGTH(kr.KEY_PART_SN) IN (14, 13)
                         )
                         WHERE rn = 1
@@ -1010,21 +992,30 @@ namespace API_WEB.Controllers.Repositories
                     LEFT JOIN sfism4.r_repair_task_t repair_task
                       ON r107.SERIAL_NUMBER = repair_task.SERIAL_NUMBER
                     LEFT JOIN (
-                        SELECT d.SERIAL_NUMBER, MIN(d.DATE3) AS first_checkin_date
-                        FROM sfism4.R_REPAIR_TASK_DETAIL_T d
-                        WHERE d.DATA12 = 'CHECK_IN'
-                        GROUP BY d.SERIAL_NUMBER
-                    ) chkin
-                      ON chkin.SERIAL_NUMBER = r107.SERIAL_NUMBER
-                    LEFT JOIN (
-                        SELECT d.SERIAL_NUMBER,
-                               LISTAGG(TRIM(d.DATA19), ' | ') WITHIN GROUP (ORDER BY d.DATE3) AS DATA19_COMBINED
-                        FROM sfism4.R_REPAIR_TASK_DETAIL_T d
-                        WHERE UPPER(d.DATA17) IN ('CONFIRM','SAVE')
-                          AND d.DATA19 IS NOT NULL
-                        GROUP BY d.SERIAL_NUMBER
-                    ) rt19
-                      ON rt19.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                    SELECT SERIAL_NUMBER,
+                           LISTAGG(TRIM(DATA19), ' | ') 
+                             WITHIN GROUP (ORDER BY MIN_DATE) AS DATA19_COMBINED
+                    FROM (
+                        SELECT DISTINCT SERIAL_NUMBER, TRIM(DATA19) AS DATA19,
+                                        MIN(DATE3) AS MIN_DATE
+                        FROM sfism4.R_REPAIR_TASK_DETAIL_T
+                        WHERE UPPER(DATA17) IN ('CONFIRM', 'SAVE')
+                          AND DATA19 IS NOT NULL
+                          AND DATA19 != 'CONFIRM_PUT_B36R'
+                          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+                        GROUP BY SERIAL_NUMBER, TRIM(DATA19)
+                    )
+                    GROUP BY SERIAL_NUMBER
+                ) rt19
+                  ON rt19.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                 LEFT JOIN (
+                    SELECT SERIAL_NUMBER, MAX(IN_DATETIME) AS IN_DATETIME
+                    FROM SFISM4.R_REPAIR_IN_OUT_T 
+                    GROUP BY SERIAL_NUMBER
+                ) CHECK_IN
+                ON CHECK_IN.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                
+                
                     LEFT JOIN (
                         SELECT SERIAL_NUMBER, TEST_CODE, TEST_TIME, TEST_GROUP, ERROR_ITEM_CODE
                         FROM (
@@ -1064,8 +1055,8 @@ namespace API_WEB.Controllers.Repositories
                       AND r107.SERIAL_NUMBER NOT IN (SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T)
                       AND r107.MO_NUMBER LIKE '4%'
                       AND (r107.WIP_GROUP LIKE '%B28M%' or r107.error_flag in ('7') or r107.work_flag in ('2'))
-                    -- Loại bỏ những dòng có WIP_GROUP của SFG chứa 'BR2C'
-                    AND (r107_sfg.WIP_GROUP IS NULL OR r107_sfg.WIP_GROUP NOT LIKE '%BR2C%')";
+                    AND (r107_sfg.WIP_GROUP IS NULL OR r107_sfg.WIP_GROUP NOT LIKE '%BR2C%')
+                    ";
 
             using var command = new OracleCommand(query, connection);
             using var reader = await command.ExecuteReaderAsync();
@@ -1460,8 +1451,7 @@ namespace API_WEB.Controllers.Repositories
             await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
             await connection.OpenAsync();
 
-            string query = @"
-SELECT
+            string query = @"SELECT
     A.SERIAL_NUMBER,
     R107.MO_NUMBER,
     A.MODEL_NAME,
@@ -1470,56 +1460,118 @@ SELECT
     R107.WIP_GROUP AS WIP_GROUP_SFC,
     R107.ERROR_FLAG,
     R107.WORK_FLAG,
-    COALESCE(C1.TEST_GROUP, R109X.LATEST_TEST_GROUP) AS TEST_GROUP,
-    COALESCE(C1.TEST_TIME,  R109X.LATEST_TEST_TIME)  AS TEST_TIME,
-    COALESCE(C1.TEST_CODE,  R109X.LATEST_TEST_CODE)  AS TEST_CODE,
-    COALESCE(C1.ERROR_ITEM_CODE,  R109X.LATEST_ERROR_ITEM_CODE)  AS ERROR_ITEM_CODE,
-    COALESCE(E1.ERROR_DESC, E2.ERROR_DESC) AS ERROR_DESC,
-    TRUNC(SYSDATE) - TRUNC(COALESCE(C1.TEST_TIME, R109X.LATEST_TEST_TIME)) AS AGING
+
+    -- 🧩 IN_DATETIME mới nhất giữa A và KP
+    CASE
+        WHEN CHECK_IN_A.IN_DATETIME IS NULL THEN CHECK_IN_KP.IN_DATETIME
+        WHEN CHECK_IN_KP.IN_DATETIME IS NULL THEN CHECK_IN_A.IN_DATETIME
+        WHEN CHECK_IN_A.IN_DATETIME >= CHECK_IN_KP.IN_DATETIME THEN CHECK_IN_A.IN_DATETIME
+        ELSE CHECK_IN_KP.IN_DATETIME
+    END AS IN_DATETIME,
+
+    -- 🧩 REMARK tương ứng với IN_DATETIME mới nhất
+    CASE
+        WHEN CHECK_IN_A.IN_DATETIME IS NULL THEN CHECK_IN_KP.REMARK
+        WHEN CHECK_IN_KP.IN_DATETIME IS NULL THEN CHECK_IN_A.REMARK
+        WHEN CHECK_IN_A.IN_DATETIME >= CHECK_IN_KP.IN_DATETIME THEN CHECK_IN_A.REMARK
+        ELSE CHECK_IN_KP.REMARK
+        END AS TEsT_CODE,
+
+    -- 🧩 ERROR_DESC tương ứng với IN_DATETIME mới nhất
+    CASE
+        WHEN CHECK_IN_A.IN_DATETIME IS NULL THEN E2.ERROR_DESC
+        WHEN CHECK_IN_KP.IN_DATETIME IS NULL THEN E1.ERROR_DESC
+        WHEN CHECK_IN_A.IN_DATETIME >= CHECK_IN_KP.IN_DATETIME THEN E1.ERROR_DESC
+        ELSE E2.ERROR_DESC
+    END AS ERROR_DESC,
+
+    -- 🧩 TEST_TIME, ERROR_ITEM_CODE, AGING
+    COALESCE(TEST_KP.LATEST_TEST_TIME, TEST_A.LATEST_TEST_TIME) AS TEST_TIME,
+    COALESCE(TEST_KP.LATEST_ERROR_ITEM_CODE, TEST_A.LATEST_ERROR_ITEM_CODE) AS ERROR_ITEM_CODE,
+    TRUNC(SYSDATE - COALESCE(TEST_KP.LATEST_TEST_TIME, TEST_A.LATEST_TEST_TIME)) AS AGING
+
 FROM SFISM4.Z_KANBAN_TRACKING_T A
-JOIN SFIS1.C_MODEL_DESC_T B
+INNER JOIN SFIS1.C_MODEL_DESC_T B
   ON A.MODEL_NAME = B.MODEL_NAME
-JOIN SFISM4.R107 R107
+INNER JOIN SFISM4.R107 R107
   ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
 
--- Lấy bản ghi REPAIR mới nhất theo TEST_TIME cho từng SERIAL_NUMBER
+-- 🔗 Mapping SERIAL_NUMBER ↔ KEY_PART_SN
 LEFT JOIN (
-    SELECT
-        R.SERIAL_NUMBER,
-        MAX(R.TEST_TIME) AS TEST_TIME,
-        MAX(R.TEST_CODE)  KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS TEST_CODE,
-        MAX(R.TEST_GROUP) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS TEST_GROUP,
-        MAX(R.ERROR_ITEM_CODE) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS ERROR_ITEM_CODE
-    FROM SFISM4.R_REPAIR_TASK_DETAIL_T R
-    WHERE R.TEST_TIME IS NOT NULL
-    GROUP BY R.SERIAL_NUMBER
-) C1
-  ON C1.SERIAL_NUMBER = A.SERIAL_NUMBER
+  SELECT SERIAL_NUMBER, KEY_PART_SN
+  FROM (
+    SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+           ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+    FROM SFISM4.P_WIP_KEYPARTS_T kp
+    WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+      AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21,23)
+      AND LENGTH(kp.KEY_PART_SN) IN (13,14)
+  )
+  WHERE rn = 1
+) kp ON a.SERIAL_NUMBER = kp.KEY_PART_SN
 
+-- 🧩 CHECK-IN KP
 LEFT JOIN (
-    SELECT
-        K.KEY_PART_SN,
-        MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
-    FROM SFISM4.P_WIP_KEYPARTS_T K
-    WHERE K.WORK_TIME IS NOT NULL
-    GROUP BY K.KEY_PART_SN
-) KP
-  ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+  SELECT RIO.SERIAL_NUMBER, RIO.REMARK, RIO.IN_DATETIME
+  FROM SFISM4.R_REPAIR_IN_OUT_T RIO
+  JOIN (
+      SELECT SERIAL_NUMBER, MAX(IN_DATETIME) AS MAX_IN
+      FROM SFISM4.R_REPAIR_IN_OUT_T
+      WHERE MODEL_NAME IN (
+          SELECT MODEL_NAME FROM SFIS1.C_MODEL_DESC_T WHERE MODEL_SERIAL = 'ADAPTER'
+      )
+        AND IN_DATETIME >= TO_DATE('2024-01-01','YYYY-MM-DD')
+      GROUP BY SERIAL_NUMBER
+  ) LATEST
+    ON LATEST.SERIAL_NUMBER = RIO.SERIAL_NUMBER
+   AND RIO.IN_DATETIME = LATEST.MAX_IN
+) CHECK_IN_KP
+  ON CHECK_IN_KP.SERIAL_NUMBER = kp.SERIAL_NUMBER
 
+-- 🧩 CHECK-IN A
 LEFT JOIN (
-    SELECT
+  SELECT RIO.SERIAL_NUMBER, RIO.REMARK, RIO.IN_DATETIME
+  FROM SFISM4.R_REPAIR_IN_OUT_T RIO
+  JOIN (
+      SELECT SERIAL_NUMBER, MAX(IN_DATETIME) AS MAX_IN
+      FROM SFISM4.R_REPAIR_IN_OUT_T
+      WHERE MODEL_NAME IN (
+          SELECT MODEL_NAME FROM SFIS1.C_MODEL_DESC_T WHERE MODEL_SERIAL = 'ADAPTER'
+      )
+        AND IN_DATETIME >= TO_DATE('2024-01-01','YYYY-MM-DD')
+      GROUP BY SERIAL_NUMBER
+  ) LATEST
+    ON LATEST.SERIAL_NUMBER = RIO.SERIAL_NUMBER
+   AND RIO.IN_DATETIME = LATEST.MAX_IN
+) CHECK_IN_A
+  ON CHECK_IN_A.SERIAL_NUMBER = A.SERIAL_NUMBER
+
+-- 🧩 TEST mới nhất cho KP
+LEFT JOIN (
+    SELECT 
         R.SERIAL_NUMBER,
         MAX(R.TEST_TIME) AS LATEST_TEST_TIME,
-        MAX(R.TEST_CODE)  KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_TEST_CODE,
-        MAX(R.TEST_GROUP) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_TEST_GROUP,
         MAX(R.ERROR_ITEM_CODE) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_ERROR_ITEM_CODE
     FROM SFISM4.R109 R
     WHERE R.TEST_TIME IS NOT NULL
     GROUP BY R.SERIAL_NUMBER
-) R109X
-  ON R109X.SERIAL_NUMBER = KP.PARENT_SN
-LEFT JOIN SFIS1.C_ERROR_CODE_T E1 ON C1.TEST_CODE = E1.ERROR_CODE
-LEFT JOIN SFIS1.C_ERROR_CODE_T E2 ON R109X.LATEST_TEST_CODE = E2.ERROR_CODE
+) TEST_KP ON TEST_KP.SERIAL_NUMBER = KP.SERIAL_NUMBER
+
+-- 🧩 TEST mới nhất cho A
+LEFT JOIN (
+    SELECT 
+        R.SERIAL_NUMBER,
+        MAX(R.TEST_TIME) AS LATEST_TEST_TIME,
+        MAX(R.ERROR_ITEM_CODE) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_ERROR_ITEM_CODE
+    FROM SFISM4.R109 R
+    WHERE R.TEST_TIME IS NOT NULL
+    GROUP BY R.SERIAL_NUMBER
+) TEST_A ON TEST_A.SERIAL_NUMBER = A.SERIAL_NUMBER
+
+-- 🧩 ERROR_DESC từ REMARK
+LEFT JOIN SFIS1.C_ERROR_CODE_T E1 ON CHECK_IN_A.REMARK = E1.ERROR_CODE
+LEFT JOIN SFIS1.C_ERROR_CODE_T E2 ON CHECK_IN_KP.REMARK = E2.ERROR_CODE
+
 WHERE
     A.WIP_GROUP LIKE '%B36R%'
     AND B.MODEL_SERIAL = 'ADAPTER'
