@@ -1,0 +1,80 @@
+@model PESystem.Areas.NPI.Models.NpiCategoryCardViewModel
+@using System.Linq
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">@Model.DisplayName</h5>
+    </div>
+    <div class="card-body">
+        <form asp-area="NPI" asp-controller="Home" asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="projectId" value="@Model.ProjectId" />
+            <input type="hidden" name="categoryPath" value="@Model.CategoryPath" />
+            <div class="col-md-4">
+                <label class="form-label">Tên tài liệu <span class="text-danger">*</span></label>
+                <input type="text" name="documentName" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Người cập nhật</label>
+                <input type="text" name="uploadedBy" class="form-control" placeholder="Tên người cập nhật" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">File <span class="text-danger">*</span></label>
+                <input type="file" name="file" class="form-control" required />
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">Tải lên</button>
+            </div>
+        </form>
+
+        @if (Model.Documents.Any())
+        {
+            <div class="table-responsive mt-4">
+                <table class="table table-striped table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Tài liệu</th>
+                            <th scope="col">Version</th>
+                            <th scope="col">Ngày cập nhật</th>
+                            <th scope="col">Người cập nhật</th>
+                            <th scope="col" class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var document in Model.Documents)
+                        {
+                            foreach (var version in document.Versions.OrderByDescending(v => v.Version))
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@document.DocumentName</td>
+                                    <td>v@version.Version</td>
+                                    <td>@version.UploadedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(version.UploadedBy) ? "-" : version.UploadedBy)</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-secondary me-2" asp-area="NPI" asp-controller="Home" asp-action="Download" asp-route-projectId="@Model.ProjectId" asp-route-categoryPath="@Model.CategoryPath" asp-route-documentName="@document.DocumentName" asp-route-version="@version.Version">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        <form asp-area="NPI" asp-controller="Home" asp-action="DeleteVersion" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xoá phiên bản này?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                            <input type="hidden" name="categoryPath" value="@Model.CategoryPath" />
+                                            <input type="hidden" name="documentName" value="@document.DocumentName" />
+                                            <input type="hidden" name="version" value="@version.Version" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted mt-4">Chưa có tài liệu nào được tải lên.</div>
+        }
+    </div>
+</div>

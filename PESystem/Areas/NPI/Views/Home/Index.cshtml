@@ -1,0 +1,107 @@
+@model IEnumerable<PESystem.Areas.NPI.Models.NpiProject>
+
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">NPI Document</h2>
+            <p class="text-muted mb-0">Quản lý tài liệu cho từng project NPI</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            <i class="bi bi-plus-circle me-2"></i>Tạo project mới
+        </button>
+    </div>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ViewBag.Success
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Project</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col" style="width: 180px;">Ngày tạo</th>
+                                <th scope="col" class="text-end" style="width: 120px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@project.Name</td>
+                                    <td>@(string.IsNullOrWhiteSpace(project.Owner) ? "-" : project.Owner)</td>
+                                    <td>@project.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" asp-area="NPI" asp-controller="Home" asp-action="Manage" asp-route-id="@project.Id">
+                                            Quản lý
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <h5 class="text-muted mb-2">Chưa có project nào được tạo.</h5>
+                    <p class="text-muted mb-4">Nhấn nút "Tạo project mới" để bắt đầu lưu trữ tài liệu NPI.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        Tạo project mới
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectModalLabel">Tạo project NPI mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-area="NPI" asp-controller="Home" asp-action="CreateProject" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Tên project <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="projectName" name="projectName" required />
+                        <div class="form-text">Tên project sẽ được sử dụng để tạo cấu trúc thư mục lưu trữ.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="owner" class="form-label">Owner</label>
+                        <input type="text" class="form-control" id="owner" name="owner" placeholder="Người phụ trách project" />
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Tạo project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
