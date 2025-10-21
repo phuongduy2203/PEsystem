@@ -472,6 +472,8 @@ namespace PESystem.Areas.NPI.Services
                     {
                         doc.Versions ??= new List<NpiDocumentVersion>();
                     }
+
+                    NormalizeDocumentVersions(project);
                 }
                 return project;
             }
@@ -491,6 +493,42 @@ namespace PESystem.Areas.NPI.Services
         private static string[] SplitCategoryPath(string categoryPath)
         {
             return categoryPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private static void NormalizeDocumentVersions(NpiProject project)
+        {
+            foreach (var document in project.Documents)
+            {
+                if (document.Versions == null || document.Versions.Count == 0)
+                {
+                    continue;
+                }
+
+                var orderedByTime = document.Versions
+                    .OrderBy(v => v.UploadedAt)
+                    .ThenBy(v => v.Version)
+                    .ToList();
+
+                var requiresRenumbering = false;
+                for (int i = 0; i < orderedByTime.Count; i++)
+                {
+                    if (orderedByTime[i].Version != i + 1)
+                    {
+                        requiresRenumbering = true;
+                        break;
+                    }
+                }
+
+                if (requiresRenumbering)
+                {
+                    for (int i = 0; i < orderedByTime.Count; i++)
+                    {
+                        orderedByTime[i].Version = i + 1;
+                    }
+                }
+
+                document.Versions = orderedByTime;
+            }
         }
     }
 }

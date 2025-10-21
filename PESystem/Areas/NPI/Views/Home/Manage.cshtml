@@ -2,9 +2,31 @@
 @using PESystem.Areas.NPI.Models
 @using System.Linq
 
-@{
+@{ 
     ViewData["Title"] = $"{Model.Project.Name} - NPI Document";
     Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .npi-category-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .npi-subcategory-wrapper {
+            border-left: 3px solid rgba(13, 110, 253, 0.2);
+            padding-left: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .npi-subcategory-wrapper {
+                padding-left: 1rem;
+                border-left-width: 2px;
+            }
+        }
+    </style>
 }
 
 <div class="container-fluid py-4">
@@ -51,41 +73,39 @@
                 </h2>
                 <div id="@collapseId" class="accordion-collapse collapse @(index == 0 ? "show" : string.Empty)" aria-labelledby="@headingId" data-bs-parent="#npiCategoryAccordion">
                     <div class="accordion-body">
-                        @if (category.Children != null && category.Children.Any())
-                        {
-                            <div class="row g-4">
+                        <div class="npi-category-stack">
+                            @if (category.Children != null && category.Children.Any())
+                            {
                                 @foreach (var child in category.Children)
                                 {
                                     var path = BuildPath(category.Name, child.Name);
                                     var docs = GetDocuments(path);
-                                    <div class="col-12 col-lg-6 col-xxl-4">
+                                    <div class="npi-subcategory-wrapper">
                                         @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
                                         {
                                             ProjectId = Model.Project.Id,
                                             DisplayName = child.DisplayName,
                                             CategoryPath = path,
-                                            Documents = docs.OrderBy(d => d.DocumentName).ToList()
+                                            Documents = docs.OrderBy(d => d.DocumentName).ToList(),
+                                            IsChildCategory = true
                                         })
                                     </div>
                                 }
-                            </div>
-                        }
-                        else
-                        {
-                            var path = BuildPath(category.Name);
-                            var docs = GetDocuments(path);
-                            <div class="row g-4">
-                                <div class="col-12 col-lg-6 col-xxl-4">
-                                    @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
-                                    {
-                                        ProjectId = Model.Project.Id,
-                                        DisplayName = category.DisplayName,
-                                        CategoryPath = path,
-                                        Documents = docs.OrderBy(d => d.DocumentName).ToList()
-                                    })
-                                </div>
-                            </div>
-                        }
+                            }
+                            else
+                            {
+                                var path = BuildPath(category.Name);
+                                var docs = GetDocuments(path);
+                                @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
+                                {
+                                    ProjectId = Model.Project.Id,
+                                    DisplayName = category.DisplayName,
+                                    CategoryPath = path,
+                                    Documents = docs.OrderBy(d => d.DocumentName).ToList(),
+                                    IsChildCategory = false
+                                })
+                            }
+                        </div>
                     </div>
                 </div>
             </div>

@@ -49,5 +49,6 @@ namespace PESystem.Areas.NPI.Models
         public string DisplayName { get; set; } = string.Empty;
         public string CategoryPath { get; set; } = string.Empty;
         public List<NpiDocument> Documents { get; set; } = new();
+        public bool IsChildCategory { get; set; }
     }
 }

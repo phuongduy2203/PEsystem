@@ -8,10 +8,18 @@
     {
         modalId += Guid.NewGuid().ToString("N");
     }
+
+    var cardClasses = Model.IsChildCategory
+        ? "card shadow-sm border-0 h-100 bg-light"
+        : "card shadow-sm border-0 h-100";
+
+    var headerClasses = Model.IsChildCategory
+        ? "card-header d-flex justify-content-between align-items-center py-3 bg-light border-0 border-bottom"
+        : "card-header bg-white d-flex justify-content-between align-items-center py-3";
 }
 
-<div class="card shadow-sm border-0 h-100">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+<div class="@cardClasses">
+    <div class="@headerClasses">
         <div>
             <h5 class="mb-1 fw-semibold">@Model.DisplayName</h5>
             <small class="text-muted">@Model.Documents.Sum(d => d.Versions.Count) phiên bản được lưu trữ</small>
@@ -21,10 +29,11 @@
         </button>
     </div>
     <div class="card-body">
-        @if (Model.Documents.Any())
+        @{ var hasAnyVersion = Model.Documents.Any(d => d.Versions != null && d.Versions.Any()); }
+        @if (hasAnyVersion)
         {
             <div class="table-responsive">
-                <table class="table align-middle table-hover">
+                <table class="table align-middle table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th scope="col" style="min-width: 200px;">Tài liệu</th>
@@ -37,15 +46,36 @@
                     <tbody>
                         @foreach (var document in Model.Documents.OrderBy(d => d.DocumentName))
                         {
-                            foreach (var version in document.Versions.OrderByDescending(v => v.Version))
+                            if (document.Versions == null || !document.Versions.Any())
                             {
+                                continue;
+                            }
+
+                            var orderedVersions = document.Versions
+                                .OrderByDescending(v => v.Version)
+                                .ThenByDescending(v => v.UploadedAt)
+                                .ToList();
+                            var latestVersion = orderedVersions.FirstOrDefault()?.Version ?? 0;
+                            for (int i = 0; i < orderedVersions.Count; i++)
+                            {
+                                var version = orderedVersions[i];
                                 <tr>
-                                    <td>
-                                        <div class="fw-semibold text-primary">@document.DocumentName</div>
-                                        <small class="text-muted">@version.OriginalFileName</small>
-                                    </td>
+                                    @if (i == 0)
+                                    {
+                                        <td rowspan="@orderedVersions.Count" class="align-middle">
+                                            <div class="fw-semibold text-primary">@document.DocumentName</div>
+                                            <small class="text-muted">@orderedVersions.Count phiên bản được lưu</small>
+                                        </td>
+                                    }
                                     <td class="text-center">
-                                        <span class="badge rounded-pill bg-secondary fw-semibold">v@version.Version</span>
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <span class="badge bg-primary fw-semibold">#@version.Version</span>
+                                            <small class="text-muted text-break">@version.OriginalFileName</small>
+                                            @if (version.Version == latestVersion)
+                                            {
+                                                <small class="text-success fw-semibold">Mới nhất</small>
+                                            }
+                                        </div>
                                     </td>
                                     <td>@version.UploadedAt.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>@(string.IsNullOrWhiteSpace(version.UploadedBy) ? "-" : version.UploadedBy)</td>
@@ -73,7 +103,7 @@
                 </table>
             </div>
         }
-        else
+        @else
         {
             <div class="d-flex align-items-center justify-content-center text-muted py-4">
                 <i class="bi bi-inbox me-2"></i> Chưa có tài liệu nào được tải lên.
