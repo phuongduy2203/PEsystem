@@ -10,22 +10,22 @@
     }
 
     var cardClasses = Model.IsChildCategory
-        ? "card shadow-sm border-0 h-100 bg-light"
-        : "card shadow-sm border-0 h-100";
+        ? "card shadow-sm border-0 h-100 bg-light npi-category-card npi-category-card--child"
+        : "card shadow-sm border-0 h-100 npi-category-card";
 
     var headerClasses = Model.IsChildCategory
-        ? "card-header d-flex justify-content-between align-items-center py-3 bg-light border-0 border-bottom"
-        : "card-header bg-white d-flex justify-content-between align-items-center py-3";
+        ? "card-header d-flex justify-content-between align-items-center py-3 bg-light border-0 border-bottom npi-category-card__header"
+        : "card-header bg-white d-flex justify-content-between align-items-center py-3 npi-category-card__header";
 }
 
 <div class="@cardClasses">
     <div class="@headerClasses">
         <div>
-            <h5 class="mb-1 fw-semibold">@Model.DisplayName</h5>
+            <h5 class="mb-1 fw-semibold npi-category-card__title">@Model.DisplayName</h5>
             <small class="text-muted">@Model.Documents.Sum(d => d.Versions.Count) phiên bản được lưu trữ</small>
         </div>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#@modalId">
-            <i class="bi bi-upload me-1"></i> Tải lên
+        <button type="button" class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#@modalId">
+            <i class="bi bi-upload"></i><span>Tải lên</span>
         </button>
     </div>
     <div class="card-body">
@@ -63,13 +63,13 @@
                                     @if (i == 0)
                                     {
                                         <td rowspan="@orderedVersions.Count" class="align-middle">
-                                            <div class="fw-semibold text-primary">@document.DocumentName</div>
+                                            <div class="fw-semibold text-primary npi-document-name">@document.DocumentName</div>
                                             <small class="text-muted">@orderedVersions.Count phiên bản được lưu</small>
                                         </td>
                                     }
                                     <td class="text-center">
-                                        <div class="d-flex flex-column align-items-center gap-1">
-                                            <span class="badge bg-primary fw-semibold">#@version.Version</span>
+                                        <div class="d-flex flex-column align-items-center gap-2">
+                                            <span class="badge rounded-pill text-bg-primary fw-semibold">V@version.Version</span>
                                             <small class="text-muted text-break">@version.OriginalFileName</small>
                                             @if (version.Version == latestVersion)
                                             {
@@ -80,9 +80,9 @@
                                     <td>@version.UploadedAt.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>@(string.IsNullOrWhiteSpace(version.UploadedBy) ? "-" : version.UploadedBy)</td>
                                     <td class="text-end">
-                                        <div class="btn-group" role="group">
-                                            <a class="btn btn-sm btn-outline-primary" asp-area="NPI" asp-controller="Home" asp-action="Download" asp-route-projectId="@Model.ProjectId" asp-route-categoryPath="@Model.CategoryPath" asp-route-documentName="@document.DocumentName" asp-route-version="@version.Version" title="Tải xuống">
-                                                <i class="bi bi-download"></i>
+                                        <div class="npi-document-actions d-flex justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" asp-area="NPI" asp-controller="Home" asp-action="Download" asp-route-projectId="@Model.ProjectId" asp-route-categoryPath="@Model.CategoryPath" asp-route-documentName="@document.DocumentName" asp-route-version="@version.Version" title="Tải xuống">
+                                                <i class="bi bi-download"></i><span>Tải</span>
                                             </a>
                                             <form asp-area="NPI" asp-controller="Home" asp-action="DeleteVersion" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xoá phiên bản này?');">
                                                 @Html.AntiForgeryToken()
@@ -90,8 +90,8 @@
                                                 <input type="hidden" name="categoryPath" value="@Model.CategoryPath" />
                                                 <input type="hidden" name="documentName" value="@document.DocumentName" />
                                                 <input type="hidden" name="version" value="@version.Version" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá phiên bản">
-                                                    <i class="bi bi-trash"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" title="Xoá phiên bản">
+                                                    <i class="bi bi-trash"></i><span>Xoá</span>
                                                 </button>
                                             </form>
                                         </div>

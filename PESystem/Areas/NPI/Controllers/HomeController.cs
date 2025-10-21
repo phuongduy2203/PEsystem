@@ -41,6 +41,24 @@ namespace PESystem.Areas.NPI.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateProject(string projectId, string projectName, string owner)
+        {
+            var result = _documentService.UpdateProject(projectId, projectName, owner);
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteProject(string projectId)
+        {
+            var result = _documentService.DeleteProject(projectId);
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+            return RedirectToAction(nameof(Index));
+        }
+
         public IActionResult Manage(string id)
         {
             if (string.IsNullOrWhiteSpace(id))

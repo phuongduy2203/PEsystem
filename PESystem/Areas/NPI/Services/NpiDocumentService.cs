@@ -228,6 +228,55 @@ namespace PESystem.Areas.NPI.Services
             }
         }
 
+        public (bool Success, string Message) UpdateProject(string projectId, string name, string owner)
+        {
+            if (string.IsNullOrWhiteSpace(projectId))
+            {
+                return (false, "Thiếu thông tin project.");
+            }
+
+            var projectFolder = Path.Combine(BasePath, projectId);
+            var metadata = LoadMetadata(projectFolder);
+            if (metadata == null)
+            {
+                return (false, "Không tìm thấy project.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                metadata.Name = name.Trim();
+            }
+
+            metadata.Owner = owner?.Trim() ?? string.Empty;
+            SaveMetadata(projectFolder, metadata);
+
+            return (true, "Đã cập nhật thông tin project.");
+        }
+
+        public (bool Success, string Message) DeleteProject(string projectId)
+        {
+            if (string.IsNullOrWhiteSpace(projectId))
+            {
+                return (false, "Thiếu thông tin project.");
+            }
+
+            var projectFolder = Path.Combine(BasePath, projectId);
+            if (!Directory.Exists(projectFolder))
+            {
+                return (false, "Không tìm thấy project.");
+            }
+
+            try
+            {
+                Directory.Delete(projectFolder, recursive: true);
+                return (true, "Đã xoá project cùng toàn bộ tài liệu.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Không thể xoá project: {ex.Message}");
+            }
+        }
+
         public (bool Success, string Message) AddDocumentVersion(
             string projectId,
             string categoryPath,
