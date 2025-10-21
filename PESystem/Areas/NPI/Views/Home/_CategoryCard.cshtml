@@ -69,7 +69,7 @@
                                     }
                                     <td class="text-center">
                                         <div class="d-flex flex-column align-items-center gap-2">
-                                            <span class="badge rounded-pill text-bg-primary fw-semibold">V@version.Version</span>
+                                            <span class="badge rounded-pill text-bg-primary fw-semibold">@($"V{version.Version}")</span>
                                             <small class="text-muted text-break">@version.OriginalFileName</small>
                                             @if (version.Version == latestVersion)
                                             {
