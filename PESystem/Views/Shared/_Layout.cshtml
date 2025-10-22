@@ -69,14 +69,14 @@
         </header>
         <div id="sidebar" class="sidebar">
             <div class="dashboard-container">
-                <a href="@Url.Action("Home", "Home")" class="text-decoration-none">
+                <a href="@Url.Action("Home", "Home", new { area = "" })">
                     <img src="~/assets/img/logo.jpg" class="logo" alt="Logo" />
                 </a>
                 <span class="spanTitle">PE SYSTEM</span>
                 <span><input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" /></span>
             </div>
             <nav class="nav flex-column">
-                <a href="@Url.Action("Home", "Home")" class="nav-link @ViewContext.IsActive("Home", "Home")">
+                <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link">
                     <i class="fas fa-home"></i> <span>Trang chủ</span>
                 </a>
                 <a href="@Url.Action("Index", "AdminView")" class="nav-link @ViewContext.IsActive("AdminView", "Index")">

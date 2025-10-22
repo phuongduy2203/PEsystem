@@ -83,7 +83,7 @@ async function processCreateTask(internalTasks, resultDivId) {
     const requestData = { internalTasks };
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/create-task", {
+        const response = await fetch("http://localhost:5025/api/Scrap/create-task", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestData)
@@ -119,7 +119,8 @@ async function processCreateTask(internalTasks, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: item.location ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask
@@ -175,7 +176,7 @@ async function processCreateTaskBySN(sNs, resultDivId) {
     const requestData = { sNs };
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/create-task-sn", {
+        const response = await fetch("http://localhost:5025/api/Scrap/create-task-sn", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestData)
@@ -211,7 +212,8 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: item.location ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask
