@@ -68,9 +68,11 @@ namespace API_WEB.Controllers.Scrap
 
                 var locationResponse = await response.Content.ReadFromJsonAsync<LocationApiResponse>(options);
 
-                if (locationResponse?.Success == true && locationResponse.Data != null)
+                var items = locationResponse?.Items ?? Enumerable.Empty<LocationData>();
+
+                if (items.Any())
                 {
-                    return locationResponse.Data
+                    return items
                         .Where(item => !string.IsNullOrWhiteSpace(item.SerialNumber))
                         .GroupBy(item => item.SerialNumber.Trim(), StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(
@@ -2135,6 +2137,14 @@ namespace API_WEB.Controllers.Scrap
     {
         public bool Success { get; set; }
         public List<LocationData> Data { get; set; } = new List<LocationData>();
+
+        [JsonPropertyName("results")]
+        public List<LocationData> Results { get; set; } = new List<LocationData>();
+
+        [JsonIgnore]
+        public IEnumerable<LocationData> Items =>
+            (Data ?? Enumerable.Empty<LocationData>())
+                .Concat(Results ?? Enumerable.Empty<LocationData>());
     }
 
     public class LocationData
