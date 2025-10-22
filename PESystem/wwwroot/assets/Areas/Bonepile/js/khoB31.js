@@ -121,9 +121,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             // Log payload để debug
             console.log("Sending payload:", { statuses });
 
-            const response = await axios.post(apiDetailUrl, {
-                statuses: statuses.length > 0 ? statuses : null
-            });
+            const params = {};
+            if (Array.isArray(statuses) && statuses.length > 0) {
+                params.statuses = statuses;
+            }
+
+            const response = await axios.get(apiDetailUrl, { params });
             const tableData = response.data?.data || [];
 
             if (dataTable) {

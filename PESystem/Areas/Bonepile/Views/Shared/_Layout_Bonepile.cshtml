@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bonepile</title>
     <link rel="icon" href="~/assets/img/bonepile.png" type="image/png">
-    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css?v=@DateTime.Now.Ticks" asp-append-version="true" />
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
     <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
@@ -40,10 +40,7 @@
         })();
     </script>
 
-    <header class="header d-flex justify-content-between align-items-center" id="header">
-
-    </header>
-    <!-- Sidebar dọc -->
+    <header class="header d-flex justify-content-between align-items-center" id="header"></header>
     <div id="sidebar" class="sidebar">
         <!-- Logo and Dashboard with fixed checkbox -->
         <div class="dashboard-container">
@@ -64,42 +61,6 @@
 
         </nav>
     </div>
-    <script>
-        // Toggle sidebar mở rộng hoặc thu gọn
-        const sidebar = document.getElementById("sidebar");
-        sidebar.addEventListener("click", () => {
-            sidebar.classList.toggle("open");
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let sidebar = document.querySelector(".sidebar");
-            let toggleSidebarFixed = document.getElementById("toggleSidebarFixed");
-
-            // Kiểm tra trạng thái sidebar đã lưu trong localStorage
-            if (localStorage.getItem("sidebarState") === "expanded") {
-                sidebar.classList.add("open");
-                toggleSidebarFixed.checked = true; // Cập nhật checkbox
-            } else {
-                sidebar.classList.remove("open");
-                toggleSidebarFixed.checked = false;
-            }
-
-            // Khi checkbox thay đổi, lưu trạng thái vào localStorage
-            toggleSidebarFixed.addEventListener("change", function () {
-                if (this.checked) {
-                    sidebar.classList.add("open");
-                    localStorage.setItem("sidebarState", "expanded");
-                } else {
-                    sidebar.classList.remove("open");
-                    localStorage.setItem("sidebarState", "collapsed");
-                }
-            });
-        });
-    </script>
-
-
 
     <main id="mainContent">
         <!--SPINER-->
@@ -119,7 +80,7 @@
     <script src="~/lib/chart.umd.min.js"></script> <!-- Chart.js -->
     <script src="~/lib/chartjs-plugin-datalabels.js"></script>
     <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
-    <script src="~/js/site.min.js" asp-append-version="true"></script> <!-- Site Scripts -->
+    <script src="~/js/site.js?v=@DateTime.Now.Ticks"></script> <!-- Site Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> <!-- Bootstrap JS -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -10,6 +10,7 @@ using OfficeOpenXml;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -28,6 +29,7 @@ namespace API_WEB.Controllers
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
         private readonly HttpClient _httpClient;
+        private static readonly HashSet<string> AllowedWorkFlags = new(StringComparer.OrdinalIgnoreCase) { "2", "5", "3" };
 
         public ProductController(CSDL_NE sqlContext, OracleDbContext oracleContext, HttpClient httpClient)
         {
@@ -387,6 +389,19 @@ namespace API_WEB.Controllers
                     }
 
                     var storageSerial = linkInfo.StorageSerial;
+                    var validationResult = await ValidateSerialForImportAsync(serialNumber, linkInfo);
+                    if (!validationResult.IsValid)
+                    {
+                        results.Add(new
+                        {
+                            serialNumber,
+                            linkedSerial = linkInfo.LinkedFgSerial ?? storageSerial,
+                            success = false,
+                            message = validationResult.ErrorMessage
+                        });
+                        continue;
+                    }
+
                     var relatedSerials = new HashSet<string>(linkInfo.RelatedSerials, StringComparer.OrdinalIgnoreCase)
                     {
                         serialNumber
@@ -568,6 +583,154 @@ namespace API_WEB.Controllers
             {
                 Console.WriteLine($"System ERROR:{ex.Message}");
                 return StatusCode(500, new { sucess = false, message = $"Loi He Thong: {ex.Message}" });
+            }
+        }
+
+        private async Task<(bool IsValid, string? ErrorMessage)> ValidateSerialForImportAsync(string originalSerial, SerialLinkResolver.SerialLinkInfo linkInfo)
+        {
+            if (linkInfo == null)
+            {
+                return (false, "SERIAL_NUMBER CHƯA ĐƯỢC UNLINK!!");
+            }
+
+            var serialCandidates = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(originalSerial))
+            {
+                serialCandidates.Add(originalSerial.Trim());
+            }
+
+            if (linkInfo.PrioritySerials != null)
+            {
+                serialCandidates.AddRange(linkInfo.PrioritySerials);
+            }
+
+            string? validatedSerial = null;
+
+            foreach (var candidate in serialCandidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    continue;
+                }
+
+                const string oracleQuery = @"SELECT SERIAL_NUMBER, ERROR_FLAG, WORK_FLAG
+                                              FROM SFISM4.R107
+                                              WHERE SERIAL_NUMBER = :serialNumber
+                                                AND ROWNUM = 1";
+
+                var oracleParam = new OracleParameter("serialNumber", OracleDbType.Varchar2)
+                {
+                    Value = candidate.Trim()
+                };
+
+                var oracleResult = await _oracleContext.OracleDataR107
+                    .FromSqlRaw(oracleQuery, oracleParam)
+                    .AsNoTracking()
+                    .Select(r => new { r.SERIAL_NUMBER, r.ERROR_FLAG, r.WORK_FLAG })
+                    .FirstOrDefaultAsync();
+
+                if (oracleResult == null)
+                {
+                    continue;
+                }
+
+                var errorFlag = oracleResult.ERROR_FLAG?.Trim();
+                if (string.Equals(errorFlag, "1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, $"SerialNumber {candidate.Trim()} CÓ ERROR_FLAG = 1 KHÔNG NHẬP KHO!");
+                }
+
+                var workFlag = oracleResult.WORK_FLAG?.Trim() ?? string.Empty;
+                if (!AllowedWorkFlags.Contains(workFlag))
+                {
+                    return (false, $"SerialNumber {candidate.Trim()} CÓ WORK_FLAG = {workFlag} KHÔNG NHẬP KHO!");
+                }
+
+                validatedSerial = candidate.Trim();
+                break;
+            }
+
+            var serialsToCheckKeyPart = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(originalSerial))
+            {
+                serialsToCheckKeyPart.Add(originalSerial.Trim());
+            }
+
+            if (linkInfo.RelatedSerials != null)
+            {
+                foreach (var related in linkInfo.RelatedSerials)
+                {
+                    if (!string.IsNullOrWhiteSpace(related))
+                    {
+                        serialsToCheckKeyPart.Add(related.Trim());
+                    }
+                }
+            }
+
+            if (validatedSerial != null)
+            {
+                serialsToCheckKeyPart.Add(validatedSerial);
+            }
+
+            foreach (var serial in serialsToCheckKeyPart)
+            {
+                if (await KeyPartSerialExistsAsync(serial))
+                {
+                    return (false, $"SerialNumber {serial} đang tồn tại trong bảng R_WIP_KEYPARTS_T với vai trò KEY_PART_SN.");
+                }
+            }
+
+            return (true, null);
+        }
+
+        private async Task<bool> KeyPartSerialExistsAsync(string serialNumber)
+        {
+            if (string.IsNullOrWhiteSpace(serialNumber))
+            {
+                return false;
+            }
+
+            const string query = @"SELECT KEY_PART_SN
+                                    FROM SFISM4.R_WIP_KEYPARTS_T
+                                    WHERE KEY_PART_SN = :serialNumber
+                                      AND ROWNUM = 1";
+
+            var connection = _oracleContext.Database.GetDbConnection();
+            var shouldClose = connection.State != System.Data.ConnectionState.Open;
+
+            if (shouldClose)
+            {
+                await connection.OpenAsync();
+            }
+
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+
+                if (command is OracleCommand oracleCommand)
+                {
+                    oracleCommand.BindByName = true;
+                }
+
+                var parameter = new OracleParameter("serialNumber", OracleDbType.Varchar2)
+                {
+                    Value = serialNumber.Trim()
+                };
+
+                command.Parameters.Add(parameter);
+
+                var result = await command.ExecuteScalarAsync();
+                return result != null && result != DBNull.Value;
+            }
+            finally
+            {
+                if (shouldClose && connection.State == System.Data.ConnectionState.Open)
+                {
+                    await connection.CloseAsync();
+                }
             }
         }
         public class SaveProductRequest

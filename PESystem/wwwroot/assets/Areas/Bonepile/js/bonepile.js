@@ -1,6 +1,5 @@
 ﻿document.addEventListener("DOMContentLoaded", async function () {
     const apiBase = "http://10.220.130.119:9090/api/Bonepile2";
-    const apiCountUrl = `${apiBase}/adapter-repair-status-count`;
     const apiDetailUrl = `${apiBase}/adapter-repair-records`;
     const apiAgingUrl = `${apiBase}/adapter-repair-aging-count`;
     const locationUrl = 'http://10.220.130.119:9090/api/Search/FindLocations';
@@ -55,6 +54,16 @@
         ">=90": "#dc3545",
     };
 
+    async function fetchOverview(statuses) {
+        const params = {};
+        if (statuses && statuses !== validStatuses && statuses.length > 0) {
+            params.statuses = statuses;
+        }
+
+        const response = await axios.get(apiDetailUrl, { params });
+        return response.data;
+    }
+
     let dataTable;
     let modalTable;
 
@@ -62,11 +71,15 @@
     async function loadDashboardData() {
         try {
             showSpinner();
-            const res = await axios.get(apiCountUrl);
-            const { totalCount, statusCounts } = res.data;
+            const [overview, agingRes] = await Promise.all([
+                fetchOverview(),
+                axios.get(apiAgingUrl)
+            ]);
 
-            const agingRes = await axios.get(apiAgingUrl);
-            const { agingCounts } = agingRes.data;
+            const totalCount = Number(overview?.totalCount ?? 0);
+            const statusCounts = overview?.statusCounts ?? [];
+
+            const agingCounts = agingRes.data?.agingCounts ?? [];
             agingData = agingCounts;
 
             // Gán KPI
@@ -245,7 +258,7 @@
             };
 
             // Load dữ liệu bảng ban đầu (Tất cả trạng thái)
-            await loadTableData(validStatuses);
+            await loadTableData(validStatuses, overview);
         } catch (error) {
             console.error("Lỗi khi tải dashboard:", error);
             alert("Không thể tải dữ liệu dashboard. Vui lòng thử lại!");
@@ -255,15 +268,17 @@
     }
 
     // Các hàm còn lại giữ nguyên...
-    async function loadTableData(statuses) {
+    async function loadTableData(statuses, overviewResponse) {
         try {
             showSpinner();
             console.log("Sending payload:", { statuses });
 
-            const response = await axios.post(apiDetailUrl, {
-                statuses: statuses.length > 0 ? statuses : null
-            });
-            const tableData = response.data?.data || [];
+            let response = overviewResponse;
+            if (!response) {
+                response = await fetchOverview(statuses);
+            }
+
+            const tableData = response?.data || [];
 
             const serials = Array.from(new Set(tableData.map(r => normalizeSn(r.sn)).filter(Boolean)));
             let locationMap = {};

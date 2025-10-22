@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', async function () {
     // ===== API endpoints =====
     const apiBase = 'http://10.220.130.119:9090/api/Bonepile2';
-    const beforeCountUrl = `${apiBase}/adapter-repair-status-count`;
     const beforeDetailUrl = `${apiBase}/adapter-repair-records`;
 
     const afterDetailUrl = `${apiBase}/bonepile-after-kanban-basic`;
@@ -167,21 +166,31 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // ===== Dashboard (KPI + BAR CHART) – run BEFORE/AFTER count concurrently =====
+    async function fetchBeforeOverview(statuses = beforeStatuses) {
+        const params = {};
+        if (Array.isArray(statuses) && statuses.length > 0) {
+            params.statuses = statuses;
+        }
+
+        const response = await axios.get(beforeDetailUrl, { params });
+        return response.data;
+    }
+
     async function loadDashboardData() {
         try {
             showSpinner();
-            const [beforeRes, afterBasicRes] = await Promise.all([
-                axios.get(beforeCountUrl),
+            const [beforeOverview, afterBasicRes] = await Promise.all([
+                fetchBeforeOverview(),
                 axios.get(afterDetailUrl)
             ]);
 
-            const beforeTotal = Number(beforeRes.data?.totalCount || 0);
+            const beforeTotal = Number(beforeOverview?.totalCount || 0);
             const afterBasic = afterBasicRes.data?.data || [];
             const afterTotal = afterBasic.length;
 
             const statusCountsMap = {};
 
-            (beforeRes.data?.statusCounts || []).forEach(s => {
+            (beforeOverview?.statusCounts || []).forEach(s => {
                 const k = normalizeStatus(s.status ?? s.Status);
                 const c = Number(s.count ?? s.Count ?? 0);
                 statusCountsMap[k] = (statusCountsMap[k] || 0) + c;
@@ -201,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             // ✅ SỬ DỤNG BAR CHART THAY VÌ DONUT
             renderBarChart(statusCounts, total);
 
-            await loadTableData(afterBasic); // then render table
+            await loadTableData(afterBasic, beforeOverview); // then render table
         } catch (e) {
             console.error('Error loading dashboard', e);
             alert('Không thể tải dữ liệu dashboard.');
@@ -212,19 +221,23 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // ===== Table – run BEFORE detail + AFTER basic concurrently, then testinfo + locations concurrently =====
     let dataTable;
-    async function loadTableData(afterBasicData) {
+    async function loadTableData(afterBasicData, beforeOverview) {
         try {
             showSpinner();
 
             // 1) BEFORE detail; AFTER basic may come from caller
-            const beforeRes = await axios.post(beforeDetailUrl, { statuses: beforeStatuses });
-            const beforeData = beforeRes.data?.data || [];
-            const afterBasic = afterBasicData || [];
+            let beforeResponse = beforeOverview;
+            if (!beforeResponse) {
+                beforeResponse = await fetchBeforeOverview();
+            }
+
+            const beforeData = beforeResponse?.data || [];
+            let afterBasic = afterBasicData ? [...afterBasicData] : [];
 
             // If caller didn't supply after data, fetch it now
             if (!afterBasicData) {
                 const afterRes = await axios.get(afterDetailUrl);
-                afterBasic.push(...(afterRes.data?.data || []));
+                afterBasic = afterRes.data?.data || [];
             }
 
             // 2) SN list for AFTER testinfo + locations

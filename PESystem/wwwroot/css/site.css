@@ -2,10 +2,11 @@
     margin: 0;
     padding: 0;
     font-family: 'Roboto', Arial, sans-serif;
-    background: #fff!important;
+    background: #fff !important;
     overflow-x: hidden;
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* ✅ từ column → row */
+    height: 100vh; /* ✅ chiếm toàn bộ chiều cao */
 }
 
 
@@ -17,7 +18,7 @@
     top: 0;
     left: 0;
     background-color: #1a1f2e;
-    z-index: 500;
+    z-index: 1001;
     padding: 16px 0;
     transition: width 0.25s ease;
     overflow: hidden;
@@ -59,7 +60,7 @@
 
 .sidebar-hover {
     width: 260px !important;
-    z-index: 500;
+    z-index: 1001;
 }
     /* Hiển thị span khi hover hoặc expanded */
     .sidebar-hover .nav-link span,
@@ -206,11 +207,6 @@
 
 
 #spinner-overlay {
-    /*position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;*/ /* Chiều rộng toàn màn hình */
-    /*height: 100vh;*/ /* Chiều cao toàn màn hình */
     position: absolute;
     inset: 0;
     width: 100%;

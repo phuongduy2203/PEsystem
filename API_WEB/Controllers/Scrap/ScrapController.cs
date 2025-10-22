@@ -599,6 +599,10 @@ namespace API_WEB.Controllers.Scrap
 
                     // Kiểm tra nếu Remark là "BP-20" thì gán Sloc = "FXV8" và Plant = "8620"
                     string slocValue = scrap.Remark == "BP-20" ? "FXV8" : scrap.Sloc;
+                    if (scrap.Purpose == "Approved to master board")
+                    {
+                        slocValue = "FXV1";
+                    }
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
 
                     return new
@@ -768,6 +772,10 @@ namespace API_WEB.Controllers.Scrap
 
                     // Kiểm tra nếu Remark là "BP-20" thì gán Sloc = "FXV8" và Plant = "8620"
                     string slocValue = scrap.Remark == "BP-20" ? "FXV8" : scrap.Sloc;
+                    if (scrap.Purpose == "Approved to master board")
+                    {
+                        slocValue = "FXV1";
+                    }
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
 
                     return new

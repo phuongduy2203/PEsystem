@@ -156,7 +156,6 @@ async function processCreateTask(internalTasks, resultDivId) {
                 "IC PN": item.icPn ?? "N/A",
                 "IC Detail PN": item.icDetailPn ?? "N/A",
                 "Board SN": item.boardSN ?? "N/A",
-                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
                 Qty: item.qty ?? "N/A",
                 "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
                 Category: item.category ?? "N/A",
@@ -170,7 +169,8 @@ async function processCreateTask(internalTasks, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask
@@ -251,7 +251,6 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 "IC PN": item.icPn ?? "N/A",
                 "IC Detail PN": item.icDetailPn ?? "N/A",
                 "Board SN": item.boardSN ?? "N/A",
-                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
                 Qty: item.qty ?? "N/A",
                 "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
                 Category: item.category ?? "N/A",
@@ -265,7 +264,8 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask

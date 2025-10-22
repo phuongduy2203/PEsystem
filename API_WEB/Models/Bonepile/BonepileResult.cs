@@ -27,7 +27,7 @@
 
     public class StatusRequest
     {
-        public List<string> Statuses { get; set; }
+        public List<string>? Statuses { get; set; }
         public string StartDate { get; set; }
         public string EndDate { get; set; }
     }
@@ -41,8 +41,48 @@
 
     public class StatusRequestBonepile
     {
-        public List<string> Statuses { get; set; }
+        public List<string>? Statuses { get; set; }
     }
+
+    public class AdapterRepairRecordDto
+    {
+        public string Sn { get; set; }
+        public string ModelName { get; set; }
+        public string MoNumber { get; set; }
+        public string ProductLine { get; set; }
+        public string ErrorFlag { get; set; }
+        public string WorkFlag { get; set; }
+        public string WipGroup { get; set; }
+        public string Data11 { get; set; }
+        public string Status { get; set; }
+        public string TestTime { get; set; }
+        public string TestCode { get; set; }
+        public string ErrorCodeItem { get; set; }
+        public string TestGroup { get; set; }
+        public string ErrorDesc { get; set; }
+        public string Repair { get; set; }
+        public string AgingDay { get; set; }
+        public DateTime? CheckInDate { get; set; }
+        public string GroupTestOff { get; set; }
+        public string TestResultOff { get; set; }
+        public string DetailTestOff { get; set; }
+        public string TimeTestOff { get; set; }
+    }
+
+    public class AdapterRepairStatusCountDto
+    {
+        public string Status { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class AdapterRepairOverviewResponse
+    {
+        public int TotalCount { get; set; }
+        public List<AdapterRepairStatusCountDto> StatusCounts { get; set; }
+        public int Count { get; set; }
+        public List<AdapterRepairRecordDto> Data { get; set; }
+    }
+
     public class RepairTaskResult
     {
         public string SERIAL_NUMBER { get; set; }

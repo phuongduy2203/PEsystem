@@ -2222,7 +2222,7 @@ namespace API_WEB.Controllers.Repositories
         {
             try
             {
-                var searchLists = await _sqlContext.SearchLists.Select(sl => new
+                var searchLists = await _sqlContext.SearchLists.OrderByDescending(sl => sl.CreatedAt).Select(sl => new
                 {
                     sl.Id,
                     sl.ListName,
