@@ -119,7 +119,8 @@ async function processCreateTask(internalTasks, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: item.location ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask
@@ -211,7 +212,8 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 Cost: item.cost ?? "N/A",
                 Remark: item.smtTime ?? "N/A",
                 Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A"
+                SpeApproveTime: item.speApproveTime ?? "N/A",
+                Location: item.location ?? "N/A"
             }));
 
             // Sắp xếp dữ liệu theo InternalTask

@@ -9,6 +9,7 @@ using API_WEB.ModelsOracle;
 using System.Net.Http;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Oracle.ManagedDataAccess.Client;
 
@@ -21,6 +22,7 @@ namespace API_WEB.Controllers.Scrap
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
         private readonly HttpClient _httpClient;
+        private readonly HttpClient _locationHttpClient;
 
         public ScrapController(CSDL_NE sqlContext, OracleDbContext oracleContext, IHttpClientFactory httpClientFactory)
         {
@@ -35,6 +37,54 @@ namespace API_WEB.Controllers.Scrap
             _httpClient = new HttpClient(handler);
             _httpClient.BaseAddress = new Uri("https://10.220.130.216:443/SfcSmartRepair/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            _locationHttpClient = httpClientFactory.CreateClient();
+            _locationHttpClient.BaseAddress = new Uri("http://10.220.130.119:9090/");
+            _locationHttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        private async Task<Dictionary<string, string>> FetchLocationsAsync(IEnumerable<string> serialNumbers)
+        {
+            var serialList = serialNumbers?
+                .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                .Select(sn => sn.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (serialList == null || !serialList.Any())
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                var response = await _locationHttpClient.PostAsJsonAsync("api/Search/FindLocations", serialList);
+                response.EnsureSuccessStatusCode();
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var locationResponse = await response.Content.ReadFromJsonAsync<LocationApiResponse>(options);
+
+                if (locationResponse?.Success == true && locationResponse.Data != null)
+                {
+                    return locationResponse.Data
+                        .Where(item => !string.IsNullOrWhiteSpace(item.SerialNumber))
+                        .GroupBy(item => item.SerialNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.FirstOrDefault()?.Location,
+                            StringComparer.OrdinalIgnoreCase);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching locations: {ex.Message}");
+            }
+
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
         private async Task AddHistoryEntriesAsync(IEnumerable<ScrapList> records)
@@ -562,6 +612,8 @@ namespace API_WEB.Controllers.Scrap
                     return StatusCode(500, new { message = "Không thể kết nối đến API bên thứ ba.", error = ex.Message, innerException = ex.InnerException?.Message });
                 }
 
+                var locationLookup = await FetchLocationsAsync(scrapRecords.Select(s => s.SN));
+
                 // Kết hợp dữ liệu từ ScrapList và API bên thứ ba
                 var unmatchedSNs = new List<string>();
                 var result = scrapRecords.Select(scrap =>
@@ -625,7 +677,10 @@ namespace API_WEB.Controllers.Scrap
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
                         Description = scrap.Desc,
-                        SpeApproveTime = scrap.SpeApproveTime
+                        SpeApproveTime = scrap.SpeApproveTime,
+                        Location = locationLookup.TryGetValue(normalizedScrapSN ?? string.Empty, out var location)
+                            ? location
+                            : null
                     };
                 }).ToList();
 
@@ -731,6 +786,8 @@ namespace API_WEB.Controllers.Scrap
                     return StatusCode(500, new { message = "Không thể kết nối đến API bên thứ ba.", error = ex.Message, innerException = ex.InnerException?.Message });
                 }
 
+                var locationLookup = await FetchLocationsAsync(validSNs.Select(s => s.SN));
+
                 // Kết hợp dữ liệu từ ScrapList và API bên thứ ba
                 var unmatchedSNs = new List<string>();
                 var result = validSNs.Select(scrap =>
@@ -794,7 +851,10 @@ namespace API_WEB.Controllers.Scrap
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
                         Description = scrap.Desc,
-                        SpeApproveTime = scrap.SpeApproveTime
+                        SpeApproveTime = scrap.SpeApproveTime,
+                        Location = locationLookup.TryGetValue(normalizedScrapSN ?? string.Empty, out var location)
+                            ? location
+                            : null
                     };
                 }).ToList();
 
@@ -2069,6 +2129,21 @@ namespace API_WEB.Controllers.Scrap
             return (month - 1) / 3 + 1; // Q1: 1-3 -> 1, Q2: 4-6 -> 2, etc.
         }
 
+    }
+
+    public class LocationApiResponse
+    {
+        public bool Success { get; set; }
+        public List<LocationData> Data { get; set; } = new List<LocationData>();
+    }
+
+    public class LocationData
+    {
+        public string SerialNumber { get; set; }
+        public string Warehouse { get; set; }
+        public string Location { get; set; }
+        public string ProductLine { get; set; }
+        public string ModelName { get; set; }
     }
 
     // Class để nhận dữ liệu đầu vào cho API update-cost
