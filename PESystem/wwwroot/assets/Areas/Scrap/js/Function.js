@@ -1,6 +1,54 @@
 let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
 let selectedHistoryInternalTasks = new Set(); // Cho HISTORY_APPLY
 
+const LOCATION_API_URL = 'http://10.220.130.119:9090/api/Search/FindLocations';
+
+function normalizeSerialNumber(value) {
+    return (value ?? '').toString().trim().toUpperCase();
+}
+
+async function fetchLocationMap(serialNumbers) {
+    try {
+        const uniqueSerials = Array.from(new Set(
+            (serialNumbers || [])
+                .map(normalizeSerialNumber)
+                .filter(sn => sn)
+        ));
+
+        if (!uniqueSerials.length) {
+            return {};
+        }
+
+        const response = await fetch(LOCATION_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(uniqueSerials)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Location API responded with status ${response.status}`);
+        }
+
+        const json = await response.json();
+        if (!json?.success || !Array.isArray(json?.data)) {
+            throw new Error('Location API returned unexpected payload');
+        }
+
+        return json.data.reduce((acc, item) => {
+            const sn = normalizeSerialNumber(item?.serialNumber || item?.sn);
+            if (!sn) {
+                return acc;
+            }
+            const location = (item?.location || '').toString().trim();
+            acc[sn] = location;
+            return acc;
+        }, {});
+    } catch (error) {
+        console.error('fetchLocationMap error:', error);
+        return {};
+    }
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -97,8 +145,10 @@ async function processCreateTask(internalTasks, resultDivId) {
                 return;
             }
 
+            const locationMap = await fetchLocationMap(payload.map(item => item.boardSN));
+
             const excelData = payload.map(item => ({
-                InternalTask: item.internalTask ?? "N/A", 
+                InternalTask: item.internalTask ?? "N/A",
                 Item: item.item ?? "N/A",
                 Project: item.project ?? "N/A",
                 OPN: item.opn ?? "N/A",
@@ -106,6 +156,7 @@ async function processCreateTask(internalTasks, resultDivId) {
                 "IC PN": item.icPn ?? "N/A",
                 "IC Detail PN": item.icDetailPn ?? "N/A",
                 "Board SN": item.boardSN ?? "N/A",
+                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
                 Qty: item.qty ?? "N/A",
                 "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
                 Category: item.category ?? "N/A",
@@ -189,8 +240,10 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 return;
             }
 
+            const locationMap = await fetchLocationMap(payload.map(item => item.boardSN));
+
             const excelData = payload.map(item => ({
-                InternalTask: item.internalTask ?? "N/A", 
+                InternalTask: item.internalTask ?? "N/A",
                 Item: item.item ?? "N/A",
                 Project: item.project ?? "N/A",
                 OPN: item.opn ?? "N/A",
@@ -198,6 +251,7 @@ async function processCreateTaskBySN(sNs, resultDivId) {
                 "IC PN": item.icPn ?? "N/A",
                 "IC Detail PN": item.icDetailPn ?? "N/A",
                 "Board SN": item.boardSN ?? "N/A",
+                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
                 Qty: item.qty ?? "N/A",
                 "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
                 Category: item.category ?? "N/A",
