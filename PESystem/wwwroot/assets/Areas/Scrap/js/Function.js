@@ -79,6 +79,51 @@ function formatPurpose(purpose) {
     return purposeMap[normalized] ?? normalized;
 }
 
+async function callSmartRepairApi(snList, status, task = "") {
+    const normalizedSnList = Array.isArray(snList)
+        ? snList.map(sn => sn.trim()).filter(Boolean)
+        : [];
+
+    if (!normalizedSnList.length) {
+        return { success: false, message: "Không có Serial Number hợp lệ để đồng bộ SmartRepair." };
+    }
+
+    const payload = {
+        type: "update",
+        sn_list: normalizedSnList.join(","),
+        type_bp: "",
+        status,
+        task: task || ""
+    };
+
+    try {
+        const response = await fetch("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            return {
+                success: false,
+                message: result?.message || `SmartRepair trả về lỗi HTTP ${response.status}`
+            };
+        }
+
+        return {
+            success: true,
+            message: result?.message || "Đồng bộ SmartRepair thành công."
+        };
+    } catch (error) {
+        console.error("callSmartRepairApi error:", error);
+        return {
+            success: false,
+            message: "Không thể kết nối đến SmartRepair."
+        };
+    }
+}
+
 // Hàm ẩn tất cả form và khu vực kết quả
 function hideAllElements() {
     const forms = ["input-sn-form", "custom-form", "custom-form-sn", "update-data-form", "history-apply-form"];
@@ -483,6 +528,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     default: scrapStatus = "Unknown"; break;
                 }
 
+                let smartRepairResult = null;
+                if (["0", "1", "2", "3"].includes(purpose)) {
+                    smartRepairResult = await callSmartRepairApi(sNs, "0");
+                }
+
                 const updateProductRequest = { serialNumbers: sNs, scrapStatus };
                 const updateProductResponse = await fetch("http://10.220.130.119:9090/api/Product/UpdateScrap", {
                     method: "PUT",
@@ -491,9 +541,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
 
                 const updateProductResult = await updateProductResponse.json();
-                resultDiv.innerHTML = updateProductResponse.ok && updateProductResult.success
-                    ? `<div class="alert alert-success"><strong>${inputSnResult.message}</strong><br>Internal Task: ${inputSnResult.internalTask}<br>Update Product: ${updateProductResult.message}</div>`
-                    : `<div class="alert alert-warning"><strong>${inputSnResult.message}</strong><br>Internal Task: ${inputSnResult.internalTask}<br><strong>Lỗi khi cập nhật Product:</strong> ${updateProductResult.message || "Không có thông tin lỗi"}</div>`;
+                const messageParts = [
+                    `<strong>${inputSnResult.message}</strong>`,
+                    `Internal Task: ${inputSnResult.internalTask}`
+                ];
+
+                if (smartRepairResult) {
+                    const smartRepairMessage = smartRepairResult.success
+                        ? `SmartRepair: ${smartRepairResult.message}`
+                        : `<strong>SmartRepair lỗi:</strong> ${smartRepairResult.message}`;
+                    messageParts.push(smartRepairMessage);
+                }
+
+                if (updateProductResponse.ok && updateProductResult.success) {
+                    messageParts.push(`Update Product: ${updateProductResult.message}`);
+                    resultDiv.innerHTML = `<div class="alert alert-success">${messageParts.join("<br>")}</div>`;
+                } else {
+                    messageParts.push(`<strong>Lỗi khi cập nhật Product:</strong> ${updateProductResult.message || "Không có thông tin lỗi"}`);
+                    resultDiv.innerHTML = `<div class="alert alert-warning">${messageParts.join("<br>")}</div>`;
+                }
             } else {
                 resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Lỗi:</strong> ${inputSnResult.message}</div>`;
             }
@@ -564,7 +630,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const updateResult = await updateResponse.json();
             if (updateResponse.ok) {
-                resultDiv.innerHTML = `<div class="alert alert-success"><strong>Thành công:</strong> ${updateResult.message}</div>`;
+                const smartRepairResult = await callSmartRepairApi(snList, "5", task);
+                const messages = [
+                    `<strong>Thành công:</strong> ${updateResult.message}`
+                ];
+
+                if (smartRepairResult.success) {
+                    messages.push(`SmartRepair: ${smartRepairResult.message}`);
+                    resultDiv.innerHTML = `<div class="alert alert-success">${messages.join("<br>")}</div>`;
+                } else {
+                    messages.push(`<strong>SmartRepair lỗi:</strong> ${smartRepairResult.message}`);
+                    resultDiv.innerHTML = `<div class="alert alert-warning">${messages.join("<br>")}</div>`;
+                }
             } else {
                 resultDiv.innerHTML = `<div class="alert alert-warning"><strong>Lỗi khi cập nhật Task PO:</strong> ${updateResult.message}</div>`;
             }
