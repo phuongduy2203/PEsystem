@@ -190,11 +190,9 @@ namespace API_WEB.Controllers.SmartFA
                                              r107.WIP_GROUP,
                                              r107.ERROR_FLAG,
                                              r107.WORK_FLAG,
-                                             r107.WIP_GROUP,
-                                             b.PRODUCT_LINE,
                                              a.REMARK AS ERROR_CODE,
                                              c.ERROR_DESC,
-                                             CASE WHEN TRUNC(a.IN_DATETIME) = TRUNC(a.OUT_DATETIME) THEN 'CHECKIN_TRONG_NGAY' ELSE 'CHECKIN_TRUOC_DO' END AS CHECKIN_STATUS
+                                             'CHECKOUT_TRONG_NGAY' as CHECKOUT_STATUS
                                         FROM sfism4.r_repair_in_out_t a
                                         INNER JOIN sfis1.c_model_desc_t b ON a.model_name = b.model_name
                                         INNER JOIN sfis1.c_error_code_t c ON a.REMARK = c.ERROR_CODE
@@ -202,6 +200,7 @@ namespace API_WEB.Controllers.SmartFA
                                         WHERE b.MODEL_SERIAL = 'ADAPTER'
                                           AND a.P_SENDER IN ('V0904136', 'V0945375','V3209541', 'V0928908', 'V3245384', 'V3211693', 'V1097872')
                                           AND a.REPAIRER IS NOT NULL
+                                          AND TRUNC(a.IN_DATETIME - a.OUT_DATETIME) < 0
                                           AND r107.ERROR_FLAG  != '8'
                                           AND a.REMARK NOT IN ('CK00')
                                           AND a.OUT_DATETIME BETWEEN :startDate AND :endDate
@@ -209,7 +208,54 @@ namespace API_WEB.Controllers.SmartFA
                                           AND NOT EXISTS (
                                               SELECT 1
                                               FROM sfism4.z_kanban_tracking_t z
-                                              WHERE z.serial_number = a.serial_number)";
+                                              WHERE z.serial_number = a.serial_number)
+
+                                              UNION ALL
+                                        SELECT DISTINCT 
+                                            B.SERIAL_NUMBER AS SFG,
+                                            B.MODEL_NAME,
+                                            C.PRODUCT_LINE,
+                                            IN_OUT.P_SENDER,
+                                            B.EMP_NO AS REPAIRER,
+                                            IN_OUT.IN_DATETIME,
+                                            B.IN_STATION_TIME AS OUT_DATETIME,
+                                            IN_OUT.STATION_NAME,
+                                            A.MO_NUMBER,
+                                            A.WIP_GROUP,
+                                            A.ERROR_FLAG,
+                                            A.WORK_FLAG,
+                                            IN_OUT.ERROR_CODE,
+                                            E.ERROR_DESC,
+                                            CASE 
+                                                WHEN IN_OUT.IN_DATETIME BETWEEN 
+                                                     TRUNC(B.IN_STATION_TIME) 
+                                                     AND (TRUNC(B.IN_STATION_TIME) + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+                                                THEN 'CHECKOUT_TRONG_NGAY'
+                                                ELSE 'CHECKOUT_TON'
+                                            END AS CHECKOUT_STATUS
+                                        FROM SFISM4.R117 B
+                                        LEFT JOIN SFISM4.R107 A 
+                                            ON A.SERIAL_NUMBER = B.SERIAL_NUMBER
+                                        LEFT JOIN (
+                                            SELECT 
+                                                R.SERIAL_NUMBER,
+                                                MAX(R.IN_DATETIME) AS IN_DATETIME,
+                                                MAX(R.STATION_NAME) KEEP (DENSE_RANK LAST ORDER BY R.STATION_NAME) AS STATION_NAME,
+                                                MAX(R.P_SENDER) KEEP (DENSE_RANK LAST ORDER BY R.P_SENDER) AS P_SENDER,
+                                                MAX(R.REMARK) KEEP (DENSE_RANK LAST ORDER BY R.REMARK) AS ERROR_CODE
+                                            FROM SFISM4.R_REPAIR_IN_OUT_T R
+                                            WHERE R.IN_DATETIME IS NOT NULL
+                                            GROUP BY R.SERIAL_NUMBER
+                                        ) IN_OUT 
+                                            ON IN_OUT.SERIAL_NUMBER = B.SERIAL_NUMBER
+                                        LEFT JOIN SFIS1.C_MODEL_DESC_T C 
+                                            ON B.MODEL_NAME = C.MODEL_NAME
+                                        INNER JOIN SFIS1.C_ERROR_CODE_T E 
+                                            ON IN_OUT.ERROR_CODE = E.ERROR_CODE
+                                        WHERE 
+                                            C.MODEL_SERIAL = 'ADAPTER'
+                                            AND B.WIP_GROUP LIKE '%B31M'
+                                            AND B.IN_STATION_TIME BETWEEN :startDate AND :endDate";
 
                 var checkOutList = new List<CheckOutRecord>();
                 await using (var cmd = new OracleCommand(checkOutQuery, connection))
@@ -236,22 +282,31 @@ namespace API_WEB.Controllers.SmartFA
                             OUT_DATETIME = reader["OUT_DATETIME"] as DateTime?,
                             ERROR_CODE = reader["ERROR_CODE"].ToString() ?? string.Empty,
                             ERROR_DESC = reader["ERROR_DESC"].ToString() ?? string.Empty,
-                            CHECKIN_STATUS = reader["CHECKIN_STATUS"].ToString() ?? string.Empty
+                            CHECKIN_STATUS = reader["CHECKOUT_STATUS"].ToString() ?? string.Empty
                         });
                     }
                 }
 
                 var checkOutTrongNgay = checkOutList
-                    .Where(c => c.CHECKIN_STATUS == "CHECKIN_TRONG_NGAY")
+                    .Where(c => c.CHECKIN_STATUS == "CHECKOUT_TRONG_NGAY")
                     .ToList();
                 var checkOutTonKhoCu = checkOutList
-                    .Where(c => c.CHECKIN_STATUS == "CHECKIN_TRUOC_DO")
+                    .Where(c => c.CHECKIN_STATUS == "CHECKOUT_TON")
                     .ToList();
 
-                var checkOutSerials = new HashSet<string>(checkOutList.Select(co => co.SERIAL_NUMBER));
-                var tonKhoTrongNgay = checkInList
-                    .Where(ci => !checkOutSerials.Contains(ci.SERIAL_NUMBER))
-                    .ToList();
+                //var checkOutSerials = new HashSet<string>(checkOutList.Select(co => co.SERIAL_NUMBER));
+                //var tonKhoTrongNgay = checkInList
+                //    .Where(ci => !checkOutSerials.Contains(ci.SERIAL_NUMBER))
+                //    .ToList();
+                var latestCheckOutSerials = checkOutList
+                .GroupBy(co => co.SERIAL_NUMBER)
+                .Select(g => g.OrderByDescending(x => x.OUT_DATETIME).First())
+                .Select(x => x.SERIAL_NUMBER)
+                .ToHashSet();
+
+                            var tonKhoTrongNgay = checkInList
+                                .Where(ci => !latestCheckOutSerials.Contains(ci.SERIAL_NUMBER))
+                                .ToList();
 
                 var response = new
                 {

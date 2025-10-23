@@ -19,7 +19,7 @@
 
     const config = {
         RECEIVING_STATUS_URL: 'http://10.220.130.119:9090/api/SearchFA/get-unique-status',
-        INVENTORY_STATUS_KEYS: ['FA', 'CHECK_LIST', 'VI-RE', 'THAY LIỆU', 'RETEST', 'PROCESS'],
+        INVENTORY_STATUS_KEYS: ['FA', 'CHECK_LIST', 'VI-RE', 'THAY LIỆU', 'RETEST', 'PROCESS', 'KHÓ SỬA', 'CHỜ TRẢ'],
         INVENTORY_STATUS_COLORS: {
             'FA': '#1976D2',
             'CHECK_LIST': '#7B1FA2',
@@ -27,6 +27,8 @@
             'THAY LIỆU': '#388E3C',
             'RETEST': '#E88E3C',
             'PROCESS': '#3F8E3C',
+            'KHÓ SỬA': '#5F8E3C',
+            'CHỜ TRẢ': '#2F8E3C',
             'KHÁC': '#546E7A'
         }
     };
