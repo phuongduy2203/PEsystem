@@ -641,11 +641,11 @@ namespace API_WEB.Controllers
                     return (false, $"SerialNumber {candidate.Trim()} CÓ ERROR_FLAG = 1 KHÔNG NHẬP KHO!");
                 }
 
-                var workFlag = oracleResult.WORK_FLAG?.Trim() ?? string.Empty;
-                if (!AllowedWorkFlags.Contains(workFlag))
-                {
-                    return (false, $"SerialNumber {candidate.Trim()} CÓ WORK_FLAG = {workFlag} KHÔNG NHẬP KHO!");
-                }
+                //var workFlag = oracleResult.WORK_FLAG?.Trim() ?? string.Empty;
+                //if (!AllowedWorkFlags.Contains(workFlag))
+                //{
+                //    return (false, $"SerialNumber {candidate.Trim()} CÓ WORK_FLAG = {workFlag} KHÔNG NHẬP KHO!");
+                //}
 
                 validatedSerial = candidate.Trim();
                 break;

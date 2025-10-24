@@ -27,6 +27,175 @@ const TABLE_CONFIG = {
     }
 };
 
+const SerialNumberModal = (() => {
+    const MODAL_ID = "serialNumberModal";
+    const MODAL_TITLE_ID = "serialNumberModalLabel";
+    const TABLE_SELECTOR = "#serialNumberTable";
+    let modalInstance = null;
+    let dataTableInstance = null;
+
+    const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    };
+
+    function getModalElement() {
+        return document.getElementById(MODAL_ID);
+    }
+
+    function ensureModalInstance() {
+        if (modalInstance) return modalInstance;
+        const modalElement = getModalElement();
+        if (!modalElement) {
+            console.warn("Không tìm thấy modal hiển thị serial number");
+            return null;
+        }
+        if (typeof bootstrap === "undefined" || !bootstrap.Modal) {
+            console.warn("Bootstrap Modal chưa được tải");
+            return null;
+        }
+        modalInstance = new bootstrap.Modal(modalElement, { keyboard: true });
+        return modalInstance;
+    }
+
+    function ensureDataTable() {
+        if (!window.$ || !$.fn || !$.fn.DataTable) {
+            console.warn("Thư viện DataTable chưa được tải");
+            return null;
+        }
+        if (dataTableInstance) return dataTableInstance;
+
+        dataTableInstance = $(TABLE_SELECTOR).DataTable({
+            data: [],
+            columns: [
+                {
+                    title: "SERIAL_NUMBER",
+                    data: "serial",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "MODEL_NAME",
+                    data: "modeL_NAME",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "WIP_GROUP",
+                    data: "wiP_GROUP",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "ERROR_FLAG",
+                    data: "erroR_FLAG",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "MO_NUMBER",
+                    data: "mO_NUMBER",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "TEST_GROUP",
+                    data: "tesT_GROUP",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "ERROR_CODE",
+                    data: "tesT_CODE",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "ERROR_DESC",
+                    data: "datA1",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "ERROR_CODE_ITEM",
+                    data: "erroR_ITEM_CODE",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "REPAIRER",
+                    data: "repairer",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                },
+                {
+                    title: "REPAIR_TIME",
+                    data: "repaiR_TIME",
+                    className: "align-middle",
+                    render: (data, type) => type === "display" ? escapeHtml(data) : data
+                }
+            ],
+            ordering: false,
+            searching: true,
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            language: {
+                search: "Tìm kiếm:",
+                lengthMenu: "Hiển thị _MENU_ dòng",
+                info: "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
+                infoEmpty: "Không có dữ liệu",
+                infoFiltered: "(lọc từ _MAX_ dòng)",
+                zeroRecords: "Không có serial number phù hợp",
+                paginate: {
+                    previous: "Trước",
+                    next: "Sau"
+                }
+            }
+        });
+
+        return dataTableInstance;
+    }
+
+    function updateTitle(category) {
+        const titleElement = document.getElementById(MODAL_TITLE_ID);
+        if (titleElement) {
+            titleElement.textContent = `Serial Number - ${category}`;
+        }
+    }
+
+    function updateTable(records) {
+        const dataTable = ensureDataTable();
+        if (!dataTable) return;
+
+        dataTable.clear();
+        dataTable.rows.add(records || []);
+        dataTable.draw();
+        dataTable.columns.adjust();
+    }
+
+    return {
+        show(category, serialNumbers) {
+            if (!category) {
+                console.warn("Không có thông tin giờ để hiển thị serial number");
+                return;
+            }
+
+            updateTitle(category);
+            updateTable(serialNumbers);
+
+            const modal = ensureModalInstance();
+            if (modal) {
+                modal.show();
+            }
+        }
+    };
+})();
+
 function renderTable(containerId, data, config, ownerFullNames) {
     const container = document.getElementById(containerId);
     if (!container || !data.length) {
@@ -137,6 +306,148 @@ function renderOwnerChart(containerId, data, title, ownerFullNames) {
 }
 
 
+function parseDateTime(value) {
+    if (!value) return null;
+
+    const tryParse = (input) => {
+        const parsed = new Date(input);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    let result = tryParse(value);
+    if (result) return result;
+
+    result = tryParse(value.replace(' ', 'T'));
+    if (result) return result;
+
+    const match = value.match(/^(\d{4})[-/](\d{2})[-/](\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+    if (match) {
+        const [, year, month, day, hour, minute, second = '0'] = match;
+        return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+    }
+
+    return null;
+}
+
+function formatHourLabel(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hour}:00`;
+}
+
+function normalizeSerialRecord(item) {
+    if (!item || typeof item !== "object") {
+        return { serial: "" };
+    }
+
+    return {
+        ...item,
+        serial: item.seriaL_NUMBER || item.serial || ""
+    };
+}
+
+function renderHourlyChart(containerId, data) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`Không tìm thấy container ${containerId}`);
+        return;
+    }
+
+    // 🕒 Lấy phạm vi thời gian ca hiện tại
+    const { startDate, endDate } = getShiftTimeRange();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // 🔍 Lọc dữ liệu chỉ nằm trong ca làm việc
+    const filteredData = (data || []).filter(item => {
+        const date = parseDateTime(item.repaiR_TIME);
+        return date && date >= start && date <= end;
+    });
+
+    if (!filteredData.length) {
+        container.innerHTML = "<div class='text-muted'>Không có dữ liệu trong ca làm việc hiện tại.</div>";
+        return;
+    }
+
+    const hourAggregator = {};
+
+    filteredData.forEach(item => {
+        const date = parseDateTime(item.repaiR_TIME);
+        const hourDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+        const key = hourDate.getTime();
+
+        if (!hourAggregator[key]) {
+            hourAggregator[key] = {
+                label: formatHourLabel(hourDate),
+                count: 0,
+                records: []
+            };
+        }
+
+        hourAggregator[key].count += 1;
+        hourAggregator[key].records.push(normalizeSerialRecord(item));
+    });
+
+    const sortedKeys = Object.keys(hourAggregator).map(Number).sort((a, b) => a - b);
+    const seriesData = sortedKeys.map(key => ({
+        y: hourAggregator[key].count,
+        name: hourAggregator[key].label,
+        records: hourAggregator[key].records
+    }));
+
+    const categories = sortedKeys.map(key => hourAggregator[key].label);
+
+    Highcharts.chart(containerId, {
+        chart: { type: 'column', height: 500, backgroundColor: '#ffffff' },
+        title: {
+            text: 'Sản lượng xóa R theo giờ (trong ca làm việc)',
+            style: { color: '#2c3e50', fontSize: '20px', fontWeight: 'bold' }
+        },
+        xAxis: {
+            categories,
+            labels: { rotation: -35, style: { color: '#333', fontSize: '12px' } }
+        },
+        yAxis: {
+            min: 0,
+            title: { text: 'Số lượng', style: { color: '#333', fontSize: '14px' } }
+        },
+        tooltip: { pointFormat: '<b>{point.y}</b> SN', shared: false },
+        legend: { enabled: false },
+        plotOptions: {
+            series: {
+                borderRadius: 6,
+                pointWidth: 30,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    style: { color: '#2c3e50', fontWeight: 'bold', textOutline: 'none' }
+                },
+                point: {
+                    events: {
+                        click: function () {
+                            SerialNumberModal.show(this.category, this.options.records || []);
+                        }
+                    }
+                }
+            }
+        },
+        series: [{
+            name: 'Số lượng',
+            type: 'column',
+            data: seriesData,
+            color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                    [0, '#42a5f5'],
+                    [1, '#1e88e5']
+                ]
+            }
+        }]
+    });
+}
+
 //GỌI API LẤY FULL_NAME
 async function fetchOwnerFullNamesBatch(ownerCodes) {
     if (!ownerCodes.length) {
@@ -215,6 +526,7 @@ async function loadData(startDate, endDate) {
         if (repair.success) {
             renderTable("xoaR", repair.data, TABLE_CONFIG.xoaR, ownerFullNames);
             renderOwnerChart("repairChart", repair.data, "Sản lượng xóa R theo Owner", ownerFullNames);
+            renderHourlyChart("repairHourlyChart", repair.data);
         }
         if (confirm.success) {
             renderTable("XacNhanPhanTich", confirm.data, TABLE_CONFIG.XacNhanPhanTich, ownerFullNames);

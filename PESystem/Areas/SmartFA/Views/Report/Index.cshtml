@@ -20,6 +20,10 @@
     <h6 class="section-title">Sản lượng xóa R theo Owner</h6>
     <div id="repairChart" style="width: 100%; height: 500px;"></div>
 
+    <!-- Chart for repair data by hour -->
+    <h6 class="section-title">Sản lượng xóa R theo giờ</h6>
+    <div id="repairHourlyChart" style="width: 100%; height: 500px;"></div>
+
     <!-- Chart for confirm data by owner -->
     <h6 class="section-title">Sản lượng xác nhận bản lỗi theo Owner</h6>
     <div id="confirmChart" style="width: 100%; height: 500px;"></div>
@@ -32,7 +36,43 @@
     <h6 class="section-title">Chi tiết confirm và phân tích</h6>
     <div id="XacNhanPhanTich" style="overflow: auto; max-height: 500px;"></div>
 
+    <!-- Modal hiển thị serial number theo giờ -->
+    <div class="modal fade" id="serialNumberModal" tabindex="-1" aria-labelledby="serialNumberModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-lg-custom">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="serialNumberModalLabel">Serial Number Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body table-responsive">
+                    <table id="serialNumberTable" class="table table-bordered datatable-table table-striped">
+                        <thead>
+                            <tr>
+                                <th>SERIAL_NUMBER</th>
+                                <th>MODEL_NAME</th>
+                                <th>WIP_GROUP</th>
+                                <th>ERROR_FLAG</th>
+                                <th>MO_NUMBER</th>
+                                <th>TEST_GROUP</th>
+                                <th>ERROR_CODE</th>
+                                <th>ERROR_DESC</th>
+                                <th>ERROR_CODE_ITEM</th>
+                                <th>REPAIRER</th>
+                                <th>REPAIR_TIME</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <style>
+                .modal-lg-custom {
+            max-width: 90% !important;
+        }
+
         .container {
             max-width: 100%;
             margin: 0 auto;
@@ -132,6 +172,14 @@
         tr:hover {
             background-color: #f1f1f1;
             transition: background-color 0.2s;
+        }
+
+        #serialNumberModal .modal-body {
+            overflow-x: auto;
+        }
+
+        #serialNumberTable {
+            width: 100% !important;
         }
     </style>
 </div>

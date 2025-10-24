@@ -446,6 +446,7 @@
                         { data: "status" },
                         { data: "statusV2" },
                         { data: "aging" },
+                        { data: "agingOld" },
                         { data: "location" }
                     ],
                     dom: '<"top d-flex align-items-center"flB>rt<"bottom"ip>',
@@ -560,6 +561,7 @@
                         { data: "errorCodeItem" },
                         { data: "errorDesc" },
                         { data: "aging" },
+                        { data: "agingOld" },
                         { data: "location" }
                     ],
                     columnDefs: [

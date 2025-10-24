@@ -969,7 +969,7 @@ namespace API_WEB.Controllers.SmartFA
         {
             if (string.IsNullOrEmpty(request.CardCode))
             {
-                return BadRequest(new { success = false, message = "Mã th? không du?c d? tr?ng." });
+                return BadRequest(new { success = false, message = "Emp not null!" });
             }
 
             try
@@ -979,7 +979,7 @@ namespace API_WEB.Controllers.SmartFA
 
                 if (user == null)
                 {
-                    return NotFound(new { success = false, message = "Không tìm th?y ngu?i dùng v?i mã th? này." });
+                    return NotFound(new { success = false, message = "Not found Emp!" });
                 }
 
                 return Ok(new { success = true, allowedAreas = user.AllowedAreas });

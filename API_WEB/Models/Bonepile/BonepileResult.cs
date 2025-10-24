@@ -126,6 +126,7 @@
         public string ERROR_ITEM_CODE { get; set; }
         public string ERROR_DESC { get; set; }
         public double? AGING { get; set; }
+        public double? AGING_OLD { get; set; }
     }
 
     public class BonepileAfterKanbanBasicRecord
@@ -144,6 +145,7 @@
         public string ErrorCodeItem { get; set; }
         public string ErrorDesc { get; set; }
         public double? Aging { get; set; }
+        public double? AgingOld { get; set; }
         public string Status { get; set; }
         public string StatusV2 { get; set; }
     }

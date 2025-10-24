@@ -949,8 +949,7 @@ SELECT
                       AND r107.SERIAL_NUMBER NOT IN (SELECT SERIAL_NUMBER FROM SFISM4.Z_KANBAN_TRACKING_T)
                       AND r107.MO_NUMBER LIKE '4%'
                       AND (r107.WIP_GROUP LIKE '%B28M%' or r107.error_flag in ('7') or r107.work_flag in ('2'))
-                    AND (r107_sfg.WIP_GROUP IS NULL OR r107_sfg.WIP_GROUP NOT LIKE '%BR2C%')
-                    ";
+                    AND (r107_sfg.WIP_GROUP IS NULL OR r107_sfg.WIP_GROUP NOT LIKE '%BR2C%')";
 
             using var command = new OracleCommand(query, connection);
             using var reader = await command.ExecuteReaderAsync();
@@ -1142,6 +1141,7 @@ SELECT
                         ErrorCodeItem = b.ERROR_ITEM_CODE,
                         ErrorDesc = b.ERROR_DESC,
                         Aging = b.AGING,
+                        AgingOld = b.AGING_OLD,
                         Status = status,
                         StatusV2 = statusV2
                     });
@@ -1346,7 +1346,8 @@ SELECT
             await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
             await connection.OpenAsync();
 
-            string query = @"SELECT
+            string query = @"
+                SELECT /*+ USE_NL(A R107 B R109C R109P) LEADING(A) */
                     A.SERIAL_NUMBER,
                     R107.MO_NUMBER,
                     A.MODEL_NAME,
@@ -1355,56 +1356,90 @@ SELECT
                     R107.WIP_GROUP AS WIP_GROUP_SFC,
                     R107.ERROR_FLAG,
                     R107.WORK_FLAG,
-                    COALESCE(C1.TEST_GROUP, R109X.LATEST_TEST_GROUP) AS TEST_GROUP,
-                    COALESCE(C1.TEST_TIME,  R109X.LATEST_TEST_TIME)  AS TEST_TIME,
-                    COALESCE(C1.TEST_CODE,  R109X.LATEST_TEST_CODE)  AS TEST_CODE,
-                    COALESCE(C1.ERROR_ITEM_CODE,  R109X.LATEST_ERROR_ITEM_CODE)  AS ERROR_ITEM_CODE,
-                    COALESCE(E1.ERROR_DESC, E2.ERROR_DESC) AS ERROR_DESC,
-                    TRUNC(SYSDATE) - TRUNC(COALESCE(C1.TEST_TIME, R109X.LATEST_TEST_TIME)) AS AGING
+
+                    NVL2(R109C.TEST_GROUP, R109C.TEST_GROUP, R109P.TEST_GROUP) AS TEST_GROUP,
+                    NVL2(R109C.TEST_TIME,  R109C.TEST_TIME,  R109P.TEST_TIME)  AS TEST_TIME,
+                    NVL2(R109C.TEST_CODE,  R109C.TEST_CODE,  R109P.TEST_CODE)  AS TEST_CODE,
+                    NVL2(R109C.ERROR_ITEM_CODE, R109C.ERROR_ITEM_CODE, R109P.ERROR_ITEM_CODE) AS ERROR_ITEM_CODE,
+                    NVL2(E1.ERROR_DESC, E1.ERROR_DESC, E2.ERROR_DESC) AS ERROR_DESC,
+
+                    --Aging dựa vào test_time mới nhất
+                    TRUNC(SYSDATE) - TRUNC(NVL2(R109C.TEST_TIME, R109C.TEST_TIME, R109P.TEST_TIME)) AS AGING,
+
+                    -- Aging dựa vào test_time cũ nhất
+                    TRUNC(SYSDATE) - TRUNC(NVL2(R109C_OLD.TEST_TIME, R109C_OLD.TEST_TIME, R109P_OLD.TEST_TIME)) AS AGING_OLDEST
+
                 FROM SFISM4.Z_KANBAN_TRACKING_T A
-                JOIN SFIS1.C_MODEL_DESC_T B
-                  ON A.MODEL_NAME = B.MODEL_NAME
-                JOIN SFISM4.R107 R107
-                  ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
+                JOIN SFIS1.C_MODEL_DESC_T B ON A.MODEL_NAME = B.MODEL_NAME
+                JOIN SFISM4.R107 R107 ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
 
-                -- Lấy bản ghi REPAIR mới nhất theo TEST_TIME cho từng SERIAL_NUMBER
+                /*Test mới nhất cho SERIAL_NUMBER */
                 LEFT JOIN (
-                    SELECT
-                        R.SERIAL_NUMBER,
-                        MAX(R.TEST_TIME) AS TEST_TIME,
-                        MAX(R.TEST_CODE)  KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS TEST_CODE,
-                        MAX(R.TEST_GROUP) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS TEST_GROUP,
-                        MAX(R.ERROR_ITEM_CODE) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS ERROR_ITEM_CODE
-                    FROM SFISM4.R109 R
-                    WHERE R.TEST_TIME IS NOT NULL
-                    GROUP BY R.SERIAL_NUMBER
-                ) C1
-                  ON C1.SERIAL_NUMBER = A.SERIAL_NUMBER
+                    SELECT SERIAL_NUMBER, TEST_GROUP, TEST_TIME, TEST_CODE, ERROR_ITEM_CODE
+                    FROM (
+                        SELECT R.*, ROW_NUMBER() OVER (PARTITION BY R.SERIAL_NUMBER ORDER BY R.TEST_TIME DESC) rn
+                        FROM SFISM4.R109 R
+                        WHERE R.TEST_TIME IS NOT NULL
+                    )
+                    WHERE rn = 1
+                ) R109C ON R109C.SERIAL_NUMBER = A.SERIAL_NUMBER
 
+                /* Test cũ nhất cho SERIAL_NUMBER */
                 LEFT JOIN (
-                    SELECT
-                        K.KEY_PART_SN,
-                        MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
-                    FROM SFISM4.P_WIP_KEYPARTS_T K
-                    WHERE K.WORK_TIME IS NOT NULL
-                    GROUP BY K.KEY_PART_SN
-                ) KP
-                  ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+                    SELECT SERIAL_NUMBER, TEST_TIME
+                    FROM (
+                        SELECT R.*, ROW_NUMBER() OVER (PARTITION BY R.SERIAL_NUMBER ORDER BY R.TEST_TIME ASC) rn_asc
+                        FROM SFISM4.R109 R
+                        WHERE R.TEST_TIME IS NOT NULL
+                    )
+                    WHERE rn_asc = 1
+                ) R109C_OLD ON R109C_OLD.SERIAL_NUMBER = A.SERIAL_NUMBER
 
+                /* Test mới nhất cho PARENT SN */
                 LEFT JOIN (
-                    SELECT
-                        R.SERIAL_NUMBER,
-                        MAX(R.TEST_TIME) AS LATEST_TEST_TIME,
-                        MAX(R.TEST_CODE)  KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_TEST_CODE,
-                        MAX(R.TEST_GROUP) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_TEST_GROUP,
-                        MAX(R.ERROR_ITEM_CODE) KEEP (DENSE_RANK LAST ORDER BY R.TEST_TIME) AS LATEST_ERROR_ITEM_CODE
-                    FROM SFISM4.R109 R
-                    WHERE R.TEST_TIME IS NOT NULL
-                    GROUP BY R.SERIAL_NUMBER
-                ) R109X
-                  ON R109X.SERIAL_NUMBER = KP.PARENT_SN
-                LEFT JOIN SFIS1.C_ERROR_CODE_T E1 ON C1.TEST_CODE = E1.ERROR_CODE
-                LEFT JOIN SFIS1.C_ERROR_CODE_T E2 ON R109X.LATEST_TEST_CODE = E2.ERROR_CODE
+                    SELECT CHILD.KEY_PART_SN, R.TEST_GROUP, R.TEST_TIME, R.TEST_CODE, R.ERROR_ITEM_CODE
+                    FROM (
+                        SELECT K.KEY_PART_SN,
+                               MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
+                        FROM SFISM4.P_WIP_KEYPARTS_T K
+                        WHERE K.WORK_TIME IS NOT NULL
+                        GROUP BY K.KEY_PART_SN
+                    ) CHILD
+                    JOIN (
+                        SELECT SERIAL_NUMBER, TEST_GROUP, TEST_TIME, TEST_CODE, ERROR_ITEM_CODE
+                        FROM (
+                            SELECT R2.*, ROW_NUMBER() OVER (PARTITION BY R2.SERIAL_NUMBER ORDER BY R2.TEST_TIME DESC) rn
+                            FROM SFISM4.R109 R2
+                            WHERE R2.TEST_TIME IS NOT NULL
+                        )
+                        WHERE rn = 1
+                    ) R ON R.SERIAL_NUMBER = CHILD.PARENT_SN
+                ) R109P ON R109P.KEY_PART_SN = A.SERIAL_NUMBER
+
+                /* Test cũ nhất cho PARENT SN */
+                LEFT JOIN (
+                    SELECT CHILD.KEY_PART_SN, R.TEST_TIME
+                    FROM (
+                        SELECT K.KEY_PART_SN,
+                               MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
+                        FROM SFISM4.P_WIP_KEYPARTS_T K
+                        WHERE K.WORK_TIME IS NOT NULL
+                        GROUP BY K.KEY_PART_SN
+                    ) CHILD
+                    JOIN (
+                        SELECT SERIAL_NUMBER, TEST_TIME
+                        FROM (
+                            SELECT R2.*, ROW_NUMBER() OVER (PARTITION BY R2.SERIAL_NUMBER ORDER BY R2.TEST_TIME ASC) rn_asc
+                            FROM SFISM4.R109 R2
+                            WHERE R2.TEST_TIME IS NOT NULL
+                        )
+                        WHERE rn_asc = 1
+                    ) R ON R.SERIAL_NUMBER = CHILD.PARENT_SN
+                ) R109P_OLD ON R109P_OLD.KEY_PART_SN = A.SERIAL_NUMBER
+
+                LEFT JOIN SFIS1.C_ERROR_CODE_T E1 ON R109C.TEST_CODE = E1.ERROR_CODE
+                LEFT JOIN SFIS1.C_ERROR_CODE_T E2 ON R109P.TEST_CODE = E2.ERROR_CODE
+
                 WHERE
                     A.WIP_GROUP LIKE '%B36R%'
                     AND B.MODEL_SERIAL = 'ADAPTER'
@@ -1430,7 +1465,8 @@ SELECT
                     TEST_CODE = reader["TEST_CODE"]?.ToString(),
                     ERROR_ITEM_CODE = reader["ERROR_ITEM_CODE"]?.ToString(),
                     ERROR_DESC = reader["ERROR_DESC"]?.ToString(),
-                    AGING = reader["AGING"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING"])
+                    AGING = reader["AGING"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING"]),
+                    AGING_OLD = reader["AGING_OLDEST"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING_OLDEST"])
                 });
             }
             return result;
