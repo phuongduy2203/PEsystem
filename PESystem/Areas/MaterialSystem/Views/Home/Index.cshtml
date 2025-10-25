@@ -70,6 +70,21 @@
                 </table>
             </div>
         </div>
+
+        <div class="mt-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                <h2 class="h5 fw-semibold mb-2 mb-md-0">Biểu Đồ Theo Dõi DATE CODE Theo PN</h2>
+                <button id="downloadDateCodeDetails" class="btn btn-success btn-sm">
+                    Tải dữ liệu chi tiết
+                </button>
+            </div>
+            <div class="bg-light rounded p-3">
+                <canvas id="dateCodeChart" height="120"></canvas>
+            </div>
+            <p class="text-muted small mt-2 mb-0">
+                Biểu đồ thống kê số PN có Qty'OK &gt; 0 theo nhóm tuổi DATE CODE.
+            </p>
+        </div>
     </div>
 </div>
 
@@ -127,7 +142,14 @@
         .datatable-table tbody tr:hover th {
             background-color: #76b900 !important;
         }
+
+        #dateCodeChart {
+            width: 100%;
+            max-height: 360px;
+        }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         // Hàm tạo nội dung cho ô với tooltip
@@ -171,6 +193,243 @@
             });
         }
 
+        const dateCodeGroups = [
+            { key: 'under6', label: 'Dưới 6 tháng' },
+            { key: 'sixToOne', label: '6 tháng - 1 năm' },
+            { key: 'oneToTwo', label: '1 năm - 2 năm' },
+            { key: 'overTwo', label: 'Trên 2 năm' }
+        ];
+
+        let dateCodeChartInstance = null;
+        let dateCodeDetailRows = [];
+        let dateCodeSummaries = {
+            under6: { count: 0, quantity: 0 },
+            sixToOne: { count: 0, quantity: 0 },
+            oneToTwo: { count: 0, quantity: 0 },
+            overTwo: { count: 0, quantity: 0 }
+        };
+
+        async function loadDateCodeChart() {
+            try {
+                const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/GetAllSumMaterials', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải dữ liệu DATE CODE');
+                }
+
+                const data = await response.json();
+                const filtered = (data || []).filter(item => Number(item?.sO_LUONG_OK || 0) > 0);
+                const now = new Date();
+
+                dateCodeSummaries = {
+                    under6: { count: 0, quantity: 0 },
+                    sixToOne: { count: 0, quantity: 0 },
+                    oneToTwo: { count: 0, quantity: 0 },
+                    overTwo: { count: 0, quantity: 0 }
+                };
+                dateCodeDetailRows = [];
+
+                filtered.forEach(item => {
+                    const parsedDate = parseDateCode(item?.datE_CODE);
+                    if (!parsedDate) {
+                        return;
+                    }
+
+                    const diffMonths = Math.max(0, (now - parsedDate) / (1000 * 60 * 60 * 24 * 30.4375));
+                    const groupKey = categorizeDateCode(diffMonths);
+
+                    if (!groupKey) {
+                        return;
+                    }
+
+                    const summary = dateCodeSummaries[groupKey];
+                    summary.count += 1;
+                    summary.quantity += Number(item?.sO_LUONG_OK || 0);
+
+                    const groupLabel = dateCodeGroups.find(g => g.key === groupKey)?.label || '';
+
+                    dateCodeDetailRows.push({
+                        'Nhóm thời gian': groupLabel,
+                        'MÃ_LIỆU': item?.mA_LIEU || '',
+                        'DATE_CODE': item?.datE_CODE || '',
+                        "Qty'OK": item?.sO_LUONG_OK || 0,
+                        'Nhà cung ứng': item?.nhA_CUNG_UNG || '',
+                        'Vị trí': item?.location || ''
+                    });
+                });
+
+                const chartLabels = dateCodeGroups.map(g => g.label);
+                const chartData = dateCodeGroups.map(g => dateCodeSummaries[g.key].count);
+
+                const ctx = document.getElementById('dateCodeChart');
+                if (!ctx) {
+                    return;
+                }
+
+                if (dateCodeChartInstance) {
+                    dateCodeChartInstance.destroy();
+                }
+
+                dateCodeChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Số PN',
+                            data: chartData,
+                            backgroundColor: ['#4caf50', '#ffc107', '#03a9f4', '#9c27b0']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Số PN'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Nhóm thời gian'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    footer(context) {
+                                        const label = context?.[0]?.label;
+                                        if (!label) {
+                                            return '';
+                                        }
+                                        const group = dateCodeGroups.find(g => g.label === label);
+                                        if (!group) {
+                                            return '';
+                                        }
+                                        const quantity = dateCodeSummaries[group.key]?.quantity || 0;
+                                        return `Tổng Qty'OK: ${quantity}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Không thể tải biểu đồ DATE CODE:', error);
+            }
+        }
+
+        function categorizeDateCode(months) {
+            if (months < 6) {
+                return 'under6';
+            }
+            if (months < 12) {
+                return 'sixToOne';
+            }
+            if (months < 24) {
+                return 'oneToTwo';
+            }
+            return 'overTwo';
+        }
+
+        function parseDateCode(raw) {
+            if (!raw) {
+                return null;
+            }
+
+            const value = raw.toString().trim();
+            if (!value) {
+                return null;
+            }
+
+            const numeric = value.replace(/[^0-9]/g, '');
+            if (/^\d{8}$/.test(numeric)) {
+                const year = parseInt(numeric.slice(0, 4), 10);
+                const month = parseInt(numeric.slice(4, 6), 10) - 1;
+                const day = parseInt(numeric.slice(6, 8), 10);
+                return new Date(year, month, day);
+            }
+
+            if (/^\d{6}$/.test(numeric)) {
+                const year = parseInt(numeric.slice(0, 4), 10);
+                const month = parseInt(numeric.slice(4, 6), 10) - 1;
+                return new Date(year, month, 1);
+            }
+
+            if (/^\d{4}$/.test(numeric)) {
+                const shortYear = parseInt(numeric.slice(0, 2), 10);
+                const week = parseInt(numeric.slice(2), 10);
+                const fullYear = resolveTwoDigitYear(shortYear);
+                return getDateFromIsoWeek(fullYear, week);
+            }
+
+            const parsed = new Date(value);
+            return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function resolveTwoDigitYear(twoDigitYear) {
+            if (isNaN(twoDigitYear)) {
+                return null;
+            }
+
+            const now = new Date();
+            const currentCentury = Math.floor(now.getFullYear() / 100) * 100;
+            const currentTwoDigit = now.getFullYear() % 100;
+
+            let year = currentCentury + twoDigitYear;
+            if (twoDigitYear > currentTwoDigit + 1) {
+                year -= 100;
+            }
+
+            return year;
+        }
+
+        function getDateFromIsoWeek(year, week) {
+            if (!year || !week || week > 53 || week < 1) {
+                return null;
+            }
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = simple.getDay() || 7;
+            if (dayOfWeek <= 4) {
+                simple.setDate(simple.getDate() - dayOfWeek + 1);
+            } else {
+                simple.setDate(simple.getDate() + (8 - dayOfWeek));
+            }
+            return simple;
+        }
+
+        function convertToCsv(data) {
+            if (!data || data.length === 0) {
+                return '';
+            }
+
+            const headers = Object.keys(data[0]);
+            const csvRows = [headers.join(',')];
+
+            data.forEach(row => {
+                const values = headers.map(field => {
+                    const cell = row[field] ?? '';
+                    const stringValue = cell.toString().replace(/"/g, '""');
+                    return `"${stringValue}"`;
+                });
+                csvRows.push(values.join(','));
+            });
+
+            return csvRows.join('\r\n');
+        }
+
         $(document).ready(function () {
             // Initialize DataTables for both tables
             $('#dcLcTable').DataTable({
@@ -185,6 +444,31 @@
                 scrollX: true,
                 responsive: true,
                 fixedHeader: true
+            });
+
+            loadDateCodeChart();
+
+            $('#downloadDateCodeDetails').on('click', function () {
+                if (!dateCodeDetailRows.length) {
+                    alert('Không có dữ liệu để tải xuống!');
+                    return;
+                }
+
+                const csvContent = convertToCsv(dateCodeDetailRows);
+                if (!csvContent) {
+                    alert('Không thể tạo dữ liệu tải xuống!');
+                    return;
+                }
+
+                const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `date_code_tracking_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
             });
         });
 
