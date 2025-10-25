@@ -371,7 +371,7 @@
             if (/^\d{4}$/.test(numeric)) {
                 const shortYear = parseInt(numeric.slice(0, 2), 10);
                 const week = parseInt(numeric.slice(2), 10);
-                const fullYear = (shortYear >= 90 ? 1900 : 2000) + shortYear;
+                const fullYear = resolveTwoDigitYear(shortYear);
                 return getDateFromIsoWeek(fullYear, week);
             }
 
@@ -379,8 +379,25 @@
             return isNaN(parsed.getTime()) ? null : parsed;
         }
 
+        function resolveTwoDigitYear(twoDigitYear) {
+            if (isNaN(twoDigitYear)) {
+                return null;
+            }
+
+            const now = new Date();
+            const currentCentury = Math.floor(now.getFullYear() / 100) * 100;
+            const currentTwoDigit = now.getFullYear() % 100;
+
+            let year = currentCentury + twoDigitYear;
+            if (twoDigitYear > currentTwoDigit + 1) {
+                year -= 100;
+            }
+
+            return year;
+        }
+
         function getDateFromIsoWeek(year, week) {
-            if (!week || week > 53) {
+            if (!year || !week || week > 53 || week < 1) {
                 return null;
             }
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
