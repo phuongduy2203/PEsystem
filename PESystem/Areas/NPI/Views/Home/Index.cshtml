@@ -1,4 +1,4 @@
-@model IEnumerable<PESystem.Areas.NPI.Models.NpiProject>
+@model IEnumerable<PESystem.Areas.NPI.Models.NpiProjectSummaryViewModel>
 @using System
 @using System.Linq
 
@@ -43,18 +43,33 @@
                             <tr>
                                 <th scope="col">Project</th>
                                 <th scope="col">Owner</th>
+                                <th scope="col" class="text-center" style="width: 180px;">Hạng mục đã tải</th>
                                 <th scope="col" style="width: 180px;">Ngày tạo</th>
                                 <th scope="col" class="text-end" style="width: 220px;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var project in Model)
+                            @foreach (var projectSummary in Model)
                             {
+                                var project = projectSummary.Project;
+                                var totalCategories = projectSummary.TotalCategoryCount;
+                                var progressText = totalCategories > 0
+                                    ? $"{projectSummary.UploadedCategoryCount}/{totalCategories}"
+                                    : projectSummary.UploadedCategoryCount.ToString();
+                                var progressLabel = totalCategories > 0
+                                    ? $"Đã tải {projectSummary.UploadedCategoryCount}/{totalCategories} hạng mục"
+                                    : $"Đã tải {projectSummary.UploadedCategoryCount} hạng mục";
+                                var badgeStyle = projectSummary.UploadedCategoryCount > 0 ? "text-bg-primary" : "text-bg-secondary";
                                 var modalKey = new string(project.Id.Where(char.IsLetterOrDigit).ToArray());
                                 modalKey = string.IsNullOrWhiteSpace(modalKey) ? Guid.NewGuid().ToString("N") : modalKey;
                                 <tr>
                                     <td class="fw-semibold">@project.Name</td>
                                     <td>@(string.IsNullOrWhiteSpace(project.Owner) ? "-" : project.Owner)</td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill @badgeStyle px-3 py-2" title="@progressLabel" aria-label="@progressLabel">
+                                            @progressText
+                                        </span>
+                                    </td>
                                     <td>@project.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td class="text-end">
                                         <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
