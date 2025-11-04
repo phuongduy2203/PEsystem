@@ -59,14 +59,16 @@
                                 var progressLabel = totalCategories > 0
                                     ? $"Đã tải {projectSummary.UploadedCategoryCount}/{totalCategories} hạng mục"
                                     : $"Đã tải {projectSummary.UploadedCategoryCount} hạng mục";
-                                var badgeStyle = projectSummary.UploadedCategoryCount > 0 ? "text-bg-primary" : "text-bg-secondary";
+                                var badgeClasses = projectSummary.UploadedCategoryCount > 0
+                                    ? "badge rounded-pill bg-light text-dark border border-primary px-3 py-2"
+                                    : "badge rounded-pill bg-light text-muted border border-secondary px-3 py-2";
                                 var modalKey = new string(project.Id.Where(char.IsLetterOrDigit).ToArray());
                                 modalKey = string.IsNullOrWhiteSpace(modalKey) ? Guid.NewGuid().ToString("N") : modalKey;
                                 <tr>
                                     <td class="fw-semibold">@project.Name</td>
                                     <td>@(string.IsNullOrWhiteSpace(project.Owner) ? "-" : project.Owner)</td>
                                     <td class="text-center">
-                                        <span class="badge rounded-pill @badgeStyle px-3 py-2" title="@progressLabel" aria-label="@progressLabel">
+                                        <span class="@badgeClasses" title="@progressLabel" aria-label="@progressLabel">
                                             @progressText
                                         </span>
                                     </td>
