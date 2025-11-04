@@ -414,7 +414,7 @@ namespace API_WEB.Controllers.MaterialSystem
                         !(t.MA_LIEU != null && (
                             t.MA_LIEU.ToUpper().StartsWith("RES") ||
                             t.MA_LIEU.ToUpper().StartsWith("CAP") ||
-                            t.MA_LIEU.StartsWith("1") ||
+                            //t.MA_LIEU.StartsWith("1") ||
                             t.MA_LIEU.StartsWith("032")
                         ))
                     );
@@ -454,7 +454,7 @@ namespace API_WEB.Controllers.MaterialSystem
                     // ❗ Loại bỏ MA_LIEU bắt đầu bằng RES / CAP / 1 / 032
                     .Where(hm => !(EF.Functions.Like(hm.MA_LIEU!, "RES%")
                                 || EF.Functions.Like(hm.MA_LIEU!, "CAP%")
-                                || EF.Functions.Like(hm.MA_LIEU!, "1%")
+                                //|| EF.Functions.Like(hm.MA_LIEU!, "1%")
                                 || EF.Functions.Like(hm.MA_LIEU!, "032%")))
                     .Select(hm => new BorrowingSummaryResponse
                     {

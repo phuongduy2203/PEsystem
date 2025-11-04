@@ -124,6 +124,7 @@
         public DateTime? TEST_TIME { get; set; }
         public string TEST_CODE { get; set; }
         public string ERROR_ITEM_CODE { get; set; }
+        public string DATA19_COMBINED { get; set; }
         public string ERROR_DESC { get; set; }
         public double? AGING { get; set; }
         public double? AGING_OLD { get; set; }

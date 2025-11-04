@@ -61,7 +61,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.LogoutPath = "/Auth/Logout";
         o.AccessDeniedPath = "/Auth/AccessDenied";
         o.SlidingExpiration = true;
-        o.ExpireTimeSpan    = TimeSpan.FromHours(12);   // thoi gian giu session
+        o.ExpireTimeSpan = TimeSpan.FromHours(12);   // thoi gian giu session
         // Nếu chạy HTTPS:
         // o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         // o.Cookie.SameSite     = SameSiteMode.Lax;

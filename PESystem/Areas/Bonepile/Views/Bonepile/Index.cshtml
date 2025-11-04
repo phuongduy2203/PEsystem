@@ -4,107 +4,200 @@
 @{
     Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
 }
-<!-- Header -->
-<header>
-    <h1>Bonepile Before</h1>
-</header>
 
-<!-- KPI Cards -->
-<div class="kpi-cards row">
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-primary smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">BonepileTotal</h5>
-                <p class="card-text" id="totalCount">N/A</p>
+<div class="dashboard-wrapper">
+    <!-- HEADER -->
+    <div class="top-header">
+        Bonepile Dashboard · Data Center
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT MAIN COLUMN (bar chart + two bottom cards) -->
+        <div class="col-lg-8">
+            <!-- Top big bar chart -->
+            <div class="data-card chart-lg mb-4">
+                <div class="neon-line"></div>
+                <div class="panel-title">Bonepile Distribution by Status / Line</div>
+                <div class="chart-container-lg">
+                    <!-- Placeholder canvas for bar chart -->
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bottom row: donut left + pie right -->
+            <div class="row g-4">
+                <!-- Donut summary card -->
+                <div class="col-md-6">
+                    <div class="data-card mini-card h-100">
+                        <div class="panel-title">Status Ratio</div>
+                        <div class="chart-container d-flex align-items-center justify-content-center mb-3" style="height:140px;">
+                            <canvas id="donutMain"></canvas>
+                        </div>
+
+                        <div class="legend-row">
+                            <span class="legend-dot legend-blue"></span>
+                            Scrap Has Task
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-dot legend-yellow"></span>
+                            Scrap Lacks Task
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-dot legend-cyan"></span>
+                            Waiting Approve Scrap
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pie stats card -->
+                <div class="col-md-6">
+                    <div class="data-card mini-card h-100">
+                        <div class="panel-title">Aging / Repair Mix</div>
+                        <div class="chart-container d-flex align-items-center justify-content-center mb-2" style="height:160px;">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                        <div class="text-center" style="font-size:12px;color:#9fb4ff;">
+                            <div>Rework FG / Under Repair / Waiting Check Out / Not Repairable / Approved BGA</div>
+                            <div>Breakdown by %</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-checkOut smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">ScrapHasTask</h5>
-                <p class="card-text" id="scrapCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-checkIn smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">ScrapLacksTask</h5>
-                <p class="card-text" id="noTaskscrapCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-waitingScrap smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">WaitingApproveScrap</h5>
-                <p class="card-text" id="waitingScrapCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-secondary smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">ReworkFG</h5>
-                <p class="card-text" id="reworkFGCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    </div>
-<div class="kpi-cards row">
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-repair smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">UnderRepairInRE</h5>
-                <p class="card-text" id="underRepairRECount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-online smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">UnderRepairInPD</h5>
-                <p class="card-text" id="underRepairPDCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-total smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">WaitingCheckOut</h5>
-                <p class="card-text" id="waitingCheckOutCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-total smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Can't Repair Process</h5>
-                <p class="card-text" id="notRepairProcessCount">N/A</p>
-            </div>
-        </div>
-    </div>    
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-total smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Approved BGA</h5>
-                <p class="card-text" id="approvedBGACount">N/A</p>
+
+        <!-- RIGHT COLUMN (ring KPIs) -->
+        <div class="col-lg-4">
+            <div class="data-card h-100">
+                <div class="panel-title">Live KPIs</div>
+
+                <div class="row g-4">
+                    <!-- KPI item 1 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="totalCount">N/A</div>
+                                    <div class="donut-label">BonepileTotal</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 2 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="scrapCount">N/A</div>
+                                    <div class="donut-label">ScrapHasTask</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 3 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="noTaskscrapCount">N/A</div>
+                                    <div class="donut-label">ScrapLacksTask</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 4 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="waitingScrapCount">N/A</div>
+                                    <div class="donut-label">WaitingApproveScrap</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 5 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="reworkFGCount">N/A</div>
+                                    <div class="donut-label">ReworkFG</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 6 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="underRepairRECount">N/A</div>
+                                    <div class="donut-label">UnderRepairInRE</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 7 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="underRepairPDCount">N/A</div>
+                                    <div class="donut-label">UnderRepairInPD</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 8 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="waitingCheckOutCount">N/A</div>
+                                    <div class="donut-label">WaitingCheckOut</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 9 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="notRepairProcessCount">N/A</div>
+                                    <div class="donut-label">Can't Repair Process</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI item 10 -->
+                    <div class="col-6">
+                        <div class="donut-box">
+                            <div class="donut-ring">
+                                <div class="donut-ring-inner">
+                                    <div class="donut-percent" id="approvedBGACount">N/A</div>
+                                    <div class="donut-label">Approved BGA</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- row -->
             </div>
         </div>
     </div>
 </div>
 
-<!-- Donut Chart and Table -->
-<div class="parent">
-    <div class="div1">
-                <canvas id="statusDonutChart"></canvas>
-    </div>
-    <div class="div2">
-                <canvas id="agingDonutChart"></canvas>
-    </div>
-</div>
-<!-- Modal for aging records -->
+<!-- MODAL (giữ nguyên từ UI cũ) -->
 <div class="modal fade" id="recordsModal" tabindex="-1" aria-labelledby="recordsModalLabel" aria-hidden="true">
     <div class="modal-dialog  modal-lg">
         <div class="modal-content">
@@ -144,10 +237,13 @@
         </div>
     </div>
 </div>
+
+<!-- MAIN TABLE (giữ nguyên từ UI cũ) -->
 <div class="row my-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-body">
+        <div class="data-card">
+            <div class="panel-title">Bonepile Detail</div>
+            <div class="table-responsive">
                 <table id="sumMaterialsTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
                     <thead>
                         <tr>
@@ -181,84 +277,334 @@
     </div>
 </div>
 
+
+<!-- Extra hidden charts to preserve old IDs for now (optional, for migration) -->
+<div style="display:none;">
+    <canvas id="statusDonutChart"></canvas>
+    <canvas id="agingDonutChart"></canvas>
+</div>
+
+
 @section Scripts {
+    <!-- Bootstrap/Chart.js CDN needed by the new UI -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- your logic -->
     <script src="~/assets/areas/bonepile/js/bonepile.js?v=@DateTime.Now.Ticks"></script>
+
     <style>
-
-        .smaller-card {
-            transform: scale(0.8); /* Reduce card size by 20% */
-            margin: 0 -5px; /* Minimize spacing between cards */
+        /* ----------- Global dark sci-fi theme ----------- */
+        body {
+            background: radial-gradient(circle at 50% 0%, #0c1a39 0%, #050b1a 60%);
+            background-color: #0a1224;
+            min-height: 100vh;
+            color: #dbe9ff;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
         }
 
-        .smaller-text .card-title {
-            font-size: 1.5rem; /* Smaller title font size */
+        .dashboard-wrapper {
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
-        .smaller-text .card-text {
-            font-size: 1.5rem; /* Smaller text font size */
-        }
-
-        .kpi-cards {
-            display: flex;
-            flex-wrap: nowrap; /* Keep cards in a single row */
-        }
-
-            .kpi-cards .col-md-2,
-            .kpi-cards .col-lg-1,
-            .kpi-cards .col-sm-3,
-            .kpi-cards .col-3 {
-                flex: 0 0 20%; /* Divide equally for 7 cards (100% / 7) */
-                max-width: 20%; /* Ensure equal width */
-                padding: 0; /* Reduce padding for tighter fit */
-            }
-
-
-                    /* Định dạng bảng recordsTable */
-        #recordsTable th, #recordsTable td {
-            width: 120px !important;
-            max-width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #sumMaterialsTable th, #sumMaterialsTable td {
-            width: 120px !important;
-            max-width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .custom-tooltip {
-            position: absolute;
-            background-color: #333;
+        /* ----------- Neon header bar ----------- */
+        .top-header {
+            text-align: center;
             color: #fff;
-            padding: 5px 10px;
-            border-radius: 4px;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            position: relative;
+            text-shadow: 0 0 8px #00d9ff, 0 0 16px #00d9ff;
+        }
+
+        .top-header::before,
+        .top-header::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 28%;
+            max-width: 400px;
+            height: 2px;
+            background: linear-gradient(
+                90deg,
+                rgba(0, 217, 255, 0) 0%,
+                rgba(0, 217, 255, 0.6) 50%,
+                rgba(0, 217, 255, 0) 100%
+            );
+            box-shadow: 0 0 8px #00d9ff;
+        }
+        .top-header::before {
+            left: 0;
+        }
+        .top-header::after {
+            right: 0;
+        }
+
+        /* ----------- Card style (glassy panels) ----------- */
+        .data-card {
+            background: rgba(13, 25, 52, 0.6);
+            border: 1px solid rgba(0, 217, 255, 0.4);
+            border-radius: 8px;
+            box-shadow:
+                0 0 15px rgba(0, 217, 255, 0.15),
+                0 0 60px rgba(0, 217, 255, 0.05) inset;
+            backdrop-filter: blur(4px);
+            position: relative;
+            padding: 16px 20px;
+            color: #dbe9ff;
+        }
+
+        .data-card .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 12px;
+            text-shadow: 0 0 6px #00d9ff;
+        }
+
+        /* ----------- left big bar chart card height ----------- */
+        .chart-lg {
+            min-height: 320px;
+        }
+
+        /* ----------- donut list on the right ----------- */
+        .donut-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #fff;
+            text-align: center;
+            width: 100%;
+            min-height: 110px;
+            border-radius: 8px;
+            background: radial-gradient(circle at 50% 0%, rgba(15,36,70,0.8) 0%, rgba(8,16,33,0.4) 70%);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            box-shadow: 0 0 12px rgba(0, 217, 255, 0.2);
+            position: relative;
+        }
+
+        .donut-percent {
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.1;
+            text-shadow: 0 0 6px #00fff2;
+        }
+
+        .donut-label {
+            font-size: 13px;
+            color: #9fb4ff;
+            margin-top: 4px;
+            line-height: 1.2;
+        }
+
+        /* Fake ring to mimic circular progress (gradient border style) */
+        .donut-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            position: relative;
+            background: conic-gradient(
+                rgba(0, 255, 255, 0.8) 0deg 288deg,
+                rgba(40, 40, 60, 0.3) 288deg 360deg
+            );
+            box-shadow:
+                0 0 10px rgba(0,255,255,0.5),
+                0 0 25px rgba(255,196,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-ring-inner {
+            width: 52px;
+            height: 52px;
+            background: radial-gradient(circle at 50% 30%, #0f274d 0%, #091327 70%);
+            border-radius: 50%;
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            box-shadow: 0 0 8px rgba(0, 217, 255, 0.4) inset;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ----------- bottom mini cards layout tweaks ----------- */
+        .mini-card {
+            min-height: 260px;
+        }
+
+        /* footer small legend text */
+        .legend-row {
             font-size: 12px;
-            z-index: 1000;
-            display: none;
-            max-width: 300px;
-            word-wrap: break-word;
+            line-height: 1.4;
+            color: #9fb4ff;
         }
 
-
-        .parent {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            gap: 8px;
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
         }
 
-        .div1 {
-            grid-column: span 4 / span 4;
-            grid-row: span 4 / span 4;
+        /* custom colors for legend demo */
+        .legend-blue { background-color: #00d9ff; }
+        .legend-yellow { background-color: #ffd24a; }
+        .legend-cyan { background-color: #00ffc6; }
+
+        /* chart canvas sizing */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
         }
 
-        .div2 {
-            grid-column: span 2 / span 2;
-            grid-row: span 4 / span 4;
-            grid-column-start: 5;
+        .chart-container-lg {
+            height: 220px;
+        }
+
+        @@media (min-width: 1400px) {
+            .chart-lg {
+                min-height: 360px;
+            }
+        }
+
+        /* small neon line decorations (optional) */
+        .neon-line {
+            position: absolute;
+            top: 8px;
+            left: 16px;
+            right: 16px;
+            height: 2px;
+            background: radial-gradient(circle, rgba(0,255,255,0.8) 0%, rgba(0,255,255,0) 70%);
+            opacity: 0.4;
+        }
+
+        /* tables styling tweaks to match dark theme */
+        .table {
+            color: #dbe9ff;
+            background-color: rgba(13, 25, 52, 0.4);
+        }
+
+        .table thead th {
+            background-color: rgba(0, 217, 255, 0.15);
+            color: #fff;
+            border-color: rgba(0, 217, 255, 0.4) !important;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            background-color: rgba(13, 25, 52, 0.15);
+            color: #9fb4ff;
+            border-color: rgba(0, 217, 255, 0.1) !important;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-content {
+            background-color: #0a1224;
+            color: #dbe9ff;
+            border: 1px solid rgba(0, 217, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-close {
+            filter: invert(1) drop-shadow(0 0 4px #00d9ff);
         }
     </style>
+
+    <script>
+        // ===== Demo Chart.js init placeholders =====
+        // BAR CHART
+        const barCtx = document.getElementById('barChart');
+        if (barCtx) {
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Line A','Line B','Line C','Scrap','Repair RE','Repair PD',
+                        'WaitingOut','NotRepair','BGA OK'
+                    ],
+                    datasets: [
+                        {
+                            label: 'Units',
+                            data: [12, 9, 6, 14, 7, 5, 3, 2, 4],
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: { color: '#9fb4ff' },
+                            grid: { color: 'rgba(0,217,255,0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#9fb4ff' },
+                            grid: { color: 'rgba(0,217,255,0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#dbe9ff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // DONUT MAIN
+        const donutCtx = document.getElementById('donutMain');
+        if (donutCtx) {
+            new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Has Task','No Task','Waiting Approve'],
+                    datasets: [{
+                        data: [50, 30, 20],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // PIE CHART
+        const pieCtx = document.getElementById('pieChart');
+        if (pieCtx) {
+            new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['ReworkFG','UnderRepairRE','UnderRepairPD','WaitingOut','NotRepair','BGA'],
+                    datasets: [{
+                        data: [20,15,10,8,5,4],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
 }

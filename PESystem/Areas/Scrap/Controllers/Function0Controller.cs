@@ -5,7 +5,7 @@ namespace PESystem.Areas.Scrap.Controllers
 {
     [Area("Scrap")]
     [Authorize(Policy = "ScrapAccess")]
-    public class Function0Controller: Controller
+    public class Function0Controller : Controller
     {
         public IActionResult Index()
         {

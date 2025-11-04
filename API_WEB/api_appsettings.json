@@ -15,5 +15,8 @@
       "key": "key-@-system-pe-mbd-1-fuyu-@-foxconn-vietnam-nvidia-*-28-08-2024",
       "AccessTokenMinutes": 60
     },
+  "SopSettings": {
+    "RootPath": "E:/SOP"
+  },
   "AllowedHosts": "*"
 }

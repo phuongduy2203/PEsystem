@@ -588,10 +588,10 @@ namespace API_WEB.Controllers
 
         private async Task<(bool IsValid, string? ErrorMessage)> ValidateSerialForImportAsync(string originalSerial, SerialLinkResolver.SerialLinkInfo linkInfo)
         {
-            if (linkInfo == null)
-            {
-                return (false, "SERIAL_NUMBER CHƯA ĐƯỢC UNLINK!!");
-            }
+            //if (linkInfo == null)
+            //{
+            //    return (false, "SERIAL_NUMBER CHƯA ĐƯỢC UNLINK!!");
+            //}
 
             var serialCandidates = new List<string>();
 
@@ -674,13 +674,13 @@ namespace API_WEB.Controllers
                 serialsToCheckKeyPart.Add(validatedSerial);
             }
 
-            foreach (var serial in serialsToCheckKeyPart)
-            {
-                if (await KeyPartSerialExistsAsync(serial))
-                {
-                    return (false, $"SerialNumber {serial} đang tồn tại trong bảng R_WIP_KEYPARTS_T với vai trò KEY_PART_SN.");
-                }
-            }
+            //foreach (var serial in serialsToCheckKeyPart)
+            //{
+            //    if (await KeyPartSerialExistsAsync(serial))
+            //    {
+            //        return (false, $"SerialNumber {serial} đang tồn tại trong bảng R_WIP_KEYPARTS_T với vai trò KEY_PART_SN.");
+            //    }
+            //}
 
             return (true, null);
         }

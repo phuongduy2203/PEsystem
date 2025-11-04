@@ -27,105 +27,125 @@ namespace API_WEB.Services.Bonepile
             await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
             await connection.OpenAsync(cancellationToken);
 
-            const string query = @"SELECT /*+ USE_NL(A R107 B R109C R109P) LEADING(A) */
-    A.SERIAL_NUMBER,
-    R107.MO_NUMBER,
-    A.MODEL_NAME,
-    B.PRODUCT_LINE,
-    A.WIP_GROUP AS WIP_GROUP_KANBAN,
-    R107.WIP_GROUP AS WIP_GROUP_SFC,
-    R107.ERROR_FLAG,
-    R107.WORK_FLAG,
+            const string query = @"
+            SELECT /*+ LEADING(A) USE_NL(A B R107 KP R109X R109_OLD) */
+                  A.SERIAL_NUMBER,
+                  KP.PARENT_SN AS FG,
+                  R107.MO_NUMBER,
+                  A.MODEL_NAME,
+                  B.PRODUCT_LINE,
+                  A.WIP_GROUP AS WIP_GROUP_KANBAN,
+                  R107.WIP_GROUP AS WIP_GROUP_SFC,
+                  R107.ERROR_FLAG,
+                  R107.WORK_FLAG,
 
-    NVL2(R109C.TEST_GROUP, R109C.TEST_GROUP, R109P.TEST_GROUP) AS TEST_GROUP,
-    NVL2(R109C.TEST_TIME,  R109C.TEST_TIME,  R109P.TEST_TIME)  AS TEST_TIME,
-    NVL2(R109C.TEST_CODE,  R109C.TEST_CODE,  R109P.TEST_CODE)  AS TEST_CODE,
-    NVL2(R109C.ERROR_ITEM_CODE, R109C.ERROR_ITEM_CODE, R109P.ERROR_ITEM_CODE) AS ERROR_ITEM_CODE,
-    NVL2(E1.ERROR_DESC, E1.ERROR_DESC, E2.ERROR_DESC) AS ERROR_DESC,
+                  R109X.TEST_GROUP,
+                  R109X.TEST_TIME,
+                  R109X.TEST_CODE,
+                  R109X.ERROR_ITEM_CODE,
+                  E.ERROR_DESC,
 
-    --Aging dựa vào test_time mới nhất
-    TRUNC(SYSDATE) - TRUNC(NVL2(R109C.TEST_TIME, R109C.TEST_TIME, R109P.TEST_TIME)) AS AGING,
+                  -- AGING theo test_time mới nhất
+                  TRUNC(SYSDATE) - TRUNC(R109X.TEST_TIME) AS AGING,
 
-    -- Aging dựa vào test_time cũ nhất
-    TRUNC(SYSDATE) - TRUNC(NVL2(R109C_OLD.TEST_TIME, R109C_OLD.TEST_TIME, R109P_OLD.TEST_TIME)) AS AGING_OLDEST
+                  -- AGING theo test_time cũ nhất
+                  TRUNC(SYSDATE) - TRUNC(R109_OLD.TEST_TIME) AS AGING_OLDEST
 
-FROM SFISM4.Z_KANBAN_TRACKING_T A
-JOIN SFIS1.C_MODEL_DESC_T B ON A.MODEL_NAME = B.MODEL_NAME
-JOIN SFISM4.R107 R107 ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
+                FROM SFISM4.Z_KANBAN_TRACKING_T A
+                JOIN SFIS1.C_MODEL_DESC_T B ON A.MODEL_NAME = B.MODEL_NAME
+                JOIN SFISM4.R107 R107 ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
 
-/* 🧩 Test mới nhất cho SERIAL_NUMBER */
-LEFT JOIN (
-    SELECT SERIAL_NUMBER, TEST_GROUP, TEST_TIME, TEST_CODE, ERROR_ITEM_CODE
-    FROM (
-        SELECT R.*, ROW_NUMBER() OVER (PARTITION BY R.SERIAL_NUMBER ORDER BY R.TEST_TIME DESC) rn
-        FROM SFISM4.R109 R
-        WHERE R.TEST_TIME IS NOT NULL
-    )
-    WHERE rn = 1
-) R109C ON R109C.SERIAL_NUMBER = A.SERIAL_NUMBER
+                /* mapping Parent_SN theo WORK_TIME mới nhất */
+                LEFT JOIN (
+                  SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                  FROM (
+                    SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                           ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                    FROM SFISM4.P_WIP_KEYPARTS_T kp
+                    WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                      AND LENGTH(kp.SERIAL_NUMBER) IN (11,12,18,20,21,23)
+                      AND LENGTH(kp.KEY_PART_SN)   IN (13,14)
+                  ) WHERE rn = 1
+                ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
 
-/* 🧩 Test cũ nhất cho SERIAL_NUMBER */
-LEFT JOIN (
-    SELECT SERIAL_NUMBER, TEST_TIME
-    FROM (
-        SELECT R.*, ROW_NUMBER() OVER (PARTITION BY R.SERIAL_NUMBER ORDER BY R.TEST_TIME ASC) rn_asc
-        FROM SFISM4.R109 R
-        WHERE R.TEST_TIME IS NOT NULL
-    )
-    WHERE rn_asc = 1
-) R109C_OLD ON R109C_OLD.SERIAL_NUMBER = A.SERIAL_NUMBER
+                /* Test mới nhất (SN ∪ Parent_SN) */
+                LEFT JOIN (
+                  SELECT *
+                  FROM (
+                    SELECT
+                      base.SN,
+                      r.TEST_GROUP,
+                      r.TEST_TIME,
+                      r.TEST_CODE,
+                      r.ERROR_ITEM_CODE,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY base.SN
+                        ORDER BY r.TEST_TIME DESC, r.TEST_CODE DESC
+                      ) AS rn
+                    FROM (
+                      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      UNION ALL
+                      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      JOIN (
+                        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                        FROM (
+                          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                          FROM SFISM4.P_WIP_KEYPARTS_T kp
+                          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                        ) WHERE rn = 1
+                      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+                    ) base
+                    JOIN SFISM4.R109 r
+                      ON r.SERIAL_NUMBER = base.CAND_SN
+                    WHERE r.TEST_TIME IS NOT NULL
+                  )
+                  WHERE rn = 1
+                ) R109X ON R109X.SN = A.SERIAL_NUMBER
 
-/* 🧩 Test mới nhất cho PARENT SN */
-LEFT JOIN (
-    SELECT CHILD.KEY_PART_SN, R.TEST_GROUP, R.TEST_TIME, R.TEST_CODE, R.ERROR_ITEM_CODE
-    FROM (
-        SELECT K.KEY_PART_SN,
-               MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
-        FROM SFISM4.P_WIP_KEYPARTS_T K
-        WHERE K.WORK_TIME IS NOT NULL
-        GROUP BY K.KEY_PART_SN
-    ) CHILD
-    JOIN (
-        SELECT SERIAL_NUMBER, TEST_GROUP, TEST_TIME, TEST_CODE, ERROR_ITEM_CODE
-        FROM (
-            SELECT R2.*, ROW_NUMBER() OVER (PARTITION BY R2.SERIAL_NUMBER ORDER BY R2.TEST_TIME DESC) rn
-            FROM SFISM4.R109 R2
-            WHERE R2.TEST_TIME IS NOT NULL
-        )
-        WHERE rn = 1
-    ) R ON R.SERIAL_NUMBER = CHILD.PARENT_SN
-) R109P ON R109P.KEY_PART_SN = A.SERIAL_NUMBER
+                /* Test cũ nhất (SN ∪ Parent_SN) */
+                LEFT JOIN (
+                  SELECT *
+                  FROM (
+                    SELECT
+                      base.SN,
+                      r.TEST_TIME,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY base.SN
+                        ORDER BY r.TEST_TIME ASC
+                      ) AS rn
+                    FROM (
+                      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      UNION ALL
+                      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      JOIN (
+                        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                        FROM (
+                          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                          FROM SFISM4.P_WIP_KEYPARTS_T kp
+                          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                        ) WHERE rn = 1
+                      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+                    ) base
+                    JOIN SFISM4.R109 r
+                      ON r.SERIAL_NUMBER = base.CAND_SN
+                    WHERE r.TEST_TIME IS NOT NULL
+                  )
+                  WHERE rn = 1
+                ) R109_OLD ON R109_OLD.SN = A.SERIAL_NUMBER
 
-/* 🧩 Test cũ nhất cho PARENT SN */
-LEFT JOIN (
-    SELECT CHILD.KEY_PART_SN, R.TEST_TIME
-    FROM (
-        SELECT K.KEY_PART_SN,
-               MAX(K.SERIAL_NUMBER) KEEP (DENSE_RANK LAST ORDER BY K.WORK_TIME) AS PARENT_SN
-        FROM SFISM4.P_WIP_KEYPARTS_T K
-        WHERE K.WORK_TIME IS NOT NULL
-        GROUP BY K.KEY_PART_SN
-    ) CHILD
-    JOIN (
-        SELECT SERIAL_NUMBER, TEST_TIME
-        FROM (
-            SELECT R2.*, ROW_NUMBER() OVER (PARTITION BY R2.SERIAL_NUMBER ORDER BY R2.TEST_TIME ASC) rn_asc
-            FROM SFISM4.R109 R2
-            WHERE R2.TEST_TIME IS NOT NULL
-        )
-        WHERE rn_asc = 1
-    ) R ON R.SERIAL_NUMBER = CHILD.PARENT_SN
-) R109P_OLD ON R109P_OLD.KEY_PART_SN = A.SERIAL_NUMBER
+                LEFT JOIN SFIS1.C_ERROR_CODE_T E ON E.ERROR_CODE = R109X.TEST_CODE
 
-LEFT JOIN SFIS1.C_ERROR_CODE_T E1 ON R109C.TEST_CODE = E1.ERROR_CODE
-LEFT JOIN SFIS1.C_ERROR_CODE_T E2 ON R109P.TEST_CODE = E2.ERROR_CODE
-
-WHERE
-    A.WIP_GROUP LIKE '%B36R%'
-    AND B.MODEL_SERIAL = 'ADAPTER'
-    AND R107.WIP_GROUP NOT LIKE '%BR2C%'
-    AND R107.WIP_GROUP NOT LIKE '%BCFA%'
-";
+                WHERE
+                  A.WIP_GROUP LIKE '%B36R%'
+                  AND B.MODEL_SERIAL = 'ADAPTER'
+                  AND R107.WIP_GROUP NOT LIKE '%BR2C%'
+                  AND R107.WIP_GROUP NOT LIKE '%BCFA%'";
 
             await using var command = new OracleCommand(query, connection);
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);

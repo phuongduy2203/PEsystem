@@ -123,7 +123,7 @@ namespace API_WEB.Controllers.SmartFA
                 from task in _oracleDbContext.OracleDataRepairTask
                 join r107 in _oracleDbContext.OracleDataR107
                 on task.SERIAL_NUMBER equals r107.SERIAL_NUMBER
-                where task.DATE3 != null && task.DATA18 != null && 
+                where task.DATE3 != null && task.DATA18 != null &&
                       task.DATA18 != "TRONG_KHO" &&
                       task.DATA17 != "Nhận(Nhập Kho Phế)" &&
                       task.DATA17 != "Nhập(Kho Phế)" &&
@@ -131,7 +131,7 @@ namespace API_WEB.Controllers.SmartFA
                       task.DATA18 != "KHO PHẾ" &&
                       task.DATA17 != "Nhận(Nhập Kho)" &&
                       task.DATA17 != "Nhận(Nhập kho)" &&
-                      task.DATA17 != "Giao(Cho mượn từ Kho)"&&
+                      task.DATA17 != "Giao(Cho mượn từ Kho)" &&
                       !(r107.WIP_GROUP.Contains("BR2C") || r107.WIP_GROUP.Contains("BCFA"))
                 join err in _oracleDbContext.ErrorCodes
                     on task.TEST_CODE equals err.ERROR_CODE into errJoin
@@ -195,7 +195,7 @@ namespace API_WEB.Controllers.SmartFA
                         MONumber = x.MO_NUMBER,
                         ModelName = x.MODEL_NAME,
                         Aging = Math.Round(x.AgingDays, 2),
-                        Location = x.DATA18 
+                        Location = x.DATA18
                     }).ToList()
                 }
             });

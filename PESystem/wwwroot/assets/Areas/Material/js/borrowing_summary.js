@@ -471,11 +471,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="swal-helper">Tổng số lượng cần thu: ${ (referenceRow.qty1 ?? 0) + (referenceRow.qty2 ?? 0) }</div>
                     <div class="swal-form-row">
                         <label for="swal-qtyOK">Số lượng OK:</label>
-                        <input type="number" id="swal-qtyOK" class="swal2-input" min="0" value="${suggestedQtyOK}" />
+                        <input type="number" id="swal-qtyOK" class="swal2-input" min="0" value="0" />
                     </div>
                     <div class="swal-form-row">
                         <label for="swal-qtyNG">Số lượng NG:</label>
-                        <input type="number" id="swal-qtyNG" class="swal2-input" min="0" value="${suggestedQtyNG}" />
+                        <input type="number" id="swal-qtyNG" class="swal2-input" min="0" value="${suggestedQtyOK}" />
                     </div>
                     <div class="swal-form-row">
                         <label for="swal-remark">Remark (Note):</label>
@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="swal-form-row">
                         <label for="swal-opReturn">Người trả (OP):</label>
-                        <input type="text" id="swal-opReturn" class="swal2-input" placeholder="Nhập mã người trả" value="${currentUser}" />
+                        <input type="text" id="swal-opReturn" class="swal2-input" placeholder="Nhập mã người trả"/>
                     </div>
                 `,
                 focusConfirm: false,

@@ -57,7 +57,7 @@ namespace API_WEB.Controllers.Repositories
 
             try
             {
-                int maxSlots = 260;
+                int maxSlots = 400;
                 request.SerialNumbers = request.SerialNumbers
                     .Where(sn => !string.IsNullOrWhiteSpace(sn))
                     .Select(sn => sn.Trim())
@@ -241,7 +241,7 @@ namespace API_WEB.Controllers.Repositories
 
                 //3. So luong vi tri toi da trong khay
                 //int maxSlots = shelf.Contains("XE") ? 20 : 8;
-                int maxSlots = 260;
+                int maxSlots = 400;
                 // 4. Tạo danh sách serials với vị trí
                 var occupiedPositions = productsInTray.Select(p => new
                 {
@@ -595,7 +595,7 @@ namespace API_WEB.Controllers.Repositories
                 }
 
                 var invalidSerials = await _sqlContext.ScrapLists.Where(sl => request.SerialNumbers
-                    .Contains(sl.SN) && (sl.ApplyTaskStatus != 17 && sl.ApplyTaskStatus != 18))
+                    .Contains(sl.SN) && (sl.ApplyTaskStatus != 19 && sl.ApplyTaskStatus != 18))
                     .Select(sl => sl.SN).ToListAsync();
 
                 if (invalidSerials.Any())

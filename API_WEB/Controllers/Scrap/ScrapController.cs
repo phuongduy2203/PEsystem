@@ -876,7 +876,7 @@ namespace API_WEB.Controllers.Scrap
                 var rejectedSNs = new List<string>();
                 foreach (var record in recordsToUpdate)
                 {
-                    if (record.TaskNumber != null || record.TaskNumber != "N/A")
+                    if (record.TaskNumber != null && record.TaskNumber != "N/A")
                     {
                         rejectedSNs.Add(record.SN);
                     }
@@ -1436,29 +1436,29 @@ namespace API_WEB.Controllers.Scrap
                     AND GROUP_NAME = 'SMTLOADING' 
                     AND MO_NUMBER LIKE '5%'";
 
-                    // Chỉ kiểm tra điều kiện MO_NUMBER nếu Approve = 2 (những bản cần xin báo phế)
-                    if (request.Approve == "2")
-                    {
+                    //// Chỉ kiểm tra điều kiện MO_NUMBER nếu Approve = 2 (những bản cần xin báo phế)
+                    //if (request.Approve == "2")
+                    //{
 
-                        using (var command = new OracleCommand(sqlQuery, connection))
-                        {
-                            using (var reader = await command.ExecuteReaderAsync())
-                            {
-                                var invalidSNs = new List<string>();
-                                while (await reader.ReadAsync())
-                                {
-                                    string serialNumber = reader.GetString(0);
-                                    string moNumber = reader.GetString(1);
-                                    invalidSNs.Add($"{serialNumber} (MO: {moNumber})");
-                                }
+                    //    using (var command = new OracleCommand(sqlQuery, connection))
+                    //    {
+                    //        using (var reader = await command.ExecuteReaderAsync())
+                    //        {
+                    //            var invalidSNs = new List<string>();
+                    //            while (await reader.ReadAsync())
+                    //            {
+                    //                string serialNumber = reader.GetString(0);
+                    //                string moNumber = reader.GetString(1);
+                    //                invalidSNs.Add($"{serialNumber} (MO: {moNumber})");
+                    //            }
 
-                                if (invalidSNs.Any())
-                                {
-                                    return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSNs)}" });
-                                }
-                            }
-                        }
-                    }
+                    //            if (invalidSNs.Any())
+                    //            {
+                    //                return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSNs)}" });
+                    //            }
+                    //        }
+                    //    }
+                    //}
                 }
 
 

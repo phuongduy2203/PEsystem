@@ -159,13 +159,16 @@
         }
         // Cập nhật tổng số serial đã nhập
         serialCount.textContent = `Tổng số serial đã nhập: ${totalSerials}/${maxSlots}`;
-        console.log("=======maxSlots ne 2: =====", maxSlots);
         // Cập nhật thông tin modelName và productLine
         updateSerialDetails(serialNumbers);
     });
 
     // Gửi dữ liệu lên API khi nhấn nút "Nhập kho"
     entryButton.addEventListener("click", async function () {
+        // 🚫 Chặn click liên tục
+        entryButton.disabled = true;
+        entryButton.textContent = "ĐANG XỬ LÝ...";
+
         const shelf = document.querySelector('input[name="shelf"]').value;
         const column = document.querySelector('input[name="column"]').value;
         const level = document.querySelector('input[name="level"]').value;
@@ -184,7 +187,7 @@
 
         const duplicatesInTray = serialNumbers.filter(sn => trayData.includes(sn));
         if (duplicatesInTray.length > 0 || hasDuplicateSerials(serialNumbers)) {
-            //alert("Danh sách serial có trung lặp hoặc đã tồn tại trong khay.");
+            //alert("Danh sách serial có trùng lặp hoặc đã tồn tại trong khay.");
             showWarning("Vui lòng điền đây đủ!");
             return;
         }
@@ -224,6 +227,10 @@
         } catch (error) {
             console.error("Lỗi khi xử lý yêu cầu:", error);
             showError("Error!");
+        } finally {
+            //Bật lại nút sau khi hoàn tất
+            entryButton.disabled = false;
+            entryButton.textContent = "NHẬP KHO";
         }
     });
 });

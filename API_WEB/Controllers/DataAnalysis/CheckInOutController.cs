@@ -10,6 +10,7 @@ using API_WEB.ModelsOracle;
 using API_WEB.ModelsDB;
 using API_WEB.Controllers.Repositories;
 using Newtonsoft.Json;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace API_WEB.Controllers.SmartFA
 {
@@ -142,7 +143,7 @@ namespace API_WEB.Controllers.SmartFA
                                        INNER JOIN SFISM4.R107 r107 ON a.serial_number = r107.serial_number
                                        INNER JOIN SFIS1.C_ERROR_CODE_T c ON a.REMARK = c.ERROR_CODE
                                        WHERE b.MODEL_SERIAL = 'ADAPTER'
-                                         AND a.P_SENDER IN ('V0904136','V3209541', 'V0945375', 'V0928908', 'V3245384', 'V3211693','V1097872')
+                                         AND a.P_SENDER IN ('V0904136','V3209541', 'V0945375', 'V0928908', 'V3245384', 'V3211693','V1097872', 'V3231778')
                                          AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                                          AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
                                          AND a.REMARK NOT IN ('CK00')
@@ -410,7 +411,6 @@ namespace API_WEB.Controllers.SmartFA
             }
         }
 
-
         [HttpGet("GetCheckInAfterKanBan")]
         public async Task<IActionResult> getCheckInAfterKanBan(DateTime? startDate, DateTime? endDate)
         {
@@ -424,9 +424,10 @@ namespace API_WEB.Controllers.SmartFA
                 var checkInQuery = @"
                     SELECT 
                         CASE 
-                        WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') THEN COALESCE(kp.KEY_PART_SN, kr.KEY_PART_SN)
+                            WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
+                                 THEN NVL(kp.KEY_PART_SN, NVL(kr.KEY_PART_SN, a.SERIAL_NUMBER))
                             ELSE a.SERIAL_NUMBER
-                            END AS SFG,
+                        END AS SFG,
                         a.SERIAL_NUMBER AS FG,
                         a.MODEL_NAME,
                         d.PRODUCT_LINE,
@@ -438,52 +439,49 @@ namespace API_WEB.Controllers.SmartFA
                         c.ERROR_DESC,
                         a.IN_DATETIME,
                         a.OUT_DATETIME,
-                        r107.WIP_GROUP,
-                        r107.ERROR_FLAG,
-                        r107.WORK_FLAG
+                        NVL(r107.WIP_GROUP, r107_v2.WIP_GROUP) AS WIP_GROUP,
+                        NVL(r107.ERROR_FLAG, r107_v2.ERROR_FLAG) AS ERROR_FLAG,
+                        NVL(r107.WORK_FLAG, r107_v2.WORK_FLAG) AS WORK_FLAG
                     FROM sfism4.R_REPAIR_IN_OUT_T a
                     LEFT JOIN SFISM4.R107 r107
-                    on r107.SERIAL_NUMBER = a.SERIAL_NUMBER
-                    LEFT JOIN SFIS1.C_ERROR_CODE_T c 
-                    on c.ERROR_CODE = a.REMARK
-                    INNER JOIN SFIS1.C_MODEL_DESC_T d 
-                    ON d.MODEL_NAME = a.MODEL_NAME
+                        ON r107.SERIAL_NUMBER = a.SERIAL_NUMBER
                     LEFT JOIN (
                         SELECT SERIAL_NUMBER, KEY_PART_SN
                         FROM (
                             SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
                                    ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
-                                   FROM sfism4.P_WIP_KEYPARTS_T kp where kp.GROUP_NAME = 'SFG_LINK_FG' 
-                                   AND LENGTH(kp.SERIAL_NUMBER) in (12, 18, 21, 20, 23) 
-                                   AND LENGTH(kp.KEY_PART_SN) in(14, 13)
-                        )
-                        WHERE rn = 1
-                    ) kp
-                        ON a.SERIAL_NUMBER = kp.SERIAL_NUMBER
+                            FROM sfism4.P_WIP_KEYPARTS_T kp
+                            WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                              AND LENGTH(kp.SERIAL_NUMBER) IN (12,18,20,21,23)
+                              AND LENGTH(kp.KEY_PART_SN) IN (13,14)
+                        ) WHERE rn = 1
+                    ) kp ON a.SERIAL_NUMBER = kp.SERIAL_NUMBER
                     LEFT JOIN (
                         SELECT SERIAL_NUMBER, KEY_PART_SN
                         FROM (
-                        SELECT kr.SERIAL_NUMBER, kr.KEY_PART_SN,
-                            ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
-                            FROM sfism4.R_WIP_KEYPARTS_T kr where kr.GROUP_NAME = 'SFG_LINK_FG' 
-                            AND LENGTH(kr.SERIAL_NUMBER) in (12, 18, 21, 20, 23) 
-                                   AND LENGTH(kr.KEY_PART_SN) in(14, 13)
-                        )
-                        WHERE rn = 1
-                        ) kr
-                        ON a.SERIAL_NUMBER = kr.SERIAL_NUMBER
+                            SELECT kr.SERIAL_NUMBER, kr.KEY_PART_SN,
+                                   ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
+                            FROM sfism4.R_WIP_KEYPARTS_T kr
+                            WHERE kr.GROUP_NAME = 'SFG_LINK_FG'
+                              AND LENGTH(kr.SERIAL_NUMBER) IN (12,18,20,21,23)
+                              AND LENGTH(kr.KEY_PART_SN) IN (13,14)
+                        ) WHERE rn = 1
+                    ) kr ON a.SERIAL_NUMBER = kr.SERIAL_NUMBER
+                    LEFT JOIN SFISM4.R107 r107_v2
+                        ON r107_v2.SERIAL_NUMBER = NVL(kp.KEY_PART_SN, kr.KEY_PART_SN)
+                    LEFT JOIN SFIS1.C_ERROR_CODE_T c
+                        ON c.ERROR_CODE = a.REMARK
+                    INNER JOIN SFIS1.C_MODEL_DESC_T d
+                        ON d.MODEL_NAME = a.MODEL_NAME
                     WHERE 
                         (
-                            (
-                                REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                                AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136', 'V1097872')
-                            ) 
-                            OR 
-                            (
-                                a.MO_NUMBER LIKE '8%' 
-                                AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
-                                AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136', 'V1097872')
-                            )
+                            (REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
+                             AND a.P_SENDER IN ('V3209541','V0928908','V0945375','V3211693','V0904136','V1097872', 'V3231778')
+                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R')
+                            OR
+                            (a.MO_NUMBER LIKE '8%'
+                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R'
+                             AND a.P_SENDER IN ('V3209541','V0928908','V3211693','V0904136','V1097872', 'V3231778'))
                         )
                       AND a.IN_DATETIME BETWEEN :startDate AND :endDate";
                 var checkInList = new List<CheckInRecord>();
@@ -534,7 +532,6 @@ namespace API_WEB.Controllers.SmartFA
                 }
             }
         }
-
 
         //[HttpGet("getCheckInRepair")]
         //public async Task<IActionResult> getCheckInRepair()
@@ -638,7 +635,6 @@ namespace API_WEB.Controllers.SmartFA
         //        }
         //    }
         //}
-
 
         [HttpGet("getLackLocation")]
         public async Task<IActionResult> getLackLocation()
@@ -1016,7 +1012,7 @@ namespace API_WEB.Controllers.SmartFA
                 INNER JOIN SFIS1.C_ERROR_CODE_T c ON a.REMARK = c.ERROR_CODE
                 WHERE b.MODEL_SERIAL = 'ADAPTER'
                   AND r107.ERROR_FLAG not in ('0', '1')
-                  AND a.P_SENDER IN ('V0904136','V3209541','V0945375','V0928908','V3245384','V3211693', 'V1097872')
+                  AND a.P_SENDER IN ('V0904136','V3209541','V0945375','V0928908','V3245384','V3211693', 'V3231778')
                   AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                   AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
                   AND a.REMARK NOT IN ('CK00')
@@ -1070,14 +1066,16 @@ namespace API_WEB.Controllers.SmartFA
                 SELECT 
                     CASE 
                         WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                             THEN COALESCE(kp.KEY_PART_SN, kr.KEY_PART_SN)
+                             THEN NVL(kp.KEY_PART_SN, NVL(kr.KEY_PART_SN, a.SERIAL_NUMBER))
                         ELSE a.SERIAL_NUMBER
                     END AS SFG,
+
                     CASE 
                         WHEN REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                        THEN (kr.SERIAL_NUMBER)
-                             ELSE ''
-                        END AS FG,
+                             THEN NVL(kr.SERIAL_NUMBER, a.SERIAL_NUMBER)
+                        ELSE a.SERIAL_NUMBER
+                    END AS FG,
+
                     a.MODEL_NAME,
                     d.PRODUCT_LINE,
                     a.MO_NUMBER,
@@ -1088,59 +1086,70 @@ namespace API_WEB.Controllers.SmartFA
                     c.ERROR_DESC,
                     a.IN_DATETIME,
                     a.OUT_DATETIME,
-                    r107.WIP_GROUP,
-                    r107.ERROR_FLAG,
-                    r107.WORK_FLAG,
-                    ROUND((SYSDATE - a.IN_DATETIME) * 24, 2) AS AGING_HOURS   -- ✅ thêm cột Aging theo giờ
+                    NVL(r107.WIP_GROUP, r107_v2.WIP_GROUP) AS WIP_GROUP,
+                    NVL(r107.ERROR_FLAG, r107_v2.ERROR_FLAG) AS ERROR_FLAG,
+                    NVL(r107.WORK_FLAG, r107_v2.WORK_FLAG) AS WORK_FLAG,
+                    ROUND((SYSDATE - a.IN_DATETIME) * 24, 2) AS AGING_HOURS
+
                 FROM sfism4.R_REPAIR_IN_OUT_T a
-                LEFT JOIN SFISM4.R107 r107
-                    ON r107.SERIAL_NUMBER = a.SERIAL_NUMBER
-                LEFT JOIN SFIS1.C_ERROR_CODE_T c 
-                    ON c.ERROR_CODE = a.REMARK
                 INNER JOIN SFIS1.C_MODEL_DESC_T d 
                     ON d.MODEL_NAME = a.MODEL_NAME
+                LEFT JOIN SFIS1.C_ERROR_CODE_T c 
+                    ON c.ERROR_CODE = a.REMARK
+
+                --KeyPart từ P_WIP
                 LEFT JOIN (
                     SELECT SERIAL_NUMBER, KEY_PART_SN
                     FROM (
                         SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
                                ROW_NUMBER() OVER (PARTITION BY kp.SERIAL_NUMBER ORDER BY kp.WORK_TIME DESC) rn
                         FROM sfism4.P_WIP_KEYPARTS_T kp 
-                        WHERE kp.GROUP_NAME = 'SFG_LINK_FG' 
-                          AND LENGTH(kp.SERIAL_NUMBER) IN (11, 12, 18, 21, 20, 23) 
-                          AND LENGTH(kp.KEY_PART_SN) IN (14, 13)
-                    )
-                    WHERE rn = 1
-                ) kp
-                    ON a.SERIAL_NUMBER = kp.SERIAL_NUMBER
+                        WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                          AND LENGTH(kp.SERIAL_NUMBER) IN (11,12,18,20,21,23)
+                          AND LENGTH(kp.KEY_PART_SN) IN (13,14)
+                    ) WHERE rn = 1
+                ) kp ON a.SERIAL_NUMBER = kp.SERIAL_NUMBER
+
+                --KeyPart từ R_WIP
                 LEFT JOIN (
                     SELECT SERIAL_NUMBER, KEY_PART_SN
                     FROM (
                         SELECT kr.SERIAL_NUMBER, kr.KEY_PART_SN,
                                ROW_NUMBER() OVER (PARTITION BY kr.SERIAL_NUMBER ORDER BY kr.WORK_TIME DESC) rn
                         FROM sfism4.R_WIP_KEYPARTS_T kr 
-                        WHERE kr.GROUP_NAME = 'SFG_LINK_FG' 
-                          AND LENGTH(kr.SERIAL_NUMBER) IN (12, 18, 21, 20, 23) 
-                          AND LENGTH(kr.KEY_PART_SN) IN (14, 13)
-                    )
-                    WHERE rn = 1
-                ) kr
-                    ON a.SERIAL_NUMBER = kr.SERIAL_NUMBER
+                        WHERE kr.GROUP_NAME = 'SFG_LINK_FG'
+                          AND LENGTH(kr.SERIAL_NUMBER) IN (12,18,20,21,23)
+                          AND LENGTH(kr.KEY_PART_SN) IN (13,14)
+                    ) WHERE rn = 1
+                ) kr ON a.SERIAL_NUMBER = kr.SERIAL_NUMBER
+
+                --Thông tin R107 (FG)
+                LEFT JOIN SFISM4.R107 r107
+                    ON r107.SERIAL_NUMBER = a.SERIAL_NUMBER
+
+                --Thông tin R107_v2 (SFG)
+                LEFT JOIN SFISM4.R107 r107_v2
+                    ON r107_v2.SERIAL_NUMBER = NVL(kp.KEY_PART_SN, kr.KEY_PART_SN)
+
                 WHERE 
                     (
                         (
-                            REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)') 
-                            AND a.P_SENDER IN ('V3209541', 'V0928908','V0945375', 'V3211693', 'V0904136', 'V1097872')
-                            AND (r107.ERROR_FLAG NOT IN ('0', '1') OR r107.SERIAL_NUMBER IS NULL)
-                        ) 
-                        OR 
-                        (
-                            a.MO_NUMBER LIKE '8%' 
+                            REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
+                            AND a.P_SENDER IN ('V3209541', 'V0928908', 'V0945375', 'V3211693', 'V0904136', 'V1097872', 'V3231778')
+                            AND (r107.ERROR_FLAG NOT IN ('0','1') OR r107.SERIAL_NUMBER IS NULL)
                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
-                            AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136', 'V1097872')
+                            AND (r107.wip_group not like '%STOCKIN-KANBAN_OUT' or r107_v2.WIP_GROUP not like '%STOCKIN-KANBAN_OUT')
+                        )
+                        OR
+                        (
+                            a.MO_NUMBER LIKE '8%'
+                            AND a.P_SENDER IN ('V3209541', 'V0928908', 'V3211693', 'V0904136', 'V1097872', 'V3231778')
+                            AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
                             AND r107.WIP_GROUP LIKE '%B36R%'
                         )
                     )
-                    AND a.IN_DATETIME BETWEEN :startDate and :endDate";
+                    AND a.IN_DATETIME BETWEEN :startDate and :endDate
+                ORDER BY a.IN_DATETIME DESC";
 
             await using (var cmd = new OracleCommand(checkInQuery, connection))
             {
@@ -1200,7 +1209,6 @@ namespace API_WEB.Controllers.SmartFA
 
             return tonKhoAfter;
         }
-
 
         [HttpGet("GetSAPInOut")]
         public async Task<IActionResult> GetSAPInOut(DateTime? startDate, DateTime? endDate)

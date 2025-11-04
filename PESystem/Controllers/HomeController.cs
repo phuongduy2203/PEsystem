@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PESystem.Models;
-using System.Diagnostics;
 
 namespace PESystem.Controllers
 {

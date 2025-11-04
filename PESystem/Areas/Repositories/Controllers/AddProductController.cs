@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace PESystem.Areas.Repositories.Controllers
 {

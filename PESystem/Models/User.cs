@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace PESystem.Models
+﻿namespace PESystem.Models
 {
     public partial class User
     {

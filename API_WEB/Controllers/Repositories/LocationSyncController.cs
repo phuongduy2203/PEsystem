@@ -156,14 +156,12 @@ namespace API_WEB.Controllers.Repositories
                 var parameterNames = batch
                     .Select((_, index) => $"p{offset + index}")
                     .ToArray();
-
                 var query = $@"
-SELECT SERIAL_NUMBER
-  FROM SFISM4.R_REPAIR_TASK_T
- WHERE DATA18 IS NOT NULL
-   AND TRIM(DATA18) <> ''
-   AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
-
+                SELECT SERIAL_NUMBER
+                  FROM SFISM4.R_REPAIR_TASK_T
+                 WHERE DATA18 IS NOT NULL
+                   AND TRIM(DATA18) <> ''
+                   AND SERIAL_NUMBER IN ({string.Join(",", parameterNames.Select(name => $":{name}"))})";
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandText = query;
 

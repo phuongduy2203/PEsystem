@@ -78,7 +78,7 @@ namespace API_WEB.Services.Bonepile
                     status = "WaitingApprovalScrap";
                     statusV2 = "Scrap";
                 }
-                else if (applyTaskStatus == 4)
+                else if (applyTaskStatus == 4 || applyTaskStatus == 10)
                 {
                     status = "WaitingApprovalBGA";
                     statusV2 = DetermineStatusV2(item.TEST_CODE);

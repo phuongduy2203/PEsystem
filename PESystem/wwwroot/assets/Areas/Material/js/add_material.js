@@ -350,6 +350,10 @@
                 showWarning("Vui lòng chọn ít nhất 1 hàng!")
                 return;
             }
+            if (selectedRows.length > 1) {
+                showWarning('Chỉ được phép phát 1 mã liệu mỗi lần!');
+                return;
+            }
             try {
                 const { value: formValues } = await Swal.fire({
                     title: 'Nhập thông tin phát liệu',

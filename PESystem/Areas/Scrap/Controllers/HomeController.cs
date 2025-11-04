@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace PESystem.Areas.Scrap.Controllers
 {
-    [Area("Scrap")]  
+    [Area("Scrap")]
     public class HomeController : Controller
     {
         public IActionResult Index()
