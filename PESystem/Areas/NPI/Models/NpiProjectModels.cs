@@ -51,4 +51,11 @@ namespace PESystem.Areas.NPI.Models
         public List<NpiDocument> Documents { get; set; } = new();
         public bool IsChildCategory { get; set; }
     }
+
+    public class NpiProjectSummaryViewModel
+    {
+        public NpiProject Project { get; set; } = new();
+        public int UploadedCategoryCount { get; set; }
+        public int TotalCategoryCount { get; set; }
+    }
 }

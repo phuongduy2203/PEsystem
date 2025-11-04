@@ -156,6 +156,11 @@ namespace PESystem.Areas.NPI.Services
             return FolderStructure.Select(CloneDefinition).ToList();
         }
 
+        public int GetTotalCategoryCount()
+        {
+            return CountLeafCategories(FolderStructure);
+        }
+
         public IEnumerable<NpiProject> GetProjects()
         {
             EnsureBasePath();
@@ -500,6 +505,25 @@ namespace PESystem.Areas.NPI.Services
                 DisplayName = definition.DisplayName,
                 Children = definition.Children.Select(CloneDefinition).ToList()
             };
+        }
+
+        private static int CountLeafCategories(IEnumerable<NpiFolderDefinition> definitions)
+        {
+            var total = 0;
+
+            foreach (var definition in definitions)
+            {
+                if (definition.Children != null && definition.Children.Count > 0)
+                {
+                    total += CountLeafCategories(definition.Children);
+                }
+                else
+                {
+                    total += 1;
+                }
+            }
+
+            return total;
         }
 
         private static NpiProject? LoadMetadata(string projectFolder)

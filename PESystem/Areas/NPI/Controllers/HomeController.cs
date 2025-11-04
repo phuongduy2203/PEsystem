@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
@@ -26,10 +27,30 @@ namespace PESystem.Areas.NPI.Controllers
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
 
+            var totalCategoryCount = _documentService.GetTotalCategoryCount();
+
+            var projectSummaries = projects
+                .Select(project =>
+                {
+                    var uploadedCategories = (project.Documents ?? Enumerable.Empty<NpiDocument>())
+                        .Where(d => !string.IsNullOrWhiteSpace(d.CategoryPath))
+                        .Select(d => d.CategoryPath)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Count();
+
+                    return new NpiProjectSummaryViewModel
+                    {
+                        Project = project,
+                        UploadedCategoryCount = uploadedCategories,
+                        TotalCategoryCount = totalCategoryCount
+                    };
+                })
+                .ToList();
+
             ViewBag.Success = TempData["Success"];
             ViewBag.Error = TempData["Error"];
 
-            return View(projects);
+            return View(projectSummaries);
         }
 
         [HttpPost]
