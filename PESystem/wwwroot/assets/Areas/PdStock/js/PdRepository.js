@@ -1,198 +1,360 @@
-﻿
+const API_BASE_URL = 'http://10.220.130.119:9090/DdRepositorys';
+const PAGE_SIZE = 20;
+
+let currentResults = [];
+let currentPage = 1;
+let currentResultsSection = null;
+let hasHistoryFields = false;
+
 //============= xử lý search =========================
 
 document.getElementById('PdStock-search-btn').addEventListener('click', function () {
     const searchOption = document.getElementById('search-options');
     const searchInput = document.getElementById('PD-repo-seach-input');
     const resultsSection = document.getElementById('PDStock-search-results-section');
-    const qtyElement = document.getElementById('Data-search-qty'); // Thẻ hiển thị số lượng kết quả
+    const qtyElement = document.getElementById('Data-search-qty');
 
-    // Kiểm tra xem tất cả các phần tử có tồn tại trong DOM hay không
     if (!searchOption || !searchInput || !resultsSection || !qtyElement) {
-        console.error("Missing required elements in DOM.");
+        console.error('Missing required elements in DOM.');
         return;
     }
 
-    // Lấy giá trị từ thẻ select và textarea
     const searchOptionValue = searchOption.value;
     const searchInputValue = searchInput.value.trim();
+    const requiresInput = searchOptionValue !== 'SEARCH_All';
 
-    // Kiểm tra xem người dùng đã nhập dữ liệu hay chưa
-    if (!searchInputValue) {
-        resultsSection.innerHTML = '<p class="data-alert">Please enter a valid input.</p>';
-        qtyElement.textContent = '0'; // Đặt số lượng kết quả về 0 nếu không có dữ liệu
+    if (requiresInput && !searchInputValue) {
+        resultsSection.innerHTML = '<p class="data-alert">Vui lòng nhập dữ liệu tìm kiếm hợp lệ.</p>';
+        qtyElement.textContent = 'Tổng số kết quả tìm được: 0';
         return;
     }
 
-    resultsSection.innerHTML = '<p class="data-alert">Loading...</p>'; // Hiển thị trạng thái tải dữ liệu
-    qtyElement.textContent = ''; // Reset số lượng trước khi cập nhật
+    resultsSection.innerHTML = '<p class="data-alert">Loading...</p>';
+    qtyElement.textContent = '';
 
-    // Tách dữ liệu đầu vào thành danh sách
-    const dataSearch = searchInputValue
-        .split('\n') // Tách theo dòng
-        .map(item => item.trim()) // Loại bỏ khoảng trắng mỗi dòng
-        .filter(item => item !== ""); // Loại bỏ các dòng trống
+    const dataSearch = requiresInput
+        ? searchInputValue
+            .split('\n')
+            .map(item => item.trim())
+            .filter(item => item !== '')
+        : [];
 
-    if (dataSearch.length === 0) {
-        resultsSection.innerHTML = '<p class="data-alert">Please enter valid data.</p>';
-        qtyElement.textContent = '0';
+    if (requiresInput && dataSearch.length === 0) {
+        resultsSection.innerHTML = '<p class="data-alert">Vui lòng nhập dữ liệu tìm kiếm hợp lệ.</p>';
+        qtyElement.textContent = 'Tổng số kết quả tìm được: 0';
         return;
     }
 
-    // Chọn API phù hợp dựa trên searchOptionValue
-    let url;
-    switch (searchOptionValue) {
-        case 'SEARCH_S/N':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetBySerialNumber';
-            break;
-        case 'SEARCH_MODEL_NAME':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetByModelName';
-            break;
-        case 'SEARCH_CAR':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetByCartonNo';
-            break;
-        case 'SEARCH_EXPORT':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetHistoryBySerialNumber';
-            break;
-        case 'SEARCH_All':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetAll';
-            break;
-        default:
-            resultsSection.innerHTML = '<p class="data-alert">Please select a valid search option.</p>';
-            qtyElement.textContent = '0';
-            return;
+    const mappedSearchType = mapSearchType(searchOptionValue);
+
+    if (searchOptionValue !== 'SEARCH_EXPORT' && !mappedSearchType) {
+        resultsSection.innerHTML = '<p class="data-alert">Vui lòng chọn loại tìm kiếm hợp lệ.</p>';
+        qtyElement.textContent = 'Tổng số kết quả tìm được: 0';
+        return;
     }
 
-    // Gửi yêu cầu POST (hoặc GET nếu SEARCH_All)
-    const fetchOptions = {
-        method: searchOptionValue === 'SEARCH_All' ? 'GET' : 'POST',
+    let url = `${API_BASE_URL}/Search`;
+    let fetchOptions = {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: searchOptionValue === 'SEARCH_All' ? null : JSON.stringify(dataSearch),
+        body: JSON.stringify({
+            searchType: mappedSearchType,
+            terms: dataSearch
+        })
     };
+
+    if (searchOptionValue === 'SEARCH_EXPORT') {
+        url = `${API_BASE_URL}/GetHistoryBySerialNumber`;
+        fetchOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataSearch)
+        };
+    }
 
     fetch(url, fetchOptions)
         .then(response => {
+            if (response.status === 404) {
+                return { data: [] };
+            }
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            displayResultsAsTable(data, resultsSection, qtyElement); // Hiển thị kết quả
+            displayResultsAsTable(data, resultsSection, qtyElement);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
-            resultsSection.innerHTML = '<p class="data-alert">Error fetching data. Please try again later.</p>';
-            qtyElement.textContent = '0'; // Đặt số lượng là 0 nếu có lỗi
+            resultsSection.innerHTML = '<p class="data-alert">Không thể tải dữ liệu. Vui lòng thử lại sau.</p>';
+            qtyElement.textContent = 'Tổng số kết quả tìm được: 0';
         });
 });
 
-/**
- * Hàm hiển thị kết quả dưới dạng bảng và cập nhật số lượng
- */
-function displayResultsAsTable(data, resultsSection, qtyElement) {
-    resultsSection.innerHTML = ''; // Xóa trạng thái tải
+function mapSearchType(optionValue) {
+    switch (optionValue) {
+        case 'SEARCH_S/N':
+            return 'SerialNumber';
+        case 'SEARCH_MODEL_NAME':
+            return 'ModelName';
+        case 'SEARCH_CAR':
+            return 'CartonNo';
+        case 'SEARCH_All':
+            return 'All';
+        default:
+            return '';
+    }
+}
 
-    // Kiểm tra nếu không có kết quả trả về
-    if (!data || !data.data || (Array.isArray(data.data) && data.data.length === 0)) {
-        resultsSection.innerHTML = '<p class="data-alert">No results found.</p>';
-        qtyElement.textContent = '0'; // Đặt số lượng là 0 nếu không có kết quả
+function displayResultsAsTable(data, resultsSection, qtyElement) {
+    resultsSection.innerHTML = '';
+
+    const results = data && data.data
+        ? (Array.isArray(data.data) ? data.data : [data.data])
+        : [];
+
+    currentResults = results;
+    currentPage = 1;
+    currentResultsSection = resultsSection;
+    hasHistoryFields = currentResults.some(item => Object.prototype.hasOwnProperty.call(item, 'outDate') || Object.prototype.hasOwnProperty.call(item, 'outOp'));
+
+    if (currentResults.length === 0) {
+        resultsSection.innerHTML = '<p class="data-alert">Không tìm thấy dữ liệu.</p>';
+        qtyElement.textContent = 'Tổng số kết quả tìm được: 0';
         return;
     }
 
-    const results = Array.isArray(data.data) ? data.data : [data.data]; // Đảm bảo dữ liệu là mảng
+    qtyElement.textContent = `Tổng số kết quả tìm được: ${currentResults.length}`;
+    renderResultsPage();
+}
 
-    // Cập nhật số lượng kết quả
-    qtyElement.textContent = `Tổng số kết quả tìm được: ${results.length}`;
+function renderResultsPage(page = currentPage) {
+    if (!currentResultsSection) {
+        return;
+    }
 
-    // Xác định xem có cột "OutDate" và "OutOp" hay không
-    const searchOption = document.getElementById('search-options').value;
-    const includeOutFields = searchOption === 'SEARCH_EXPORT';
+    const totalPages = Math.max(1, Math.ceil(currentResults.length / PAGE_SIZE));
+    currentPage = Math.min(Math.max(page, 1), totalPages);
 
-    // Tạo bảng HTML để hiển thị kết quả
+    currentResultsSection.innerHTML = '';
+
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-responsive';
+
     const table = document.createElement('table');
     table.className = 'PdStock-results-table';
 
-    // Tạo tiêu đề bảng
     table.innerHTML = `
         <thead>
             <tr>
                 <th>Serial Number</th>
                 <th>Model Name</th>
                 <th>Carton No</th>
-                <th>Location Stock</th>
+                <th>Kệ</th>
+                <th>Cột</th>
+                <th>Tầng</th>
+                <th>Khay</th>
+                <th>WIP Group</th>
                 <th>Entry Date</th>
                 <th>Entry Op</th>
-                ${includeOutFields ? '<th>Out Date</th><th>Out Op</th>' : ''}
+                ${hasHistoryFields ? '<th>Out Date</th><th>Out Op</th>' : ''}
             </tr>
         </thead>
-        <tbody>
-        </tbody>
+        <tbody></tbody>
     `;
 
-    // Thêm các hàng dữ liệu vào bảng
     const tbody = table.querySelector('tbody');
-    results.forEach(item => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = currentResults.slice(startIndex, startIndex + PAGE_SIZE);
+
+    pageItems.forEach(item => {
+        const location = parseLocationValue(item.locationStock);
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.serialNumber || '-'}</td>
             <td>${item.modelName || '-'}</td>
             <td>${item.cartonNo || '-'}</td>
-            <td>${item.locationStock || '-'}</td>
-            <td>${item.entryDate || '-'}</td>
+            <td>${location.shelf}</td>
+            <td>${location.column}</td>
+            <td>${location.level}</td>
+            <td>${location.tray}</td>
+            <td>${item.wipGroup || '-'}</td>
+            <td>${formatDateValue(item.entryDate)}</td>
             <td>${item.entryOp || '-'}</td>
-            ${includeOutFields ? `<td>${item.outDate || '-'}</td><td>${item.outOp || '-'}</td>` : ''}
+            ${hasHistoryFields ? `<td>${formatDateValue(item.outDate)}</td><td>${item.outOp || '-'}</td>` : ''}
         `;
         tbody.appendChild(row);
     });
 
-    // Thêm bảng vào resultsSection
-    resultsSection.appendChild(table);
+    tableWrapper.appendChild(table);
+    currentResultsSection.appendChild(tableWrapper);
+
+    if (totalPages > 1) {
+        currentResultsSection.appendChild(createPagination(totalPages));
+    }
+}
+
+function createPagination(totalPages) {
+    const nav = document.createElement('nav');
+    nav.className = 'pdstock-pagination';
+
+    const ul = document.createElement('ul');
+    ul.className = 'pagination justify-content-end';
+
+    ul.appendChild(createPageButton('«', currentPage - 1, currentPage === 1));
+
+    const pages = buildPageList(totalPages);
+    pages.forEach(page => {
+        if (page === 'ellipsis') {
+            ul.appendChild(createEllipsisItem());
+        } else {
+            ul.appendChild(createPageButton(page, page, false, page === currentPage));
+        }
+    });
+
+    ul.appendChild(createPageButton('»', currentPage + 1, currentPage === totalPages));
+
+    nav.appendChild(ul);
+    return nav;
+}
+
+function buildPageList(totalPages) {
+    const maxMiddleButtons = 5;
+    const pages = [];
+
+    if (totalPages <= maxMiddleButtons + 2) {
+        for (let i = 1; i <= totalPages; i += 1) {
+            pages.push(i);
+        }
+        return pages;
+    }
+
+    const half = Math.floor(maxMiddleButtons / 2);
+    let start = Math.max(2, currentPage - half);
+    let end = Math.min(totalPages - 1, currentPage + half);
+
+    if (currentPage <= half + 1) {
+        start = 2;
+        end = maxMiddleButtons + 1;
+    } else if (currentPage >= totalPages - half) {
+        start = totalPages - maxMiddleButtons;
+        end = totalPages - 1;
+    }
+
+    pages.push(1);
+
+    if (start > 2) {
+        pages.push('ellipsis');
+    }
+
+    for (let i = start; i <= end; i += 1) {
+        pages.push(i);
+    }
+
+    if (end < totalPages - 1) {
+        pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+    return pages;
+}
+
+function createPageButton(label, page, disabled, active = false) {
+    const li = document.createElement('li');
+    li.className = 'page-item';
+
+    if (disabled) {
+        li.classList.add('disabled');
+    }
+    if (active) {
+        li.classList.add('active');
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'page-link';
+    button.textContent = label;
+
+    if (!disabled) {
+        button.addEventListener('click', () => {
+            renderResultsPage(typeof page === 'number' ? page : currentPage);
+        });
+    }
+
+    li.appendChild(button);
+    return li;
+}
+
+function createEllipsisItem() {
+    const li = document.createElement('li');
+    li.className = 'page-item disabled';
+
+    const span = document.createElement('span');
+    span.className = 'page-link';
+    span.textContent = '…';
+
+    li.appendChild(span);
+    return li;
+}
+
+function parseLocationValue(locationStock) {
+    if (!locationStock) {
+        return { shelf: '-', column: '-', level: '-', tray: '-' };
+    }
+
+    const sanitized = locationStock.replace(/\s+/g, '');
+    const [prefix = '', tray = '-'] = sanitized.split('-');
+
+    return {
+        shelf: prefix.charAt(0) || '-',
+        column: prefix.charAt(1) || '-',
+        level: prefix.charAt(2) || '-',
+        tray: tray || '-'
+    };
+}
+
+function formatDateValue(value) {
+    if (!value) {
+        return '-';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString('vi-VN');
 }
 
 // xử lý nút xuất Excel
 
 document.getElementById('PdStock-ExportExcel-btn').addEventListener('click', function () {
-    // Lấy dữ liệu từ bảng PdStock-results-table
     const table = document.querySelector('.PdStock-results-table');
     if (!table) {
-        alert("Không có dữ liệu để xuất!");
+        alert('Không có dữ liệu để xuất!');
         return;
     }
 
-    // Tạo dữ liệu Excel từ bảng
     let tableData = '';
     const rows = table.querySelectorAll('tr');
     rows.forEach(row => {
         const cols = row.querySelectorAll('td, th');
         const rowData = Array.from(cols)
-            .map(col => col.textContent.replace(/,/g, '')) // Loại bỏ dấu phẩy
-            .join(','); // Ngăn cách bằng dấu phẩy
-        tableData += rowData + '\n';
+            .map(col => col.textContent.replace(/,/g, ''))
+            .join(',');
+        tableData += `${rowData}\n`;
     });
 
-    // Tạo Blob chứa dữ liệu CSV
     const blob = new Blob([tableData], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
-    // Tạo thẻ <a> để tải file
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'PdStockData.csv'); // Đặt tên file tải về
+    link.setAttribute('download', 'PdStockData.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Thông báo thành công
-    alert("Xuất dữ liệu ra file Excel thành công!");
+    alert('Xuất dữ liệu ra file Excel thành công!');
 });
-
-
-
-
-
-
-
-
-
-

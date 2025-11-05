@@ -27,12 +27,106 @@ namespace API_WEB.Controllers.PdRepositorys
             this.R107Db = R107Db;
         }
 
+        [HttpPost]
+        [Route("Search")]
+        public async Task<IActionResult> Search([FromBody] PdStockSearchRequestDto request)
+        {
+            if (request == null)
+            {
+                return BadRequest(new { message = "Invalid search request." });
+            }
+
+            var searchType = (request.SearchType ?? string.Empty).Trim().ToUpperInvariant();
+            var terms = request.Terms?
+                .Where(term => !string.IsNullOrWhiteSpace(term))
+                .Select(term => term.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
+
+            var normalizedTerms = terms
+                .Select(term => term.ToUpperInvariant())
+                .ToList();
+
+            var query = PdStockDb.PdStocks.AsNoTracking().AsQueryable();
+
+            if (searchType != "ALL")
+            {
+                if (!terms.Any())
+                {
+                    return BadRequest(new { message = "Search terms are required for the selected search type." });
+                }
+
+                switch (searchType)
+                {
+                    case "SERIALNUMBER":
+                    case "SERIAL_NUMBER":
+                    case "SEARCH_S/N":
+                        query = query.Where(p => p.SerialNumber != null && normalizedTerms.Contains(p.SerialNumber.ToUpper()));
+                        break;
+                    case "MODELNAME":
+                    case "MODEL_NAME":
+                        query = query.Where(p => p.ModelName != null && normalizedTerms.Contains(p.ModelName.ToUpper()));
+                        break;
+                    case "CARTONNO":
+                    case "CARTON_NO":
+                        query = query.Where(p => p.CartonNo != null && normalizedTerms.Contains(p.CartonNo.ToUpper()));
+                        break;
+                    default:
+                        return BadRequest(new { message = "Unsupported search type." });
+                }
+            }
+
+            var pdStocks = await query.ToListAsync();
+
+            if (!pdStocks.Any())
+            {
+                return Ok(new { data = new List<PdStockSearchResultDto>() });
+            }
+
+            var serialNumbers = pdStocks
+                .Where(p => !string.IsNullOrWhiteSpace(p.SerialNumber))
+                .Select(p => p.SerialNumber!)
+                .Distinct()
+                .ToList();
+
+            var wipGroups = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+            if (serialNumbers.Any())
+            {
+                var wipRecords = await R107Db.OracleDataR107
+                    .Where(r => serialNumbers.Contains(r.SERIAL_NUMBER))
+                    .Select(r => new { r.SERIAL_NUMBER, r.WIP_GROUP })
+                    .ToListAsync();
+
+                wipGroups = wipRecords
+                    .GroupBy(r => r.SERIAL_NUMBER)
+                    .ToDictionary(g => g.Key, g => g.First().WIP_GROUP, StringComparer.OrdinalIgnoreCase);
+            }
+
+            var results = pdStocks
+                .Select(p => new PdStockSearchResultDto
+                {
+                    SerialNumber = p.SerialNumber,
+                    ModelName = p.ModelName,
+                    CartonNo = p.CartonNo,
+                    LocationStock = p.LocationStock,
+                    EntryDate = p.EntryDate,
+                    EntryOp = p.EntryOp,
+                    WipGroup = p.SerialNumber != null && wipGroups.TryGetValue(p.SerialNumber, out var wip)
+                        ? wip
+                        : string.Empty
+                })
+                .ToList();
+
+            return Ok(new { data = results });
+        }
+
         // Lấy tất cả các sản phẩm
         [HttpGet]
         [Route("GetAll")]
         public IActionResult GetAll()
         {
-            var result = PdStockDb.PdStocks.ToList(); 
+            var result = PdStockDb.PdStocks.ToList();
             if(result == null)
             {
                 return NotFound();
