@@ -91,5 +91,12 @@ namespace API_WEB.ModelsDB
 
         [Column("SpeApproveTime")]
         public string? SpeApproveTime { get; set; }
+
+        [Column("ModelName")]
+        [StringLength(20)]
+        public string? ModelName { get; set; } 
+        [Column("ModelType")]
+        [StringLength(20)]
+        public string? ModelType { get; set; }
     }
 }

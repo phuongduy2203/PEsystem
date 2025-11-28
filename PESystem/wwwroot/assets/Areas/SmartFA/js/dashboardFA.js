@@ -1,11 +1,10 @@
 import { state } from './dashboardfa/state.js';
-import { utils } from './dashboardfa/utils.js?';
+import { utils } from './dashboardfa/utils.js';
 import { tables } from './dashboardfa/tables.js';
 import { charts } from './dashboardfa/charts.js';
 import { handlers } from './dashboardfa/handlers.js';
 import { exporter } from './dashboardfa/exporter.js';
 import { modals } from './dashboardfa/modals.js';
-
 
 function registerEventHandlers() {
     const exportExcelBtn = document.getElementById('exportExcelBtn');

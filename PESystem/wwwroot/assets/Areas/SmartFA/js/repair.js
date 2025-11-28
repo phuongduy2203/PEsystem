@@ -165,10 +165,10 @@
         }
 
         const { value: stepText, isConfirmed } = await Swal.fire({
-            title: 'Thêm bước cho cookbook FXN',
+            title: 'Thêm Cookbook FXN',
             input: 'text',
-            inputLabel: 'Nội dung bước',
-            inputPlaceholder: 'Nhập mô tả bước',
+            inputLabel: 'Nội dung',
+            inputPlaceholder: 'Nhập nội dung',
             showCancelButton: true,
             confirmButtonText: 'Lưu',
             cancelButtonText: 'Hủy',

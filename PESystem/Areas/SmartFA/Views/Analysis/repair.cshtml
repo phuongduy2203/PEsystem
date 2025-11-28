@@ -1,10 +1,24 @@
 @{
     ViewData["Title"] = "SmartFA Area";
     Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+    ViewData["HideSidebar"] = true;
     var serialNumber = ViewData["SerialNumber"] as string ?? string.Empty;
     var currentUser = User?.Identity?.Name ?? "";
 }
 <div class="main-inner mt-2" id="repair-root" data-serial="@serialNumber" data-user="@currentUser">
+    <div class="repair-toolbar">
+        <button class="btn-back" type="button" onclick="goBack()">← Quay lại</button>
+        <script>
+            function goBack() {
+                if (document.referrer && document.referrer !== window.location.href) {
+                    window.history.back();
+                } else {
+                    window.location.href = '/SmartFA';
+                }
+            }
+        </script>
+
+    </div>
     <!-- Header: Fault info -->
     <section class="fault-header" id="fault-header">
         <div class="fh-item">
@@ -126,9 +140,38 @@
             min-height: 100vh;
         }
 
+        body.layout-no-sidebar {
+            padding-left: 0;
+        }
+
         .main-inner {
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .repair-toolbar {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-back:hover {
+            background: var(--accent-soft);
+            color: #ffffff;
+            border-color: var(--accent);
+            transform: translateY(-1px);
         }
 
         /* Header – fault information */
