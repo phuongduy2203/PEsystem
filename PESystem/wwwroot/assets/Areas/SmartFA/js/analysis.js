@@ -163,23 +163,19 @@ const DataTableManager = (function () {
             },
             columnDefs: [
                 { width: '140px', targets: 0 }, // SERIAL_NUMBER
-                { width: '140px', targets: 1 }, // PRODUCT_LINE
-                { width: '100px', targets: 2 }, // MODEL_NAME
-                { width: '100px', targets: 3 }, // WIP
-                { width: '100px', targets: 4 }, // TEST_GROUP
-                { width: '100px', targets: 5 }, // TEST_CODE
-                { width: '140px', targets: 6 }, // ERROR_DESC
-                { width: '100px', targets: 7 }, // PRE_STATUS
-                { width: '100px', targets: 8 }, // STATUS
-                { width: '140px', targets: 9 }, // DATE
-                { width: '100px', targets: 10 }, // ID_NV
-                { width: '160px', targets: 11 }, // CHECK_POINT
-                { width: '100px', targets: 12 }, // DATA13 -- HANDOVER
-                { width: '100px', targets: 13 }, // DATA18 -- VI TRI
-                { width: '80px', targets: 14 }, // HƯỚNG_DẪN
-                { width: '80px', targets: 15 }, // SỬA_CHỮA
-                { width: '80px', targets: 16 }, // LỊCH_SỬ
-                { width: '80px', targets: 17 }  // KHÁC
+                { width: '100px', targets: 1 }, // MODEL_NAME
+                { width: '100px', targets: 2 }, // WIP
+                { width: '100px', targets: 3 }, // TEST_GROUP
+                { width: '100px', targets: 4 }, // TEST_CODE
+                { width: '100px', targets: 5 }, // PRE_STATUS
+                { width: '100px', targets: 6 }, // STATUS
+                { width: '140px', targets: 7 }, // DATE
+                { width: '100px', targets: 8 }, // ID_NV
+                { width: '100px', targets: 9 }, // DATA18 -- VI TRI
+                { width: '80px', targets: 10 }, // HƯỚNG_DẪN
+                { width: '80px', targets: 11 }, // SỬA_CHỮA
+                { width: '80px', targets: 12 }, // LỊCH_SỬ
+                { width: '80px', targets: 13 }  // KHÁC
             ]
         });
     }
@@ -217,28 +213,20 @@ const DataTableManager = (function () {
 
         snTable.row.add([
             item.seriaL_NUMBER.trim(),
-            item.productLine || '',
             item.modeL_NAME || '',
             item.wiP_GROUP || '',
             item.tesT_GROUP || '',
             `<span title="${item.tesT_CODE || ''}">${truncateText(item.tesT_CODE, 20)}</span>`,
-            `<span title="${item.datA1 || ''}">${truncateText(item.datA1, 20)}</span>`,
             item.datA12 || '',
             item.datA11 || '',
             `<span title="${item.datE3 || ''}">${item.datE3 || ''}</span>`,
             `<span title="${item.tester}">${fullName || item.tester || 'N/A'}</span>`,
-            `<span title="${checkpointsArray.join(', ') || ''}">${checkpointsArray.join(', ') || ''}</span>`,
-            item.datA13 || '',
             item.datA18 || '',
-            `<button class="btn btn-info btn-sm view-detail" 
-                    data-sn="${item.seriaL_NUMBER}" 
-                    data-model="${item.modeL_NAME}" 
-                    data-product-line="${item.productLine}" 
-                    data-checkpoints="${encodedCheckpoints}" 
-                    data-detail="${encodedDetail}">
+            `<button class="btn btn-warning btn-sm open-repair-view"
+                    data-serial-number="${item.seriaL_NUMBER}">
                     Chi tiết
             </button>`,
-            `<button class="btn btn-warning btn-sm open-repair-view"
+            `<button class="btn btn-warning btn-sm save-repair-history"
                     data-serial-number="${item.seriaL_NUMBER}">
                     Sửa chữa
             </button>`,
@@ -427,6 +415,7 @@ const FormHandler = (function () {
         $('#sn-table tbody').on('click', '.view-detail', ModalManager.handleViewDetail);
         $('#sn-table tbody').on('click', '.btn-repair-detail', RepairHistoryManager.handleRepairDetailClick);
         $('#sn-table tbody').on('click', '.open-repair-view', RepairHistoryManager.handleOpenRepairView);
+        $('#sn-table tbody').on('click', '.save-repair-history', RepairHistoryManager.handleSaveRepairHistoryClick);
         $('#refreshButton').on('click', handleRefresh);
     }
 
@@ -1181,9 +1170,54 @@ const RepairHistoryManager = (function () {
         window.open(targetUrl, '_blank');
     }
 
+
+    //Function them lich su sua chua
+    function handleSaveRepairHistoryClick() {
+        const serialNumber = String($(this).data('serial-number'));
+        const currentRow = DataTableManager.getRowData(serialNumber);
+
+        if (!currentRow) return;
+
+        $('#save-serial-number').text(serialNumber);
+        $('#save-notes').val('');
+        ModalManager.showModal('#save-repair-modal');
+
+        $('#confirm-save-repair').off('click').on('click', async () => {
+            const notes = $('#save-notes').val().trim();
+            if (!notes) {
+                showWarning("Vui lòng nhập ghi chú!");
+                return;
+            }
+
+            const payload = {
+                serialNumbers: serialNumber,
+                type: currentRow[6],
+                status: currentRow[6],
+                employeeId: $('#analysisPerson').val(),
+                notes: notes,
+                tag: "save"
+            };
+
+            try {
+                const result = await ApiService.repairStatus(payload);
+                const cleanMessage = result.message.replace(/"/g, '').trim();
+                if (result.success && cleanMessage === "OK") {
+                    showSuccess("Lưu lịch sử sửa chữa thành công!");
+                    ModalManager.hideModal('#save-repair-modal');
+                } else {
+                    showError("Lỗi khi lưu lịch sử sửa chữa!");
+                }
+            } catch (error) {
+                showError("Lỗi khi gọi API!");
+            }
+        });
+    }
+
+
     return {
         handleRepairDetailClick,
-        handleOpenRepairView
+        handleOpenRepairView,
+        handleSaveRepairHistoryClick
     };
 })();
 

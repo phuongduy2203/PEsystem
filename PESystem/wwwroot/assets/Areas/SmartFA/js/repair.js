@@ -5,7 +5,7 @@
     }
 
     const serialNumber = root.dataset.serial;
-    const API_BASE = 'http://localhost:5025/api';
+    const API_BASE = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api';
 
     const state = {
         faultId: null,
@@ -99,7 +99,7 @@
     const loadSuggestions = async () => {
         if (!serialNumber) return;
         try {
-            const resp = await postJson(`http://localhost:5025/SearchFA/get-repair-suggestions`, { serialNumber });
+            const resp = await postJson(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/get-repair-suggestions`, { serialNumber });
             renderSuggestions(resp?.data || []);
         } catch (err) {
             console.warn('Không thể tải AI suggestions', err);
@@ -109,7 +109,7 @@
     const loadSearchInfo = async () => {
         if (!serialNumber) return;
         try {
-            const resp = await postJson(`http://localhost:5025/SearchFA/search`, { SerialNumbers: [serialNumber] });
+            const resp = await postJson(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/search`, { SerialNumbers: [serialNumber] });
             const first = resp?.data && resp.data[0];
             if (first) {
                 setText('fault-sn', first.seriaL_NUMBER || '--');

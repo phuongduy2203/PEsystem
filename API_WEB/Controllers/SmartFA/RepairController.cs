@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace API_WEB.Controllers.SmartFA
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class RepairController : ControllerBase
     {
         private readonly CSDL_NE _sqlContext;

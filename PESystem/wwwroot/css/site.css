@@ -602,7 +602,6 @@ body::before {
     border-collapse: separate;
     border-spacing: 0;
     table-layout: auto;
-    width: max-content!important;
     font-size: 10px;
     background: rgba(255, 255, 255, 0.88) !important;
 }
