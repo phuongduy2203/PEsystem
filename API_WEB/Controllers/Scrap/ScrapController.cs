@@ -184,20 +184,6 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = "Không có SN nào hợp lệ để cập nhật (yêu cầu ApplyTaskStatus = 2 & 4)." });
                 }
 
-                // kiểm tra xem có lẫn lộn bản giữa Bonepile 1.0 và SN 2.0 không
-                /*var remarkGroups = existingSNs
-                .Where(s => s.Remark != null) // Chỉ xét các SN có Remark không null
-                .GroupBy(s => s.Remark)
-                .Select(g => new { Remark = g.Key!, SNs = g.Select(s => s.SN).ToList() })
-                .ToList();
-
-                if (remarkGroups.Count > 1)
-                {
-                    var errorMessage = "Danh sách SN có trạng thái cả Bonpile 1.0 và Bonpile 2.0:\n" +
-                        string.Join("\n", remarkGroups.Select(g => $"Remark '{g.Remark}': {string.Join(", ", g.SNs)}"));
-                    return BadRequest(new { message = errorMessage });
-                }*/
-
 
                 // Tạo danh sách SN để gửi đến API bên thứ ba
                 var serialNumbers = string.Join(",", request.SNs);
@@ -1436,29 +1422,29 @@ namespace API_WEB.Controllers.Scrap
                     AND GROUP_NAME = 'SMTLOADING' 
                     AND MO_NUMBER LIKE '5%'";
 
-                    //// Chỉ kiểm tra điều kiện MO_NUMBER nếu Approve = 2 (những bản cần xin báo phế)
-                    //if (request.Approve == "2")
-                    //{
+                    // Chỉ kiểm tra điều kiện MO_NUMBER nếu Approve = 2 (những bản cần xin báo phế)
+                    if (request.Approve == "2")
+                    {
 
-                    //    using (var command = new OracleCommand(sqlQuery, connection))
-                    //    {
-                    //        using (var reader = await command.ExecuteReaderAsync())
-                    //        {
-                    //            var invalidSNs = new List<string>();
-                    //            while (await reader.ReadAsync())
-                    //            {
-                    //                string serialNumber = reader.GetString(0);
-                    //                string moNumber = reader.GetString(1);
-                    //                invalidSNs.Add($"{serialNumber} (MO: {moNumber})");
-                    //            }
+                        using (var command = new OracleCommand(sqlQuery, connection))
+                        {
+                            using (var reader = await command.ExecuteReaderAsync())
+                            {
+                                var invalidSNs = new List<string>();
+                                while (await reader.ReadAsync())
+                                {
+                                    string serialNumber = reader.GetString(0);
+                                    string moNumber = reader.GetString(1);
+                                    invalidSNs.Add($"{serialNumber} (MO: {moNumber})");
+                                }
 
-                    //            if (invalidSNs.Any())
-                    //            {
-                    //                return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSNs)}" });
-                    //            }
-                    //        }
-                    //    }
-                    //}
+                                if (invalidSNs.Any())
+                                {
+                                    return BadRequest(new { message = $"Các SN sau có MO_NUMBER bắt đầu bằng 5xxxx và không thể xử lý: {string.Join(", ", invalidSNs)}" });
+                                }
+                            }
+                        }
+                    }
                 }
 
 
