@@ -32,14 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryModal = summaryModalEl && typeof bootstrap !== 'undefined'
         ? new bootstrap.Modal(summaryModalEl)
         : null;
-    const summaryApiUrl = 'http://10.220.130.119:9090/api/scan/summary';
+    const summaryApiUrl = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/scan/summary';
     let summaryCache = { key: '', items: [], total: 0, found: 0, loaded: false };
     let summaryPromise = null;
 
     async function fetchSerialInfo(serialNumber) {
         if (!serialNumber) return null;
         const encoded = encodeURIComponent(serialNumber);
-        const url = `http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber=${encoded}`;
+        const url = `https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product/GetSNInfo?serialNumber=${encoded}`;
         try {
             const response = await fetch(url);
             if (!response.ok) return null;
@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadSearchLists() {
         toggleSpinner(true);
         try {
-            const resp = await fetch('http://10.220.130.119:9090/api/scan/search-lists/details');
+            const resp = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/scan/search-lists/details');
             if (!resp.ok) {
                 renderSearchLists([]);
                 return;
@@ -700,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
             serialNumber,
             isFound
         };
-        const response = await fetch('http://10.220.130.119:9090/api/Search/UpdateScannedStatus', {
+        const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/UpdateScannedStatus', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -871,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(Boolean);
 
         try {
-            const resp = await fetch('http://10.220.130.119:9090/api/scan/SearchBySN', {
+            const resp = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/scan/SearchBySN', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ serialNumber: lines })

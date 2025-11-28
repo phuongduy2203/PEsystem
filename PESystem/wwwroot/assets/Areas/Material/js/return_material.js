@@ -51,7 +51,7 @@
     // Hàm tải dữ liệu lịch sử dựa trên type
     async function loadHistoryTable(type) {
         try {
-            const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/GetHistory', {
+            const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/GetHistory', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -108,6 +108,14 @@
                 drawCallback: function () {
                     attachTooltipEvents();
                 }
+            });
+            // === CLICK ROW TO HIGHLIGHT ===
+            $('#historyMaterialsTable tbody').on('click', 'tr', function () {
+                // Bỏ highlight cũ
+                $('#historyMaterialsTable tbody tr').removeClass('selected-row');
+
+                // Nếu click chính row đó → toggle chọn
+                $(this).toggleClass('selected-row');
             });
 
             // Xóa danh sách hàng được chọn khi bảng được tải lại

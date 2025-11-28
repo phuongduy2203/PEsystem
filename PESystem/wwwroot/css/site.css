@@ -1,88 +1,221 @@
-﻿body {
+﻿/* ================================
+   GLOBAL RESET + BACKGROUND
+================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+body {
     margin: 0;
     padding: 0;
     font-family: 'Roboto', Arial, sans-serif;
-    background: #fff !important;
+    /* ==== Background image duy nhất ==== */
+    background-image: url('../assets/img/background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
     overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
-    flex-direction: row; /* ✅ từ column → row */
-    height: 100vh; /* ✅ chiếm toàn bộ chiều cao */
+    flex-direction: row;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Bảo đảm modal luôn hiển thị trên lớp phủ */
+.modal {
+    z-index: 1055;
+}
+
+.modal-lg-custom {
+    max-width: 90% !important;
+    border-radius: 15px;
+}
+
+.modal-backdrop {
+    z-index: 1045;
 }
 
 
-/* Sidebar */
-.sidebar {
-    width: 70px; /* Trạng thái mặc định: thu gọn */
-    height: 100vh;
+/* Overlay gradient để nền sâu hơn */
+body::before {
+    content: "";
     position: fixed;
-    top: 0;
-    left: 0;
-    background-color: #1a1f2e;
-    z-index: 1001;
-    padding: 16px 0;
-    transition: width 0.25s ease;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(115, 103, 240, 0.35), transparent 60%), radial-gradient(circle at bottom right, rgba(118, 185, 0, 0.28), transparent 55%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ===========================================
+   HELPER: CLASS GLASS DÙNG LẠI NHIỀU NƠI
+=========================================== */
+.glass {
+    background: rgba(17, 25, 40, 0.58);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ================================
+   SIDEBAR – GLASS + NEON
+================================ */
+.sidebar {
+    width: 60px;
+    height: calc(100vh - 5px); /* chừa khoảng để bo góc */
+    position: fixed;
+    top: 5px; /* cách trên 5px */
+    left: 5px; /* cách trái 5px – để bo góc hiển thị */
+    /*background: rgba(10, 14, 30, 0.88);*/
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border-radius: 20px; /* ⭐ Bo tròn 4 góc */
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 0 30px rgba(0,0,0,0.45);
+    transition: width 0.25s ease, height 0.25s ease;
     overflow: hidden;
-}
-
-    .sidebar.open {
-        width: 260px !important; /* Trạng thái mở rộng, khớp với Materio */
-    }
-
-    /* Dashboard container */
-    .sidebar .dashboard-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-        .sidebar .dashboard-container .logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            object-fit: cover;
-        }
-
-        .sidebar .dashboard-container .spanTitle {
-            color: #fff;
-            font-size: 1.25rem;
-            font-weight: 600;
-            opacity: 0;
-            white-space: nowrap;
-            transition: opacity 0.25s ease;
-            margin-left: 12px;
-        }
-
-    .sidebar.open .dashboard-container .spanTitle {
-        opacity: 1;
-    }
-
-.sidebar-hover {
-    width: 260px !important;
     z-index: 1001;
 }
-    /* Hiển thị span khi hover hoặc expanded */
-    .sidebar-hover .nav-link span,
-    .sidebar-hover .dashboard-container .spanTitle,
-    .sidebar-expanded .sidebar .nav-link span,
-    .sidebar-expanded .sidebar .dashboard-container .spanTitle {
-        opacity: 1;
+
+    /* Sidebar mở rộng cũng bo tròn */
+    .sidebar.open {
+        width: 230px !important;
+        border-radius: 20px;
     }
 
+/* Hover mở rộng */
+.sidebar-hover {
+    width: 230px !important;
+    border-radius: 20px !important;
+}
+
+/* Thanh header nhỏ trong sidebar */
+.sidebar .dashboard-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 11px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    .sidebar .dashboard-container .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 0 12px rgba(115, 103, 240, 0.65);
+    }
+
+    .sidebar .dashboard-container .spanTitle {
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        opacity: 0;
+        white-space: nowrap;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        margin-left: 12px;
+        transform: translateX(-4px);
+    }
+
+.sidebar.open .dashboard-container .spanTitle,
+.sidebar-hover .dashboard-container .spanTitle,
+.sidebar-expanded .sidebar .dashboard-container .spanTitle {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Hiển thị span khi hover hoặc expanded */
+.sidebar-hover .nav-link span,
+.sidebar-hover .dashboard-container .spanTitle,
+.sidebar-expanded .sidebar .nav-link span,
+.sidebar-expanded .sidebar .dashboard-container .spanTitle {
+    opacity: 1;
+}
 
 /* Trạng thái cố định: mở rộng và đẩy main */
 .sidebar-expanded .sidebar {
-    width: 260px;
+    width: 230px;
 }
 
+/* ================================
+   NAV LINK – ICON + TEXT
+================================ */
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 10px 70px 10px;
+}
 
-
-/* Checkbox cố định */
-.fixed-checkbox {
+.sidebar .nav-link {
     display: flex;
     align-items: center;
+    color: #c4c7d4;
+    padding: 10px;
+    gap: 12px;
+    min-height: 44px;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    text-decoration: none;
+    border-radius: 10px;
+    margin: 0;
+    width: 100%;
+}
+
+    .sidebar .nav-link i {
+        width: 24px;
+        min-width: 24px;
+        display: inline-flex;
+        justify-content: center;
+        font-size: 20px;
+        filter: drop-shadow(0 0 6px rgba(115, 103, 240, 0.7));
+    }
+
+    .sidebar .nav-link span {
+        opacity: 0;
+        white-space: nowrap;
+        margin-left: 4px;
+        display: none;
+        font-size: 0.98rem;
+        transition: opacity 0.25s ease;
+        flex: 1;
+    }
+
+.sidebar.open .nav-link span,
+.sidebar-hover .nav-link span,
+.sidebar-expanded .sidebar .nav-link span {
+    opacity: 1;
+    display: inline-block;
+}
+
+.sidebar .nav-link:hover {
+    background: linear-gradient(90deg, rgba(115, 103, 240, 0.4), rgba(118, 185, 0, 0.4));
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.sidebar .nav-link.active {
+    background: linear-gradient(90deg, rgba(115, 103, 240, 0.85), rgba(118, 185, 0, 0.8));
+    color: #fff;
+    box-shadow: 0 0 16px rgba(115, 103, 240, 0.7);
+}
+
+/* ================================
+   CHECKBOX CỐ ĐỊNH SIDEBAR
+================================ */
+.fixed-checkbox {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Đẩy checkbox sát bên phải */
     color: #a5a8b6;
+    padding: 8px 8px 8px 0;
+    gap: 8px;
 }
 
     .fixed-checkbox input {
@@ -91,135 +224,134 @@
 
     .fixed-checkbox label {
         cursor: pointer;
-        font-size: 18px;
-        transition: color 0.25s ease;
+        font-size: 23px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: inherit;
+        transition: color 0.25s ease, text-shadow 0.25s, box-shadow 0.25s ease, background 0.25s ease;
     }
+
 
     .fixed-checkbox input:checked + label {
         color: #fff;
     }
 
-/* Nav links */
-.sidebar .nav-link {
+/* === DASHBOARD STAGE === */
+.dashboard-stage {
+    flex: 1; /* ⭐ Tự động chiếm toàn bộ phần còn lại */
+    min-height: calc(100vh - 10px); /* ⭐ Cùng margin 5px như sidebar */
+    margin: 5px 5px 5px 80px; /* trên | phải | dưới | trái */
     display: flex;
-    align-items: center;
-    color: #a5a8b6;
-    padding: 12px 20px;
-    transition: background 0.25s ease, color 0.25s ease;
-    text-decoration: none;
-}
-
-    .sidebar .nav-link i {
-        min-width: 24px;
-        font-size: 20px;
-    }
-
-    .sidebar .nav-link span {
-        opacity: 0;
-        white-space: nowrap;
-        margin-left: 16px;
-        font-size: 1rem;
-        transition: opacity 0.25s ease;
-    }
-
-.sidebar.open .nav-link span {
-    opacity: 1;
-}
-
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.sidebar .nav-link.active {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: #fff;
-}
-
-/* Header */
-.header {
-    position: fixed;
-    top: 0;
-    left: 70px;
-    width: calc(100% - 70px);
-    height: 64px;
-    background-color: #1a1f2e;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    z-index: 500;
-    padding: 0 24px;
-    transition: left 0.25s ease, width 0.25s ease;
-}
-
-.sidebar-expanded .header {
-    left: 260px;
-    width: calc(100% - 260px);
-}
-
-/* Main content */
-#mainContent {
-    flex: 1;
-    margin-top: 64px;
-    margin-left: 70px;
-    padding: 24px;
-    transition: margin-left 0.25s ease;
-    overflow-y: auto;
-    background-color: #fff;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12px 0;
+    /* Glass trắng nhẹ */
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    border-radius: 20px; /* ⭐ Bo góc phải */
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.38);
+    overflow-x: hidden;
     position: relative;
+    transition: margin-left 0.3s ease, margin 0.3s ease;
 }
 
-.sidebar-expanded #mainContent {
-    margin-left: 260px;
+    .dashboard-stage::-webkit-scrollbar {
+        width: 0; /* Chrome */
+        height: 0;
+    }
+
+
+/* === DASHBOARD WRAPPER === */
+.dashboard-wrapper {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transform-origin: top center;
+    transition: transform 0.25s ease;
 }
 
-/* User avatar */
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
+.sidebar-expanded .dashboard-stage {
+    margin-left: 250px;
 }
 
-/* Button */
+/* ================================
+   BUTTON – NEON GLASS
+================================ */
 .btn-ne {
-    background-color: #7367f0;
-    border: none;
-    color: #fff;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 6px;
-    transition: background 0.25s ease;
+    background-color: rgba(118, 185, 0, 0.9) !important;
+    border: none !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    border-radius: 999px;
+    /* giữ tỉ lệ */
+    aspect-ratio: 1 / 0.3;
+    width: 10vw;
+    min-width: 80px;
+    max-width: 180px;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 0 16px rgba(118, 185, 0, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
     .btn-ne:hover {
-        background-color: #6254d8;
+        background-color: rgba(118, 185, 0, 1) !important;
+        box-shadow: 0 0 22px rgba(118, 185, 0, 1);
+        transform: translateY(-1px) scale(1.02);
     }
 
+/* ================================
+   CARD – GLASS BLOCK
+================================ */
 .custom-card {
     width: 140px;
     height: 140px;
-    margin: auto; /* Căn giữa card */
+    margin: auto;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.21);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
     .custom-card img.logo {
-        width: 90px; /* Giảm kích thước logo */
+        width: 90px;
         height: 90px;
     }
 
-
+/* ================================
+   SPINNER OVERLAY
+================================ */
 #spinner-overlay {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Làm mờ nền */
-    display: flex;
-    justify-content: center; /* Căn giữa ngang */
-    align-items: center; /* Căn giữa dọc */
-    z-index: 1000; /* Đảm bảo hiển thị trên mọi nội dung khác */
-    display: none; /* Ẩn mặc định */
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.8));
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-
+/* Vòng quay */
 @keyframes rotation {
     0% {
         transform: rotate(0deg);
@@ -231,7 +363,7 @@
 }
 
 .loader {
-    width: 100px; /* Tăng kích thước spinner */
+    width: 100px;
     height: 100px;
     border: 8px solid #FFF;
     border-radius: 50%;
@@ -255,58 +387,19 @@
         border-bottom-color: #FF3D00;
     }
 
-
-.btn-ne {
-    background-color: #76b900 !important;
-    border: none !important;
-    color: #000 !important;
-    font-weight: bold !important;
-    /* Đảm bảo nút có chiều dài và chiều rộng bằng nhau */
-    aspect-ratio: 1 / 0.3; /* Giữ tỷ lệ 1:1 */
-    width: 10vw; /* Chiều rộng linh hoạt dựa trên kích thước màn hình */
-    min-width: 40px; /* Đặt kích thước tối thiểu để tránh quá nhỏ */
-    max-width: 120px; /* Kích thước tối đa nếu cần */
-    /* Ngăn nội dung xuống dòng */
-    white-space: nowrap;
-    /* Căn giữa nội dung bên trong */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Đảm bảo chữ không bị cắt */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Roboto', Arial, sans-serif;
-}
-
-/* Hiệu ứng particles */
+/* ================================
+   PARTICLES LAYER (NẾU DÙNG)
+================================ */
 #particles-js {
-    position: absolute;
+    position: fixed;
     width: 100%;
     height: 100%;
-    top: 0;
-    left: 0;
-    z-index: 0; /* Đặt nền thấp nhất */
-    pointer-events: none; /* Ngăn particles cản trở tương tác */
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
 }
 
-@keyframes rotation {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Đèn LED di chuyển */
+/* Đèn LED / glow nhẹ (nếu cần dùng class) */
 @keyframes glowing {
     0% {
         box-shadow: 0 0 5px rgba(118, 185, 0, 0.3);
@@ -325,24 +418,257 @@
     color: #0c0c0c !important;
 }
 
-/* Responsive adjustments */
+/* ================================
+   RESPONSIVE
+================================ */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
-        width: 260px;
+        width: 230px;
         transition: transform 0.25s ease;
     }
 
-    .sidebar.mobile-show {
-        transform: translateX(0);
-    }
+        .sidebar.mobile-show {
+            transform: translateX(0);
+        }
 
-    #mainContent {
+    .dashboard-stage {
         margin-left: 0 !important;
     }
-
-    .header {
-        left: 0 !important;
-        width: 100% !important;
-    }
 }
+
+
+
+/* AVATAR SÁT MÉP DƯỚI SIDEBAR */
+.sidebar-avatar {
+    position: absolute;
+    bottom: 16px; /* ⭐ SÁT MÉP DƯỚI */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.18);
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+    .sidebar-avatar .user-avatar {
+        box-shadow: none;
+    }
+    .sidebar-avatar:hover {
+        background: rgba(255,255,255,0.22);
+    }
+
+    .sidebar-avatar .user-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+    }
+
+/* Ẩn tên khi sidebar thu gọn */
+.sidebar-avatar-name {
+    color: #fff;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.25s ease;
+}
+
+.sidebar.open .sidebar-avatar-name,
+.sidebar-hover .sidebar-avatar-name,
+.sidebar-expanded .sidebar-avatar-name {
+    opacity: 1;
+}
+
+.user-info-card {
+    display: none;
+    position: fixed;
+    left: 82px;
+    bottom: 24px;
+    width: 270px;
+    padding: 16px;
+    background: rgba(10, 14, 30, 0.92);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    z-index: 1002;
+}
+
+    .user-info-card.show {
+        display: block;
+    }
+
+.sidebar-expanded .user-info-card {
+    left: 260px;
+}
+
+.user-info-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+    .user-info-header .user-avatar {
+        width: 40px;
+        height: 40px;
+        box-shadow: 0 0 12px rgba(115, 103, 240, 0.6);
+    }
+
+.user-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .user-info-text .user-name {
+        color: #fff;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .user-info-text .user-email {
+        color: #c4c7d4;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+.user-info-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+    .user-info-actions .menu-item {
+        color: #fff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+        .user-info-actions .menu-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(2px);
+        }
+
+    .user-info-actions .btn {
+        border-radius: 12px;
+    }
+
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+/* === CARD === */
+.data-card {
+    background: #fff;
+    border: 1px solid rgba(0, 86, 216, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(15, 35, 95, 0.08);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .data-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 26px rgba(0, 86, 216, 0.15);
+    }
+
+.panel-title {
+    font-weight: 600;
+    color: #003d99;
+    font-size: 1.1rem;
+}
+
+.datatable-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+    width: max-content!important;
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.88) !important;
+}
+
+    .datatable-table th,
+    .datatable-table td {
+        white-space: nowrap;
+        padding: 4px 8px;
+    }
+
+    /* ============================
+           STICKY HEADER (luôn ở trên)
+        ============================= */
+    .datatable-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #343a40 !important;
+        color: #fff;
+        z-index: 40 !important; /* header chung */
+    }
+
+/* ROW SELECTED (CLICK) */
+    .datatable-table tbody tr.selected-row {
+        background-color: #76b900 !important;
+        font-weight: 600;
+    }
+        /* Khi hàng được chọn, cột sticky cũng đổi màu */
+        .datatable-table tbody tr.selected-row td:nth-child(1) {
+            background-color: #76b900 !important;
+            font-weight: 600;
+        }
+        /* Khi hàng được chọn, cột sticky cũng đổi màu */
+        .datatable-table tbody tr.selected-row td:nth-child(5) {
+            background-color: #76b900 !important;
+            font-weight: 600;
+        }
+
+        /* ============================
+           CỘT 1 — CHECKBOX
+        ============================= */
+
+        /* Header cột 1 (giao giữa sticky row + sticky col) */
+        .datatable-table thead th:nth-child(1) {
+            position: sticky !important;
+            left: 0;
+            z-index: 50 !important; /* cao hơn tất cả các ô sticky khác */
+            background-color: #343a40 !important;
+        }
+
+    /* Body cột 1 */
+    .datatable-table tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+        background-color: #ffffff !important;
+        text-align: center;
+    }
+
+    /* Hover nguyên hàng */
+    .datatable-table tbody tr:hover td,
+    .datatable-table tbody tr:hover th {
+        background-color: #76b900 !important;
+        cursor: pointer;
+    }
+
+    .datatable-table tbody tr.auto-block:hover td,
+    .datatable-table tbody tr.auto-block:hover th {
+        background-color: #76b900 !important;
+    }

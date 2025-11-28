@@ -1,245 +1,113 @@
-﻿@{
+@{
     ViewData["Title"] = "Bonepile";
     Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
 }
 
-<!-- Header -->
-<header>
-    <h1>Bonepile 2.0</h1>
-    <div class="row">
-        <div class="col-md-3">
-            <label for="startDate">Từ ngày:</label>
-            <input type="datetime-local" id="startDate" value="2025-03-16T11:00">
+<header class="dashboard-header">
+    <div class="filter-grid">
+        <div class="filter-field">
+            <label for="startDate">Từ ngày</label>
+            <input type="datetime-local" id="startDate" value="2025-03-16T11:00" />
         </div>
-        <div class="col-md-3">
-            <label for="endDate">Đến ngày:</label>
+        <div class="filter-field">
+            <label for="endDate">Đến ngày</label>
             <input type="datetime-local" id="endDate" />
         </div>
-        <div class="col-md-3">
-            <button id="applyFilters" class="btn btn-primary">Áp dụng</button>
+        <div class="filter-actions">
+            <button id="applyFilters" class="primary-btn">Áp dụng</button>
         </div>
     </div>
 </header>
 
-<!-- KPI Cards -->
-<div class="kpi-cards row my-6">
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-total smaller-card">
-            <div class="card-body  smaller-text">
-                <h5 class="card-title">Bonepile 2.0</h5>
-                <p class="card-text" id="totalCount">N/A</p>
+<div class="dashboard-grid">
+    <div class="dashboard-left">
+        <div class="data-card chart-card">
+            <div class="panel-title">Phân Bố Trạng Thái</div>
+            <div class="chart-container-lg">
+                <div id="statusDonutChart" class="echart"></div>
             </div>
         </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-waitingScrap smaller-card">
-            <div class="card-body  smaller-text">
-                <h5 class="card-title">WaitingApprovalScrap</h5>
-                <p class="card-text" id="waitingScrapCount">N/A</p>
-            </div>
+        <div class="data-card control-card">
+            <div class="panel-title">N/A</div>
         </div>
     </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-repair smaller-card">
-            <div class="card-body  smaller-text">
-                <h5 class="card-title">UnderRepair</h5>
-                <p class="card-text" id="repairCount">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-online smaller-card">
-            <div class="card-body  smaller-text">
-                <h5 class="card-title">Online</h5>
-                <p class="card-text" id="onlinePd">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-kanban smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">KANBAN_IN</h5>
-                <p class="card-text" id="kanbanIn">N/A</p>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="kpi-cards row my-6">
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-link smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Chờ Link</h5>
-                <p class="card-text" id="waitingLink">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-checkOut smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Chờ CheckOut</h5>
-                <p class="card-text" id="waitingOut">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-checkIn smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Chờ CheckIn</h5>
-                <p class="card-text" id="waitingIn">N/A</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-linkedDone smaller-card">
-            <div class="card-body smaller-text">
-                <h5 class="card-title">Đã Link</h5>
-                <p class="card-text" id="linkedDone">N/A</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-2 col-lg-1 col-sm-3 col-3">
-        <div class="card text-white bg-repair smaller-card">
-            <div class="card-body smaller-text">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="card-title">Nhập Kanban</h5>
-                    <i class="fa fa-calendar fa-2x" id="pickDateBtn" aria-hidden="true"></i>
-                </div>
-                <p class="card-text" id="kanbanDone">N/A</p>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!--MODAL CHỌN THỜI GIAN-->
-<div class="modal fade" id="dateModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Chọn khoảng thời gian</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label>Từ:</label>
-                <input type="datetime-local" id="fromTime" class="form-control mb-2" />
-                <label>Đến:</label>
-                <input type="datetime-local" id="toTime" class="form-control" />
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="applyDate">Áp dụng</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Donut Chart and sumMaterialsTable -->
-<div class="row my-4">
-    <!-- Biểu đồ phân bố trạng thái -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body" style="display: flex; flex-direction: column; align-items: center;">
-                <h5 class="card-title">Phân bố trạng thái</h5>
-                <canvas id="statusDonutChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bảng sumMaterialsTable -->
-    <div class="col-md-8">
-        <div class="card">
-            <!--HTML CỦA SPINER-->
-            <div id="spinner-overlay">
-                <span class="loader"></span>
-            </div>
-            <div class="card-body">
-                <table id="sumMaterialsTable" class="table table-bordered table-striped datatable-table" style="width:100%">
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <select id="statusFilter" class="form-control">
-                                <option value="">Tất cả trạng thái</option>
-                                <option value="Repair">Repair</option>
-                                <option value="CheckOut">CheckOut</option>
-                                <option value="CheckIn">CheckIn</option>
-                                <option value="WaitingLink">WaitingLink</option>
-                                <option value="WaitingKanBanIn">WaitingKanBanIn</option>
-                                <option value="Online">Online</option>
-                                <option value="WaitingApproveScrap">WaitingApproveScrap</option>
-                                <option value="Scrap">Scrap</option>
-                            </select>
-                        </div>
+    <div class="dashboard-right">
+        <div class="data-card kpi-card">
+            @*<div class="panel-title">Thống Kê</div>*@
+            <div class="kpi-grid">
+                <div class="donut-box"><div class="donut-label">Bonepile 2.0</div><div class="donut-percent" id="totalCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">WaitingApprovalScrap</div><div class="donut-percent" id="waitingScrapCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">UnderRepair</div><div class="donut-percent" id="repairCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Online</div><div class="donut-percent" id="onlinePd">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">KANBAN_IN</div><div class="donut-percent" id="kanbanIn">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ Link</div><div class="donut-percent" id="waitingLink">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ CheckOut</div><div class="donut-percent" id="waitingOut">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ CheckIn</div><div class="donut-percent" id="waitingIn">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Đã Link</div><div class="donut-percent" id="linkedDone">N/A</div></div>
+                <div class="donut-box control-box">
+                    <div class="donut-box-header">
+                        <span class="donut-label">Nhập Kanban</span>
+                        <button type="button" id="pickDateBtn" class="icon-btn" aria-label="Chọn thời gian">
+                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <thead>
-                        <tr>
-                            <th>SERIAL_NUMBER</th>
-                            <th>PRODUCT_LINE</th>
-                            <th>MODEL_NAME</th>
-                            <th>MO_NUMBER</th>
-                            <th>WIP_GROUP</th>
-                            <th>FAIL_STATION</th>
-                            <th>TEST_CODE</th>
-                            <th>ERROR_DESC</th>
-                            <th>TIME</th>
-                            <th>FLAG</th>
-                            <th>PO_NO</th>
-                            <th>PO_ITEM</th>
-                            <th>FAIL_AGING</th>
-                            <th>VERSION_CODE</th>
-                            <th>WORK_FLAG</th>
-                            <th>ERROR_FLAG</th>
-                            <th>MO_NEW</th>
-                            <th>STATUS</th>
-                            <th>CHECKIN_TIME</th>
-                            <th>CHECKOUT_TIME</th>
-                            <th>SCRAP_STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    <div class="donut-percent" id="kanbanDone">N/A</div>
+                </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="data-card table-card">
+    <div class="table-responsive">
+        <table id="sumMaterialsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+            <div class="col-md-2">
+                <div class="status-filter-wrapper">
+                    <select id="statusFilter" class="form-control">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Repair">Repair</option>
+                        <option value="CheckOut">CheckOut</option>
+                        <option value="CheckIn">CheckIn</option>
+                        <option value="WaitingLink">WaitingLink</option>
+                        <option value="WaitingKanBanIn">WaitingKanBanIn</option>
+                        <option value="Online">Online</option>
+                        <option value="WaitingApproveScrap">WaitingApproveScrap</option>
+                        <option value="Scrap">Scrap</option>
+                    </select>
+                </div>
+            </div>
+            <thead class="table-light">
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>FAIL_STATION</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_DESC</th>
+                    <th>TIME</th>
+                    <th>FLAG</th>
+                    <th>PO_NO</th>
+                    <th>PO_ITEM</th>
+                    <th>FAIL_AGING</th>
+                    <th>VERSION_CODE</th>
+                    <th>WORK_FLAG</th>
+                    <th>ERROR_FLAG</th>
+                    <th>MO_NEW</th>
+                    <th>STATUS</th>
+                    <th>CHECKIN_TIME</th>
+                    <th>CHECKOUT_TIME</th>
+                    <th>SCRAP_STATUS</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 
 @section Scripts {
     <script src="~/assets/areas/bonepile/js/bonepile2_0.js?v=@DateTime.Now.Ticks"></script>
-    <style>
-        .smaller-card {
-            transform: scale(0.75); /* Reduce card size by 25% */
-            margin: 0 -5px; /* Minimize spacing between cards */
-        }
-
-        .smaller-text .card-title {
-            font-size: 1.5rem; /* Smaller title font size */
-        }
-
-        .smaller-text .card-text {
-            font-size: 1.5rem; /* Smaller text font size */
-        }
-
-        .kpi-cards {
-            display: flex;
-            flex-wrap: nowrap; /* Keep cards in a single row */
-        }
-
-            .kpi-cards .col-md-2,
-            .kpi-cards .col-lg-1,
-            .kpi-cards .col-sm-3,
-            .kpi-cards .col-3 {
-                flex: 0 0 20%; /* Divide equally for 10 cards (100% / 10) */
-                max-width: 20%; /* Ensure equal width */
-                padding: 0; /* Reduce padding for tighter fit */
-            }
-
-        #sumMaterialsTable th, #sumMaterialsTable td {
-            width: 120px !important;
-            max-width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-    </style>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const pickBtn = document.getElementById("pickDateBtn");
@@ -296,7 +164,7 @@
             // API
             async function loadSummary(from, to) {
                 try {
-                    const url = `http://10.220.130.119:9090/api/Bonepile2/waiting-summary?from=${toApiParam(from)}&to=${toApiParam(to)}`;
+                    const url = `https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2/waiting-summary?from=${toApiParam(from)}&to=${toApiParam(to)}`;
                     const res = await fetch(url);
                     if (!res.ok) throw new Error("API lỗi");
                     const data = await res.json();
@@ -322,13 +190,13 @@
                 const { value: formValues } = await Swal.fire({
                     title: "Chọn khoảng thời gian",
                     html: `
-                <label style="display:block;text-align:left;">Từ:</label>
-                <input id="swalFrom" type="datetime-local" class="swal2-input"
-                       value="${toLocalInputValue(currentFrom)}">
-                <label style="display:block;text-align:left;">Đến:</label>
-                <input id="swalTo" type="datetime-local" class="swal2-input"
-                       value="${toLocalInputValue(currentTo)}">
-              `,
+                                        <label style="display:block;text-align:left;">Từ:</label>
+                                        <input id="swalFrom" type="datetime-local" class="swal2-input"
+                                               value="${toLocalInputValue(currentFrom)}">
+                                        <label style="display:block;text-align:left;">Đến:</label>
+                                        <input id="swalTo" type="datetime-local" class="swal2-input"
+                                               value="${toLocalInputValue(currentTo)}">
+                                      `,
                     focusConfirm: false,
                     showCancelButton: true,
                     confirmButtonText: "Áp dụng",
@@ -363,5 +231,4 @@
             });
         });
     </script>
-
 }

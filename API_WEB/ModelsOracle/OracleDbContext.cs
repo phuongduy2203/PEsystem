@@ -24,6 +24,7 @@ namespace API_WEB.ModelsOracle
         public DbSet<GetAteSn> GetAteSnRecords { get; set; } // DbSet cho bảng
         public DbSet<ErrorCode> ErrorCodes { get; set; } // DbSet cho bảng
         public DbSet<RepairOwnerBySerialResult> RepairOwnerBySerialResults { get; set; } = null!;
+        public DbSet<SFISM4_R_ULT_RESULT_T> UltResults { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<SFISM4_r107>(entity =>
@@ -123,7 +124,17 @@ namespace API_WEB.ModelsOracle
                 entity.Property(e => e.DATA11).HasColumnName("DATA11");
                 entity.Property(e => e.DATA12).HasColumnName("DATA12");
                 entity.Property(e => e.DATE3).HasColumnName("DATE3");
+                entity.Property(e => e.TEST_TIME).HasColumnName("TEST_TIME");
                 entity.Property(e => e.TESTER).HasColumnName("TESTER");
+            });
+            modelBuilder.Entity<SFISM4_R_ULT_RESULT_T>(entity =>
+            {
+                entity.ToTable("R_ULT_RESULT_T", schema: "SFISM4");
+                entity.HasNoKey();
+                entity.Property(e => e.SERIAL_NUMBER).HasColumnName("SERIAL_NUMBER");
+                entity.Property(e => e.GROUP_NAME).HasColumnName("GROUP_NAME");
+                entity.Property(e => e.PASS_DATE).HasColumnName("PASS_DATE");
+                entity.Property(e => e.DATA5).HasColumnName("DATA5");
             });
             modelBuilder.Entity<SFISM4_r117>(entity =>
             {

@@ -131,7 +131,7 @@ builder.Services.AddHostedService<DailyTaskService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("RepairStatusClient", client =>
 {
-    client.BaseAddress = new Uri("https://10.220.130.215:443/SfcSmartRepair/");
+    client.BaseAddress = new Uri("https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
 .ConfigurePrimaryHttpMessageHandler(() =>

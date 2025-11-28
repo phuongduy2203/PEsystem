@@ -1,4 +1,72 @@
-﻿$(document).ready(function () {
+﻿var SearchFaNormalizer = (function () {
+    const existing = typeof window !== 'undefined' ? window.SearchFaNormalizer : undefined;
+    if (existing) {
+        return existing;
+    }
+    const hasValue = (value) => value !== undefined && value !== null && value !== '';
+    const fieldMappings = {
+        seriaL_NUMBER: ['SERIAL_NUMBER', 'serialNumber', 'SerialNumber', 'serial_number'],
+        productLine: ['PRODUCT_LINE', 'productLine', 'ProductLine'],
+        modeL_NAME: ['MODEL_NAME', 'modelName', 'ModelName'],
+        wiP_GROUP: ['WIP_GROUP', 'wipGroup', 'WipGroup'],
+        tesT_GROUP: ['TEST_GROUP', 'testGroup', 'TestGroup'],
+        tesT_CODE: ['TEST_CODE', 'testCode', 'ERROR_CODE', 'errorCode'],
+        datA1: ['DATA1', 'data1', 'ERROR_DESC', 'errorDesc'],
+        datA11: ['DATA11', 'data11', 'STATUS', 'status'],
+        datA12: ['DATA12', 'data12', 'PR_STATUS', 'prStatus'],
+        datA13: ['DATA13', 'data13', 'HANDOVER', 'handover'],
+        datA14: ['DATA14', 'data14'],
+        datA15: ['DATA15', 'data15'],
+        datA17: ['DATA17', 'data17', 'ACTION', 'action'],
+        datA18: ['DATA18', 'data18', 'POSITION', 'position', 'LOCATION', 'location'],
+        datA19: ['DATA19', 'data19', 'KANBAN_WIP', 'kanbanWip'],
+        datE3: ['DATE3', 'date3'],
+        tester: ['TESTER', 'tester'],
+        mO_NUMBER: ['MO_NUMBER', 'moNumber'],
+        mo_NUMBER: ['MO_NUMBER', 'moNumber']
+    };
+
+    function normalizeItem(item = {}) {
+        if (!item || typeof item !== 'object') {
+            return {};
+        }
+        const normalized = { ...item };
+        Object.entries(fieldMappings).forEach(([targetKey, sourceKeys]) => {
+            if (hasValue(normalized[targetKey])) {
+                return;
+            }
+            for (const sourceKey of sourceKeys) {
+                if (hasValue(item[sourceKey])) {
+                    normalized[targetKey] = item[sourceKey];
+                    break;
+                }
+            }
+        });
+        return normalized;
+    }
+
+    function normalizeData(data) {
+        if (!Array.isArray(data)) {
+            return [];
+        }
+        return data.map(normalizeItem);
+    }
+
+    function normalizeResponse(response) {
+        if (!response || typeof response !== 'object') {
+            return { success: false, data: [] };
+        }
+        return { ...response, data: normalizeData(response.data) };
+    }
+
+    const api = { normalizeItem, normalizeData, normalizeResponse };
+    if (typeof window !== 'undefined') {
+        window.SearchFaNormalizer = api;
+    }
+    return api;
+})();
+
+$(document).ready(function () {
     const table = $('#sn-table').DataTable({
         dom: 't',
         paging: false,
@@ -17,7 +85,7 @@
     });
 
     // Gọi API lấy danh sách ProductLine khi trang được tải
-    fetch('http://10.220.130.119:9090/api/FixGuide/GetProductLines', {
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/GetProductLines', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -58,7 +126,7 @@
         }
 
         // Gọi API để lấy dữ liệu theo SN
-        fetch('http://10.220.130.119:9090/api/SearchFA/search', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -81,13 +149,14 @@
             })
             .then(data => {
                 // Kiểm tra nếu không có dữ liệu trả về
-                if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+                const normalizedItems = SearchFaNormalizer.normalizeData(data.data);
+                if (!Array.isArray(normalizedItems) || normalizedItems.length === 0) {
                     alert(`Không tìm thấy dữ liệu cho Serial Number "${serialNumber}"!`);
                     return;
                 }
 
                 // Xử lý từng phần tử trong mảng dữ liệu
-                data.data.forEach(item => {
+                normalizedItems.forEach(item => {
                     const sn = item.seriaL_NUMBER?.trim() || ''; // Đọc trường chính xác từ API
 
                     if (sn === '') return; // Bỏ qua nếu SN rỗng
@@ -95,7 +164,7 @@
                     existingSNs.add(sn); // Thêm vào danh sách SN
 
                     // Gọi API để lấy CheckPoint dựa trên ProductLine và TestCode
-                    fetch('http://10.220.130.119:9090/api/FixGuide/GetCheckPoints', {
+                    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/GetCheckPoints', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -224,7 +293,7 @@
         formData.append('file', file);
         formData.append('productLine', productLine);
 
-        fetch('http://10.220.130.119:9090/api/FixGuide/Upload', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/Upload', {
             method: 'POST',
             body: formData
         })
@@ -249,7 +318,7 @@
 
     // Hàm hiển thị lịch sử sửa chữa
     function loadRepairHistory(serialNumber) {
-        fetch(`http://10.220.130.119:9090/api/FixGuide/GetRepairHistoryBySerialNumber/${serialNumber}`, {
+        fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/GetRepairHistoryBySerialNumber/${serialNumber}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -342,7 +411,7 @@
         console.log('Payload:', repairHistory); // Debug dữ liệu gửi
 
         // Gửi dữ liệu qua API
-        fetch('http://10.220.130.119:9090/api/FixGuide/SaveRepairHistoryWithActions', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/SaveRepairHistoryWithActions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

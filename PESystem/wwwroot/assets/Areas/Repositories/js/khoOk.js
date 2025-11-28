@@ -8,7 +8,7 @@ const KhoScrapManager = (function () {
     let notFoundSerialNumbers = []; // Lưu Serial Number không tìm thấy
     let selectedSerialsSNs = []; // Không dùng (bỏ checkbox)
 
-    const API_BASE_URL = 'http://10.220.130.119:9090/api/KhoScrap';
+    const API_BASE_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/KhoScrap';
     const API_TOTAL_SCRAP = `${API_BASE_URL}/totalKhoOk`;
     const API_CLASSIFY_SCRAP = `${API_BASE_URL}/ClassifyScrap`;
 
@@ -96,7 +96,7 @@ const KhoScrapManager = (function () {
 
             try {
                 Utils.showSpinner();
-                const response = await fetch(`http://10.220.130.119:9090/api/Search/SearchSnOK`, {
+                const response = await fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/SearchSnOK`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(serialNumbers)
@@ -240,7 +240,7 @@ const KhoScrapManager = (function () {
                 exportButton.disabled = true;
                 exportButton.textContent = "Đang xuất...";
 
-                const response = await fetch(`http://10.220.130.119:9090/api/Search/ExportExcelKhoOk`, {
+                const response = await fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/ExportExcelKhoOk`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
                 });
@@ -364,7 +364,7 @@ const KhoScrapManager = (function () {
 
             for (const serial of serialNumbers) {
                 try {
-                    const response = await fetch(`http://10.220.130.119:9090/api/Product/GetSNInfo?serialNumber=${serial}`);
+                    const response = await fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product/GetSNInfo?serialNumber=${serial}`);
                     const data = await response.json();
                     if (data.success && data.data) {
                         modelNames.push(data.data.modelName || "");

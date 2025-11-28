@@ -33,9 +33,9 @@ document.getElementById('PD-repo-add-input').addEventListener('keypress', functi
         // Xác định URL API dựa trên giá trị của dropdown
         let apiUrl = '';
         if (searchOption === 'add-with-SN') {
-            apiUrl = 'http://10.220.130.119:9090/DdRepositorys/GetR107bySN'; // API cho Serial Number
+            apiUrl = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetR107bySN'; // API cho Serial Number
         } else if (searchOption === 'add-with-cartonNO') {
-            apiUrl = 'http://10.220.130.119:9090/DdRepositorys/GetR107byCartonNos'; // API cho Carton No
+            apiUrl = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetR107byCartonNos'; // API cho Carton No
         } else {
             resultsSection.innerHTML = '<p class="data-alert">Please select a valid search option.</p>';
             qtyElement.textContent = 'Tổng số kết quả: 0';
@@ -153,7 +153,7 @@ document.getElementById('PdStock-add-btn').addEventListener('click', function ()
     console.log("Data to send:", dataToPost); // Log dữ liệu gửi để kiểm tra
 
     // Gửi dữ liệu tới API
-    fetch('http://10.220.130.119:9090/DdRepositorys/PostToTable', {
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/PostToTable', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

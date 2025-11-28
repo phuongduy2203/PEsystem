@@ -6,4 +6,9 @@ namespace API_WEB.Models.SmartFA
     {
         public List<string> SerialNumbers { get; set; } = new List<string>();
     }
+
+    public class RepairSuggestionRequest
+    {
+        public string SerialNumber { get; set; }
+    }
 }

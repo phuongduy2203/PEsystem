@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace API_WEB.Controllers.SmartFA
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class FixGuideController : ControllerBase
     {
@@ -23,14 +23,17 @@ namespace API_WEB.Controllers.SmartFA
             _sqlContext = sqlContext;
             _oracleContext = oracleContext;
         }
+        
         [HttpGet("GetProductLines")]
         public async Task<IActionResult> GetProductLines()
         {
             try
             {
                 var productLines = await _sqlContext.Products
-                    .Select(p => p.ProductLine)
-                    .Distinct()
+                    .Where(p => !string.IsNullOrWhiteSpace(p.ProductLine)) // bỏ trống hoặc null
+                    .Select(p => p.ProductLine.Replace(" ", "").Trim().ToUpper())           // xóa khoảng trắng & in hoa
+                    .Distinct()                                            //Loaị bỏ trùng lặp
+                    .OrderBy(p => p)                                       // sắp xếp (tùy chọn)
                     .ToListAsync();
 
                 return Ok(new { success = true, productLines });
@@ -40,6 +43,7 @@ namespace API_WEB.Controllers.SmartFA
                 return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
+
 
         [HttpPost("Upload")]
         public async Task<IActionResult> UploadGuide(IFormFile file, string productLine)

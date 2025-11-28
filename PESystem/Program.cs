@@ -9,6 +9,18 @@ using PESystem.Policies;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ===== FIX UPLOAD LIMIT (Kestrel) =====
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 209715200; // 200 MB
+});
+
+// ===== FIX UPLOAD LIMIT (Form) =====
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = 200 * 1024 * 1024;
+});
+
 // ---- Config ----
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("mvc_appsettings.json", optional: false, reloadOnChange: true)
@@ -68,7 +80,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 // ---- Form & CORS (MVC call API server-side nên CORS không cần thiết) ----
-builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 100 * 1024 * 1024);
+builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 200 * 1024 * 1024);
 // Có thể bỏ CORS ở MVC nếu chỉ server-side call API
 builder.Services.AddCors(o => o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 

@@ -117,7 +117,7 @@ async function fetchAndRenderData(status, resultDivId, tableId, checkboxName, se
     resultDiv.innerHTML = `<div class="alert alert-info"><strong>Thông báo:</strong> Đang tải dữ liệu...</div>`;
 
     try {
-        const response = await fetch(`http://10.220.130.119:9090/api/Scrap/get-task-by-status?status=${status}`, {
+        const response = await fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/get-task-by-status?status=${status}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -182,7 +182,7 @@ function showConfirmPopup(selectedTaskNumbers, buttonId) {
         };
 
         try {
-            const response = await fetch('http://10.220.130.119:9090/api/Scrap/confirm-move-mrb', {
+            const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/confirm-move-mrb', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

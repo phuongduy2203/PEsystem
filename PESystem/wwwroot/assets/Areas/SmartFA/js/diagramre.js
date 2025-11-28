@@ -2,7 +2,7 @@
     'use strict';
 
     //const API_BASE_URL = window.SmartFAApiBaseUrl || window.location.origin;
-    const API_BASE_URL = 'http://10.220.130.119:9090/'
+    const API_BASE_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/'
     const ENDPOINTS = {
         locations: 'api/DataChart/getCountLocation',
         receivingStatus: 'api/RepairStatus/receiving-status'

@@ -4,233 +4,92 @@
 @{
     Layout = "~/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml";
 }
-<section class="section dashboard">
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h4 class="card-title fw-bold">📦TỔNG KHO</h4>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h4 id="total-repair-scrap" class="mb-0 text-primary fw-bold">Loading...</h4>
-                        <img id="export-total-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h4 class="card-title fw-bold">📦KHO SỬA</h4>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h4 id="total-repair" class="mb-0 text-primary fw-bold">Loading...</h4>
-                        <img id="export-repair-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h4 class="card-title fw-bold">KHO OK</h4>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h4 id="kho-ok-count" class="mb-0 text-primary fw-bold">Loading...</h4>
-                        <img id="export-kho-ok-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h4 class="card-title fw-bold">KHO PHẾ</h4>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h4 id="kho-scrap-count" class="mb-0 text-primary fw-bold">Loading...</h4>
-                        <img id="export-kho-scrap-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mb-4">
-        <div class="col-md-3">
-                <input type="hidden" id="entryPerson" value="@User.Identity.Name" />
-                <div class="input-group">
-                    <textarea class="form-control" id="warehouse-sn-input" rows="4" placeholder="..." style="resize:none"></textarea>
-                    <button class="btn btn-primary" id="warehouse-search-btn" type="button">Search</button>
-                </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="d-flex flex-column justify-content-center">
-                        <h4 class="card-title fw-bold mb-3">
-                            ĐANG MƯỢN 
-                            <span id="borrowed-count" class="text-primary fw-bold">Loading...</span>
-                        </h4>
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <input type="hidden" id="entryPerson" value="@User.Identity.Name" />
+
+        <div class="dashboard-right">
+            <div class="data-card kpi-card">
+                <div class="kpi-grid">
+                    <div class="donut-box">
+                        <div id="total-repair-scrap" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦TỔNG KHO</div>
+                            <img id="export-total-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <div>
-                            <span class="mb-0 text-primary fw-bold" style="color:#000!important;">Đã Định Vị</span>
-                            <span id="borrowed-location-found" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
-                        </div>
-                        <div>
-                            <span class="mb-0 text-primary fw-bold" style="color:#000!important;">Chưa Định Vị</span>
-                            <span id="borrowed-location-missing" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                    <div class="donut-box">
+                        <div id="total-repair" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO SỬA</div>
+                            <img id="export-repair-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!--CHECKING B36R-->
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <i class="fa fa-calendar fa-2x" id="pickDateBtn" aria-hidden="true" style="cursor:pointer;"></i>
-                        <input type="datetime-local" id="cioStartDate" hidden />
-                        <input type="datetime-local" id="cioEndDate" hidden />
-                        <h4 class="card-title fw-bold mb-0">B36R STATUS</h4>
-                        <i class="fa fa-cogs fa-2x" id="b36r-settings" style="cursor: pointer;"></i>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <div>
-                            <span class="mb-0 text-primary fw-bold" style="color:#000!important;">Đã link</span>
-                            <span id="totaL-linked-mo" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                    <div class="donut-box">
+                        <div id="kho-ok-count" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO OK</div>
+                            <img id="export-kho-ok-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
                         </div>
-                        <div>
-                            <span class="mb-0 text-primary fw-bold" style="color:#000!important;">Chờ link</span>
-                            <span id="total-waiting-link-mo" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                    </div>
+
+                    <div class="donut-box">
+                        <div id="kho-scrap-count" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO PHẾ</div>
+                            <img id="export-kho-scrap-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="donut-box">
+                        <div class="text-center">
+                            <div class="d-flex flex-column justify-content-center">
+                                <div id="borrowed-count" class="donut-percent">Loading...</div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="donut-label" style="color:#000!important;">Location</div>
+                                    <span id="borrowed-location-found" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                                <div>
+                                    <div class="donut-label" style="color:#000!important;">NotLocation</div>
+                                    <span id="borrowed-location-missing" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="donut-box">
+                        <div class="text-center">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <i class="fa fa-calendar fa-1.5x" id="pickDateBtn" aria-hidden="true" style="cursor:pointer;"></i>
+                                <input type="datetime-local" id="cioStartDate" hidden />
+                                <input type="datetime-local" id="cioEndDate" hidden />
+                                <h4 class="donut-percent">B36R</h4>
+                                <i class="fa fa-cogs fa-1.5x" id="b36r-settings" style="cursor: pointer;"></i>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between ">
+                                <div>
+                                    <span class="donut-label" style="color:#000!important;">Linked</span>
+                                    <span id="totaL-linked-mo" class="text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                                <div>
+                                    <span class="donut-label" style="color:#000!important;">WaitingLink</span>
+                                    <span id="total-waiting-link-mo" class="text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!--CHECKIN CHUA NHAP KHO-->
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h4 class="card-title fw-bold">CHECK IN CHƯA CÓ VỊ TRÍ</h4>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h4 id="checkin-3days-count" class="mb-0 text-primary fw-bold">Loading...</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="warehouseModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Kết quả tìm kiếm</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table id="warehouseTable" class="table table-bordered table-striped datatable-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>SERIAL_NUMBER</th>
-                                <th>KHO</th>
-                                <th>VỊ_TRÍ</th>
-                                <th>PRODUCT_LINE</th>
-                                <th>MODEL_NAME</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-success" id="create-list-btn" type="button" style="display:none;">Create List</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="borrowedLocationModal" tabindex="-1" aria-labelledby="borrowedLocationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="borrowedLocationModalLabel">Danh sách Serial Number</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table id="borrowedLocationTable" class="table table-bordered table-striped datatable-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>SERIAL_NUMBER</th>
-                                <th>KHO</th>
-                                <th>VỊ_TRÍ</th>
-                                <th>PRODUCT_LINE</th>
-                                <th>MODEL_NAME</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dataModalLabel">Chi tiết</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table id="dataTable" class="table table-bordered datatable-table table-striped datatable-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>SERIAL_NUMBER</th>
-                                <th>PRODUCT_LINE</th>
-                                <th>MODEL_NAME</th>
-                                <th>MO_NUMBER</th>
-                                <th>EXPORT_DATE</th>
-                                <th>STATUS</th>
-                                <th>LINK_TIME</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">B36R EXPORT</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group mb-3">
-                        <textarea class="form-control" id="export-search-input" rows="3" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
-                        <button class="btn btn-outline-secondary" id="export-search-btn" type="button">Search</button>
-                    </div>
-                    <table id="exportTable" class="table table-bordered table-striped datatable-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>SERIAL_NUMBER</th>
-                                <th>PRODUCT_LINE</th>
-                                <th>MODEL_NAME</th>
-                                <th>EXPORT_DATE</th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!--Bieu do Nhap/Xuat Kho Repair va TopModel-->
-    <div class="row d-flex flex-wrap">
-        <div class="col-md-6">
-            <div class="card shadow-lg rounded-lg border-0">
-                <div class="card-body p-4">
+        <div class="dashboard-grid">
+            <div class="data-card">
+                <div class="chart-container-lg">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title text-center font-weight-bold">NHẬP XUẤT</h5>
                         <select id="chart-filter" class="form-select w-auto">
@@ -239,32 +98,37 @@
                             <option value="shift2">Ca 2</option>
                         </select>
                     </div>
-                    <div id="reportsChart" style="width: 100%; height: 400px;"></div>
+                    <div id="reportsChart" class="echart"></div>
+                </div>
+            </div>
+
+            <div class="data-card confirm-card" id="borrow-return-chart">
+                <div class="text-muted">Đang tải dữ liệu...</div>
+            </div>
+            <div class="data-card">
+                <div class="chart-container-lg">
+                    <div id="borrow-aging-chart" class="echart"></div>
                 </div>
             </div>
         </div>
-
-        <!--Table aging > 3 days-->
-        <div class="col-md-6">
-            <div class="card shadow-lg rounded-lg">
-                <h5 class="text-center fw-bold text-primary">
-                    Check in chưa có vị trí
-                </h5>
-                <table id="dataTable-aging-3" class="table table-bordered table-striped datatable-table" style="width:100%">
+    </div>
+</div>
+<div class="modal fade" id="borrowedLocationModal" tabindex="-1" aria-labelledby="borrowedLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="borrowedLocationModalLabel">Danh sách Serial Number</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table id="borrowedLocationTable" class="table table-bordered table-striped datatable-table" style="width:100%">
                     <thead>
                         <tr>
                             <th>SERIAL_NUMBER</th>
+                            <th>KHO</th>
+                            <th>VỊ_TRÍ</th>
                             <th>PRODUCT_LINE</th>
                             <th>MODEL_NAME</th>
-                            <th>MO_NUMBER</th>
-                            <th>ERROR_FLAG</th>
-                            <th>WORK_FLAG</th>
-                            <th>WIP_GROUP</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_TIME</th>
-                            <th>ERROR_CODE</th>
-                            <th>ERROR_DESC</th>
-                            <th>AGING</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -272,28 +136,61 @@
             </div>
         </div>
     </div>
-
-    <!--Bieu do Muon/Tra và Aging -->
-    <div class="row d-flex flex-wrap mt-4">
-        <div class="col-md-6">
-            <div class="card shadow-lg rounded-lg border-0">
-                <div class="card-body p-4">
-                    <h5 class="card-title text-center font-weight-bold">MƯỢN/TRẢ TRONG NGÀY</h5>
-                    <div id="borrow-return-chart" style="width: 100%; height: 400px;"></div>
-                </div>
+</div>
+<div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dataModalLabel">Chi tiết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow-lg rounded-lg border-0">
-                <div class="card-body p-4">
-                    <h5 class="card-title text-center font-weight-bold">AGING MƯỢN</h5>
-                    <div id="borrow-aging-chart" style="width: 100%; height: 400px;"></div>
-                </div>
+            <div class="modal-body">
+                <table id="dataTable" class="table table-bordered datatable-table table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>MO_NUMBER</th>
+                            <th>EXPORT_DATE</th>
+                            <th>STATUS</th>
+                            <th>LINK_TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
-</section>
-
+</div>
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">B36R EXPORT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <textarea class="form-control" id="export-search-input" rows="3" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                    <button class="btn btn-outline-secondary" id="export-search-btn" type="button">Search</button>
+                </div>
+                <table id="exportTable" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>EXPORT_DATE</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="modelDataModal" tabindex="-1" aria-labelledby="modelDataModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -363,25 +260,370 @@
 </div>
 @section Scripts {
     <style>
+        /*kpi card*/
+        .kpi-card {
+            gap: 1rem;
+        }
+
+        .kpi-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 1rem;
+            align-content: stretch;
+        }
+
+        .donut-box {
+            background: radial-gradient(circle at 50% 0%, #f4f8ff 0%, #eaf1ff 90%);
+            border: 1px solid rgba(0, 86, 216, 0.18);
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(13, 40, 104, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            gap: 0.35rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .donut-box:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 16px 28px rgba(13, 40, 104, 0.16);
+            }
+
+        .donut-percent {
+            font-size: clamp(1.1rem, 1.9vw, 1.6rem);
+            color: #001b4e;
+        }
+
+        .donut-label {
+            font-size: clamp(0.85rem, 1vw, 1.05rem);
+            color: #30497a;
+        }
+
+        .donut-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* label bên trái, icon bên phải */
+            gap: 0.5rem;
+        }
+
+
+        /*table card*/
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .date-time-range {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+            .date-time-range label {
+                font-weight: 600;
+                color: #333;
+            }
+
+            .date-time-range input[type="datetime-local"] {
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 14px;
+            }
+
+        .section-title {
+            margin: 20px 0 10px;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        /* === TABLE === */
+        .table-card .panel-title {
+            margin-bottom: 0.75rem;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        td {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.2s;
+        }
+
+        #serialNumberModal .modal-body {
+            overflow-x: auto;
+        }
+
+        #serialNumberTable {
+            width: 100% !important;
+        }
+
+        .confirm-card .panel-title {
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .vi-re-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .vi-re-total {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .vi-re-total-split {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+            .vi-re-total-split .ok {
+                color: #2e7d32;
+            }
+
+            .vi-re-total-split .ng {
+                color: #c62828;
+            }
+
+        .vi-re-chart {
+            height: 320px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px;
+            background: #fff;
+        }
+
+            .vi-re-chart .vi-re-no-data {
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+        .vi-re-owner {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: #fff;
+        }
+
+            .vi-re-owner + .vi-re-owner {
+                margin-top: 10px;
+            }
+
+            .vi-re-owner summary {
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-weight: 600;
+                color: #2c3e50;
+            }
+
+                .vi-re-owner summary::-webkit-details-marker {
+                    display: none;
+                }
+
+                .vi-re-owner summary::after {
+                    content: '\25BC';
+                    font-size: 12px;
+                    margin-left: 8px;
+                    transition: transform 0.2s ease;
+                    color: #7f8c8d;
+                }
+
+            .vi-re-owner[open] summary::after {
+                transform: rotate(180deg);
+            }
+
+        .vi-re-owner-count-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vi-re-owner-status {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+            .vi-re-owner-status.ok {
+                color: #2e7d32;
+            }
+
+            .vi-re-owner-status.ng {
+                color: #c62828;
+            }
+
+        .vi-re-owner-count {
+            min-width: 32px;
+            text-align: center;
+            background: #34495e;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .vi-re-owner-table-wrapper {
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+
+        .vi-re-owner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+            .vi-re-owner-table th,
+            .vi-re-owner-table td {
+                border: 1px solid #dee2e6;
+                padding: 6px 8px;
+                text-align: left;
+                white-space: nowrap;
+            }
+
+            .vi-re-owner-table th {
+                background-color: #2c3e50;
+                color: #fff;
+            }
+
+            .vi-re-owner-table tr:nth-child(even) {
+                background-color: #f4f6f8;
+            }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* === CARD === */
+        .data-card {
+            background: #fff;
+            border: 1px solid rgba(0, 86, 216, 0.18);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(15, 35, 95, 0.08);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .data-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 26px rgba(0, 86, 216, 0.15);
+            }
+
+        .panel-title {
+            font-weight: 600;
+            color: #003d99;
+            font-size: 1.1rem;
+        }
+
+        /* === CHARTS === */
+        .echart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-container-lg {
+            min-height: 320px;
+        }
+
+        .mini-chart-box {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 86, 216, 0.1);
+            padding: 1rem;
+            flex: 1;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .mini-chart-box:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(15, 35, 95, 0.12);
+            }
+
+        .mini-chart-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0f2458;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .aging-split {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        /*========================*/
+
         .modal-dialog {
             max-width: 85%;
             font-size: 14px;
         }
+
         .swal2-input {
             z-index: 2000 !important;
-        }
-
-        .info-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
-            max-width: 280px;
-            margin-bottom: 10px;
-        }
-
-        .card-title {
-            font-size: 20px;
-            color: #333;
         }
 
         #total-stock, #total-stock-re {
@@ -390,50 +632,17 @@
         }
 
         .excel-icon {
-            width: 35px;
-            height: 35px;
+            width: 28px;
+            height: px;
             transition: transform 0.2s ease-in-out;
+            cursor: pointer;
         }
 
             .excel-icon:hover {
                 transform: scale(1.1);
             }
 
-        .card {
-            border-radius: 15px;
-            overflow: hidden;
-            background: #fff;
-            transition: all 0.3s ease-in-out;
-        }
-
-        .card-body {
-            border-radius: 15px;
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            box-shadow: 5px 5px 15px #c1c1c1, -5px -5px 15px #ffffff;
-            padding: 20px;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 10px 10px 20px #c1c1c1, -10px -10px 20px #ffffff;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        .excel-button img{
-            border: none !important;
-            background: none !important;
-            width: 32px;
-            height: 32px;
-        }
-
     </style>
-    <link href="~/assets/areas/bonepile/css/bonepile.css" rel="stylesheet" />
     <script src="~/assets/areas/repositories/js/dashboard.js?v=@DateTime.Now.Ticks"></script>
     <script src="~/assets/areas/repositories/js/reportschart.js?v=@DateTime.Now.Ticks"></script>
     <script src="~/assets/areas/repositories/js/borrowChart.js?v=@DateTime.Now.Ticks"></script>

@@ -7,6 +7,8 @@
 
 <!-- Thẻ ẩn chứa tên người dùng -->
 <input type="hidden" id="entryPerson" value="@User.Identity.Name" />
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
 
 <div id="option-list" class="mt-2 col-md-12">
     <div class="row">
@@ -57,7 +59,7 @@
     </div>
 </div>
 
-<table id="sumMaterialsTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+<table id="sumMaterialsTable" class="table table-bordered table-striped datatable-table" style="width:100%">
     <thead>
         <tr>
             <th><input type="checkbox" id="selectAllCheckbox" title="Chọn tất cả" /></th>
@@ -77,7 +79,8 @@
     </thead>
     <tbody></tbody>
 </table>
-
+</div>
+</div>
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
 @section Scripts {
@@ -100,46 +103,6 @@
         /* Hiển thị tooltip khi di chuột vào */
         td:hover .custom-tooltip {
             display: block;
-        }
-        /* Giới hạn độ rộng cột */
-        #sumMaterialsTable th, #sumMaterialsTable td {
-            white-space: nowrap; /* Ngăn xuống dòng */
-            overflow: hidden;
-            text-overflow: ellipsis; /* Hiển thị dấu "..." nếu nội dung quá dài */
-            max-width: 80px; /* Giới hạn độ rộng cột */
-        }
-        #sumMaterialsTable th:nth-child(1),
-        #sumMaterialsTable td:nth-child(1){
-            width: 20px!important;
-        }
-
-        /* Cố định thanh tìm kiếm và phân trang khi cuộn ngang */
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_paginate {
-            position: sticky;
-            top: 0;
-            background-color: #fff;
-            z-index: 1;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            padding:5px;
-        }
-
-        /* Đảm bảo thanh tìm kiếm và phân trang không bị che khuất */
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-            /* Điều chỉnh chiều rộng tối thiểu cho wrapper */
-            .dataTables_wrapper .dataTables_scroll {
-                min-width: 100%;
-            }
-
-        /* Thêm hiệu ứng hover cho hàng */
-        .datatable-table tbody tr:hover td,
-        .datatable-table tbody tr:hover th {
-            background-color: #76b900 !important;
-            /*transition: background-color 0.2s ease;*/
         }
     </style>
     <script src="~/assets/areas/material/js/add_material.js?v=@DateTime.Now.Ticks"></script>

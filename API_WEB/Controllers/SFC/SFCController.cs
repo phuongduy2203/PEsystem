@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace API_WEB.Controllers.SFC
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SFCController : ControllerBase
     {

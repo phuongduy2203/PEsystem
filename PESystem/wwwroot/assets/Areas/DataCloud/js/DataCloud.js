@@ -1,7 +1,7 @@
 ﻿$(document).ready(function () {
     let pathHistory = ['D:\\DataCloud']; // Khởi tạo với đường dẫn mặc định
     let selectedItem = null; // Lưu thông tin item được click chuột phải
-    const API_BASE = `${window.location.origin}/api/data`;
+    const API_BASE = `https://pe-vnmbd-nvidia-cns.myfiinet.com/data`;
 
     // Hàm chuẩn hóa đường dẫn
     function normalizePath(path) {
@@ -215,74 +215,6 @@
             $('#context-menu').hide();
         }
     });
-
-    //// Xử lý hành động từ menu ngữ cảnh
-    //$('#context-menu').on('click', '.context-menu-item', function () {
-    //    const action = $(this).data('action');
-    //    if (selectedItem) {
-    //        const path = selectedItem.attr('custom-path');
-    //        const type = selectedItem.attr('custom-type');
-
-    //        if (action === 'download') {
-    //            if (type === 'File') {
-    //                window.location.href = `http://10.220.130.119:8000/api/data/download-file?path=${encodeURIComponent(path)}`;
-    //            } else if (type === 'Folder') {
-    //                window.location.href = `http://10.220.130.119:8000/api/data/download-folder?path=${encodeURIComponent(path)}`;
-    //            }
-    //        } else if (action === 'delete') {
-    //            swalWithBootstrapButtons.fire({
-    //                title: "Xác nhận xóa?",
-    //                text: "Hành động không thể hoàn tác!",
-    //                icon: "warning",
-    //                showCancelButton: true,
-    //                confirmButtonText: "XÁC NHẬN",
-    //                cancelButtonText: "HỦY"
-    //            }).then((result) => {
-    //                if (result.isConfirmed) {
-    //                    swalWithBootstrapButtons.fire({
-    //                        title: "Đang xóa...",
-    //                        allowOutsideClick: false,
-    //                        didOpen: () => {
-    //                            Swal.showLoading();
-    //                        }
-    //                    });
-    //                    $.ajax({
-    //                        url: 'http://10.220.130.119:8000/api/data/delete-items',
-    //                        type: 'POST',
-    //                        contentType: 'application/json',
-    //                        data: JSON.stringify([{ path: path, type: type }]),
-    //                        success: function (response) {
-    //                            Swal.close();
-    //                            swalWithBootstrapButtons.fire({
-    //                                title: "Đã xóa!",
-    //                                text: response.Message || "",
-    //                                icon: "success"
-    //                            });
-    //                            loadData(normalizePath(pathHistory[pathHistory.length - 1]));
-    //                        },
-    //                        error: function (xhr) {
-    //                            Swal.close();
-    //                            swalWithBootstrapButtons.fire({
-    //                                title: "Lỗi!",
-    //                                text: `Không thể xóa ${xhr.status} - ${xhr.responseText}`,
-    //                                icon: "error"
-    //                            });
-    //                        }
-    //                    });
-    //                } else if (result.dismiss === Swal.DismissReason.cancel) {
-    //                    swalWithBootstrapButtons.fire({
-    //                        title: "Đã hủy",
-    //                        text: "",
-    //                        icon: "info"
-    //                    });
-    //                }
-    //            });
-    //        }
-    //        $('#context-menu').hide(); // Ẩn menu sau khi thực hiện hành động
-    //    }
-    //});
-
-    // Xử lý hành động từ menu ngữ cảnh
 
     $('#context-menu').on('click', '.context-menu-item', function () {
         const action = $(this).data('action');
@@ -622,7 +554,7 @@
         if (!files.length) return;
 
         // Kiểm tra kích thước tệp
-        const maxSize = 100 * 1024 * 1024; // 100MB
+        const maxSize = 200 * 1024 * 1024; // 100MB
         for (let file of files) {
             if (file.size > maxSize) {
                 swalWithBootstrapButtons.fire({
@@ -687,7 +619,7 @@
         if (!files.length) return;
 
         // Kiểm tra kích thước tệp
-        const maxSize = 100 * 1024 * 1024; // 100MB
+        const maxSize = 200 * 1024 * 1024; // 100MB
         for (let file of files) {
             if (file.size > maxSize) {
                 swalWithBootstrapButtons.fire({
@@ -759,7 +691,7 @@
             const files = e.originalEvent.dataTransfer.files;
             if (!files.length) return;
             // Kiểm tra kích thước tệp
-            const maxSize = 400 * 1024 * 1024; // 100MB
+            const maxSize = 200 * 1024 * 1024; // 100MB
             for (let file of files) {
                 if (file.size > maxSize) {
                     swalWithBootstrapButtons.fire({

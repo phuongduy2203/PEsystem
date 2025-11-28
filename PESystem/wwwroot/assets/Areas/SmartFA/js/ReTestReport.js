@@ -36,7 +36,7 @@
     }
 
     // Fetch 7-day data from summary-retest-result
-    fetch('http://10.220.130.119:9090/api/SFC/summary-retest-result')
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/summary-retest-result')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -252,7 +252,7 @@
             });
 
             // Fetch today's data for day shift from summary-retest-model
-            fetch('http://10.220.130.119:9090/api/SFC/summary-retest-model', {
+            fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/summary-retest-model', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -358,7 +358,7 @@
                 .catch(error => console.error('Error fetching day shift today data:', error));
 
             // Fetch today's data for night shift from summary-retest-model
-            fetch('http://10.220.130.119:9090/api/SFC/summary-retest-model', {
+            fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/summary-retest-model', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

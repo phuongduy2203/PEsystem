@@ -9,8 +9,75 @@
 
     // Danh sách trạng thái cố định
     const statuses = ["Scrap", "WaitingLink", "CheckIn", "Repair", "Online", "WaitingKanBanIn", "WaitingApproveScrap", "CheckOut"];
-    // Khởi tạo các biến
-    let statusDonutChart, sumMaterialsTable;
+    const statusDisplayMap = {
+        Scrap: "Scrap",
+        WaitingLink: "Waiting Link",
+        CheckIn: "Waiting Check In",
+        Repair: "Under Repair",
+        Online: "Online",
+        WaitingKanBanIn: "Waiting Kanban In",
+        WaitingApproveScrap: "Waiting Approve Scrap",
+        CheckOut: "Waiting Check Out"
+    };
+    const statusColorMap = {
+        Scrap: "#dc3545",
+        WaitingLink: "#ff8307",
+        CheckIn: "#ffc107",
+        Repair: "#0d6efd",
+        Online: "#198754",
+        WaitingKanBanIn: "#20c997",
+        WaitingApproveScrap: "#6f42c1",
+        CheckOut: "#17a2b8"
+    };
+    const fallbackColors = ["#ff8307", "#05b529", "#ffc107", "#75b507", "#17a2b8", "#17b86d", "#dc3545", "#6c757d"];
+
+    let sumMaterialsTable;
+    const charts = [];
+    let statusDonutChart = registerChart(initChart('statusDonutChart'));
+
+    function initChart(elementId) {
+        if (typeof echarts === 'undefined') {
+            console.warn('ECharts library is not loaded.');
+            return null;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with id "${elementId}" not found.`);
+            return null;
+        }
+        return echarts.init(element);
+    }
+
+    function initChart(elementId) {
+        if (typeof echarts === 'undefined') {
+            console.warn('ECharts library is not loaded.');
+            return null;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with id "${elementId}" not found.`);
+            return null;
+        }
+        return echarts.init(element);
+    }
+
+    function registerChart(chart) {
+        if (chart && !charts.includes(chart)) {
+            charts.push(chart);
+        }
+        return chart || null;
+    }
+
+    function resizeCharts() {
+        charts.forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    }
+
+    window.addEventListener('resize', resizeCharts);
+
 
     // Hàm gọi API cho số lượng trạng thái
     async function fetchStatusCounts() {
@@ -27,7 +94,7 @@
         console.log('fetchStatusCounts payload:', payload); // Log payload
 
         try {
-            const response = await axios.post('http://10.220.130.119:9090/api/Bonepile2/status-count', payload);
+            const response = await axios.post('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2/status-count', payload);
             const { count, statusCounts } = response.data;
             console.log('fetchStatusCounts response:', { count, statusCounts });
             updateStatusCounts(count, statusCounts);
@@ -41,11 +108,6 @@
 
     // Hàm gọi API cho dữ liệu chi tiết
     async function fetchData(selectedStatus = null) {
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js không được tải.');
-            alert('Không thể tải Chart.js.');
-            return;
-        }
         if (typeof axios === 'undefined') {
             console.error('Axios không được tải.');
             alert('Không thể tải Axios.');
@@ -83,7 +145,7 @@
         console.log('selectedStatus:', selectedStatus); // Log giá trị selectedStatus
 
         try {
-            const response = await axios.post('http://10.220.130.119:9090/api/Bonepile2/data', payload);
+            const response = await axios.post('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2/data', payload);
             const { count, data } = response.data;
             console.log('fetchData response:', { count, data });
             updateDashboard(count, data);
@@ -97,50 +159,101 @@
     }
 
     // Hàm cập nhật số lượng trạng thái
-    function updateStatusCounts(count, statusCounts) {
-        document.getElementById('totalCount').textContent = count || 'N/A';
-        document.getElementById('waitingScrapCount').textContent = statusCounts.WaitingApproveScrap || 0;
-        document.getElementById('repairCount').textContent = statusCounts.Repair || 0;
-        document.getElementById('onlinePd').textContent = statusCounts.Online || 0;
-        document.getElementById('kanbanIn').textContent = statusCounts.WaitingKanBanIn || 0;
-        document.getElementById('waitingLink').textContent = statusCounts.WaitingLink || 0;
-        document.getElementById('waitingOut').textContent = statusCounts.CheckOut || 0;
-        document.getElementById('waitingIn').textContent = statusCounts.CheckIn || 0;
+    function updateStatusCounts(count, statusCounts = {}) {
+        const counts = statusCounts || {};
+        const waitingScrap = counts.WaitingApproveScrap ?? counts.WaitingApprovalScrap ?? 0;
+        const waitingOut = counts.CheckOut ?? counts.WaitingCheckOut ?? 0;
 
-        const statusLabels = Object.keys(statusCounts);
-        const statusData = Object.values(statusCounts);
-        if (statusDonutChart) statusDonutChart.destroy();
-        statusDonutChart = new Chart(document.getElementById('statusDonutChart'), {
-            type: 'doughnut',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    data: statusData,
-                    backgroundColor: ['#ff8307', '#05b529', '#ffc107', '#75b507', '#17a2b8', '#17b86d', '#dc3545', '#fa0f0f']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => `${ctx.label}: ${ctx.raw} (${((ctx.raw / count) * 100).toFixed(1)}%)`
-                        }
-                    },
-                    datalabels: {
-                        formatter: (value, ctx) => {
-                            const total = statusData.reduce((sum, d) => sum + d, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${percentage}%`;
-                        },
-                        color: '#000', // Màu chữ
-                        font: { weight: 'bold', size: 12 }
-                    }
+        const totalCountEl = document.getElementById('totalCount');
+        if (totalCountEl) totalCountEl.textContent = count ?? 'N/A';
+        const waitingScrapEl = document.getElementById('waitingScrapCount');
+        if (waitingScrapEl) waitingScrapEl.textContent = waitingScrap;
+        const repairEl = document.getElementById('repairCount');
+        if (repairEl) repairEl.textContent = counts.Repair || 0;
+        const onlineEl = document.getElementById('onlinePd');
+        if (onlineEl) onlineEl.textContent = counts.Online || 0;
+        const kanbanInEl = document.getElementById('kanbanIn');
+        if (kanbanInEl) kanbanInEl.textContent = counts.WaitingKanBanIn || 0;
+        const waitingLinkEl = document.getElementById('waitingLink');
+        if (waitingLinkEl) waitingLinkEl.textContent = counts.WaitingLink || 0;
+        const waitingOutEl = document.getElementById('waitingOut');
+        if (waitingOutEl) waitingOutEl.textContent = waitingOut;
+        const waitingInEl = document.getElementById('waitingIn');
+        if (waitingInEl) waitingInEl.textContent = counts.CheckIn || 0;
+        const kanbanDoneEl = document.getElementById('kanbanDone');
+        if (kanbanDoneEl && counts.KanbanDone !== undefined) {
+            kanbanDoneEl.textContent = counts.KanbanDone;
+        }
+
+        const orderedStatuses = [...statuses];
+        Object.keys(counts).forEach(status => {
+            if (!orderedStatuses.includes(status)) {
+                orderedStatuses.push(status);
+            }
+        });
+
+        const chartData = orderedStatuses.map((status, idx) => {
+            const value = Number(counts[status]) || 0;
+            const color = statusColorMap[status] || fallbackColors[idx % fallbackColors.length];
+            return {
+                value,
+                name: statusDisplayMap[status] || status,
+                rawStatus: status,
+                itemStyle: { color }
+            };
+        });
+
+        const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
+        if (!statusDonutChart) {
+            statusDonutChart = registerChart(initChart('statusDonutChart'));
+        }
+
+        statusDonutChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: params => {
+                    const label = statusDisplayMap[params.data?.rawStatus] || params.name;
+                    return `${label}: ${params.value} (${params.percent}%)`;
                 }
             },
-            plugins: [ChartDataLabels]
-        });
+            legend: {
+                type: 'scroll',
+                bottom: 0,
+                icon: 'circle',
+                data: chartData.map(item => item.name),
+                textStyle: {
+                    color: '#1e2a45',
+                    fontSize: 12
+                }
+            },
+            series: [
+                {
+                    name: 'Trạng thái',
+                    type: 'pie',
+                    radius: ['42%', '72%'],
+                    center: ['50%', '45%'],
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderColor: '#fff'
+                    },
+                    label: {
+                        show: total > 0,
+                        formatter: '{b}\n{c} ({d}%)',
+                        color: '#1e2a45',
+                        fontSize: 11,
+                        lineHeight: 16
+                    },
+                    labelLine: {
+                        length: 18,
+                        length2: 12,
+                        smooth: true
+                    },
+                    data: chartData
+                }
+            ]
+        }, true);
+        requestAnimationFrame(resizeCharts);
     }
 
     // Hàm cập nhật dashboard
@@ -219,13 +332,21 @@
                     $('.dataTables_filter input[type="search"]').attr('placeholder', 'Tìm kiếm');
                 }
             });
+            //JS để click vào row thì giữ highlight
+            $('#sumMaterialsTable tbody').on('click', 'tr', function () {
+                // Bỏ chọn các row khác
+                $('#sumMaterialsTable tbody tr').removeClass('selected-row');
+
+                // Gán class highlight
+                $(this).addClass('selected-row');
+            });
         } else {
             // Cập nhật dữ liệu mà không phá hủy DataTable
             sumMaterialsTable.clear(); // Xóa dữ liệu cũ
             sumMaterialsTable.rows.add(data); // Thêm dữ liệu mới
             sumMaterialsTable.draw(); // Vẽ lại bảng
         }
-        
+
     }
     // Sự kiện áp dụng bộ lọc
     document.getElementById('applyFilters').addEventListener('click', () => {

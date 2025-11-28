@@ -63,7 +63,7 @@ namespace API_WEB.Helpers.Repositories
                 var handler = new HttpClientHandler { UseProxy = false };
                 using var client = new HttpClient(handler);
 
-                var response = await client.PostAsync("http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+                var response = await client.PostAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/RepairStatus/receiving-status", content);
 
                 if (!response.IsSuccessStatusCode)
                 {

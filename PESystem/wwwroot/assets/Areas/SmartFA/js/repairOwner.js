@@ -9,7 +9,7 @@ document.getElementById("searchBtn").addEventListener("click", async () => {
     }
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/SearchFA/get-repair-owner-data-by-sn", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/get-repair-owner-data-by-sn", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ serialNumbers: serials })

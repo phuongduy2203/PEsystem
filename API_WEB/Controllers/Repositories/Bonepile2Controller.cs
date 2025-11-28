@@ -18,7 +18,7 @@ using System.IO;
 
 namespace API_WEB.Controllers.Repositories
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class Bonepile2Controller : ControllerBase
     {
@@ -2026,6 +2026,392 @@ SELECT
                         });
                     }
                 }
+            }
+
+            return result;
+        }
+
+        [HttpGet("bonepile-npi")]
+        public async Task<IActionResult> BonepileNpi()
+        {
+            try
+            {
+                var beforeData = await ExecuteBonepileNpiBeforeQuery();
+                var afterData = await ExecuteBonepileNpiAfterQuery();
+
+                if (!beforeData.Any() && !afterData.Any())
+                {
+                    return NotFound(new { message = "Khong tim thay du lieu!", totalCount = 0 });
+                }
+
+                var productLines = beforeData
+                    .Select(b => b.ProductLine)
+                    .Concat(afterData.Select(a => a.ProductLine))
+                    .Where(pl => !string.IsNullOrWhiteSpace(pl))
+                    .Distinct(StringComparer.OrdinalIgnoreCase);
+
+                var groupedResult = productLines
+                    .Select(pl =>
+                    {
+                        var beforeList = beforeData
+                            .Where(b => string.Equals(b.ProductLine, pl, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        var afterList = afterData
+                            .Where(a => string.Equals(a.ProductLine, pl, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        return new BonepileNPIProductLineResponse
+                        {
+                            ProductLine = pl,
+                            BeforeCount = beforeList.Count,
+                            AfterCount = afterList.Count,
+                            BeforeDetails = beforeList,
+                            AfterDetails = afterList
+                        };
+                    })
+                    .ToList();
+
+                return Ok(new
+                {
+                    totalBefore = beforeData.Count,
+                    totalAfter = afterData.Count,
+                    data = groupedResult
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Xay ra loi", error = ex.Message });
+            }
+        }
+
+        private async Task<List<BonepileNPISerialBefore>> ExecuteBonepileNpiBeforeQuery()
+        {
+            var result = new List<BonepileNPISerialBefore>();
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            await connection.OpenAsync();
+
+            const string query = @"
+SELECT 
+    r107.SERIAL_NUMBER,
+    r107.MODEL_NAME,
+    model_desc.PRODUCT_LINE,
+    r107.MO_NUMBER,
+    r107.ERROR_FLAG,
+    r107.WORK_FLAG,
+    r107.WIP_GROUP,
+    r109_latest.TEST_GROUP,
+    r109_latest.TEST_TIME,
+    r109_latest.TEST_CODE,
+    r109_latest.ERROR_ITEM_CODE,
+    error_desc.ERROR_DESC,
+    repair_task.DATA11,
+    rep_detail.DATA19_COMBINED,
+    RE_TEST.GROUP_NAME AS STATION_TEST,
+    RE_TEST.DATA2,
+    RE_TEST.DATA5,
+    RE_TEST.PASS_TIME,
+    CHECK_IN.IN_DATETIME AS CHECKIN_DATE,
+    TRUNC(SYSDATE - CHECK_IN.IN_DATETIME) AS AGING_DAY
+FROM sfism4.r107 r107
+JOIN sfis1.c_model_desc_t model_desc
+  ON r107.model_name = model_desc.model_name
+LEFT JOIN sfism4.r_repair_task_t repair_task
+  ON r107.SERIAL_NUMBER = repair_task.SERIAL_NUMBER
+LEFT JOIN (
+    SELECT SERIAL_NUMBER, MAX(IN_DATETIME) AS IN_DATETIME
+    FROM SFISM4.R_REPAIR_IN_OUT_T 
+    WHERE MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+      AND MODEL_NAME NOT LIKE '900%' 
+      AND MODEL_NAME NOT LIKE '930%' 
+      AND MODEL_NAME NOT LIKE '692%'
+    GROUP BY SERIAL_NUMBER
+) CHECK_IN
+  ON CHECK_IN.SERIAL_NUMBER = r107.SERIAL_NUMBER
+LEFT JOIN (
+    SELECT SERIAL_NUMBER,
+           LISTAGG(TRIM(DATA19), ' | ') 
+             WITHIN GROUP (ORDER BY MIN_DATE) AS DATA19_COMBINED
+    FROM (
+        SELECT DISTINCT SERIAL_NUMBER, TRIM(DATA19) AS DATA19,
+                        MIN(DATE3) AS MIN_DATE
+        FROM sfism4.R_REPAIR_TASK_DETAIL_T
+        WHERE UPPER(DATA17) IN ('CONFIRM', 'SAVE')
+          AND DATA19 IS NOT NULL
+          AND DATA19 != 'CONFIRM_PUT_B36R'
+          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+        GROUP BY SERIAL_NUMBER, TRIM(DATA19)
+    )
+    GROUP BY SERIAL_NUMBER
+) rep_detail
+  ON rep_detail.SERIAL_NUMBER = r107.SERIAL_NUMBER
+LEFT JOIN (
+    SELECT SERIAL_NUMBER, TEST_CODE, TEST_TIME, TEST_GROUP, ERROR_ITEM_CODE
+    FROM (
+        SELECT 
+            R109.SERIAL_NUMBER,
+            R109.TEST_CODE,
+            R109.TEST_TIME,
+            R109.TEST_GROUP,
+            R109.ERROR_ITEM_CODE,
+            ROW_NUMBER() OVER(
+                PARTITION BY R109.SERIAL_NUMBER
+                ORDER BY R109.TEST_TIME DESC
+            ) rn
+        FROM SFISM4.R109 R109
+        WHERE MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+          AND MODEL_NAME NOT LIKE '900%' 
+          AND MODEL_NAME NOT LIKE '930%' 
+          AND MODEL_NAME NOT LIKE '692%'
+    )
+    WHERE rn = 1
+) r109_latest
+  ON r109_latest.SERIAL_NUMBER = r107.SERIAL_NUMBER
+LEFT JOIN (
+    SELECT SERIAL_NUMBER, GROUP_NAME, PASS_TIME, DATA2, DATA5
+    FROM (
+        SELECT t.SERIAL_NUMBER, t.GROUP_NAME, t.PASS_TIME, t.DATA2, t.DATA5,
+            ROW_NUMBER() OVER (PARTITION BY SERIAL_NUMBER ORDER BY PASS_TIME DESC) rn
+        FROM SFISM4.R_ULT_RESULT_T t
+        WHERE GROUP_NAME LIKE '%_OFF%' 
+          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+    )
+    WHERE rn = 1
+) RE_TEST
+  ON RE_TEST.SERIAL_NUMBER = r107.SERIAL_NUMBER
+INNER JOIN sfis1.C_ERROR_CODE_T error_desc
+  ON r109_latest.TEST_CODE = error_desc.ERROR_CODE
+LEFT JOIN SFISM4.Z_KANBAN_TRACKING_T z
+  ON z.SERIAL_NUMBER = r107.SERIAL_NUMBER 
+WHERE 
+    z.SERIAL_NUMBER IS NULL
+    AND r107.MODEL_NAME NOT LIKE '900%'
+    AND r107.MODEL_NAME NOT LIKE '930%'
+    AND r107.MODEL_NAME NOT LIKE '692%'
+    AND r107.WIP_GROUP NOT LIKE '%BR2C%'
+    AND (
+        r107.ERROR_FLAG IN ('7','8')
+        OR (r107.ERROR_FLAG = '1' AND r109_latest.TEST_TIME <= SYSDATE - (8/24))
+        OR r107.WORK_FLAG IN ('2','5')
+        OR (r107.WIP_GROUP LIKE '%B28M' OR r107.WIP_GROUP LIKE '%B30M')
+    )
+    AND (
+        r107.MO_NUMBER LIKE '5%'
+        OR (
+            r107.MO_NUMBER LIKE '3%'
+            AND EXISTS (
+                SELECT 1 
+                FROM sfism4.r117 r117
+                WHERE r117.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                  AND r117.MO_NUMBER LIKE '5%'
+            )
+        )
+    )";
+
+            using var command = new OracleCommand(query, connection);
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                result.Add(new BonepileNPISerialBefore
+                {
+                    SerialNumber = reader["SERIAL_NUMBER"].ToString(),
+                    ModelName = reader["MODEL_NAME"].ToString(),
+                    ProductLine = reader["PRODUCT_LINE"].ToString(),
+                    MoNumber = reader["MO_NUMBER"].ToString(),
+                    ErrorFlag = reader["ERROR_FLAG"] != DBNull.Value ? reader["ERROR_FLAG"].ToString() : null,
+                    WorkFlag = reader["WORK_FLAG"] != DBNull.Value ? reader["WORK_FLAG"].ToString() : null,
+                    WipGroup = reader["WIP_GROUP"] != DBNull.Value ? reader["WIP_GROUP"].ToString() : null,
+                    TestGroup = reader["TEST_GROUP"] != DBNull.Value ? reader["TEST_GROUP"].ToString() : null,
+                    TestTime = reader["TEST_TIME"] != DBNull.Value ? Convert.ToDateTime(reader["TEST_TIME"]) : (DateTime?)null,
+                    TestCode = reader["TEST_CODE"]?.ToString(),
+                    ErrorItemCode = reader["ERROR_ITEM_CODE"]?.ToString(),
+                    ErrorDesc = reader["ERROR_DESC"]?.ToString(),
+                    Data11 = reader["DATA11"] != DBNull.Value ? reader["DATA11"].ToString() : null,
+                    Repair = reader["DATA19_COMBINED"] != DBNull.Value ? reader["DATA19_COMBINED"].ToString() : null,
+                    StationTest = reader["STATION_TEST"] != DBNull.Value ? reader["STATION_TEST"].ToString() : null,
+                    Data2 = reader["DATA2"] != DBNull.Value ? reader["DATA2"].ToString() : null,
+                    Data5 = reader["DATA5"] != DBNull.Value ? reader["DATA5"].ToString() : null,
+                    PassTime = reader["PASS_TIME"] != DBNull.Value ? Convert.ToDateTime(reader["PASS_TIME"]) : (DateTime?)null,
+                    CheckinDate = reader["CHECKIN_DATE"] != DBNull.Value ? Convert.ToDateTime(reader["CHECKIN_DATE"]) : (DateTime?)null,
+                    AgingDay = reader["AGING_DAY"] != DBNull.Value ? reader["AGING_DAY"].ToString() : null
+                });
+            }
+
+            return result;
+        }
+
+        private async Task<List<BonepileNPISerialAfter>> ExecuteBonepileNpiAfterQuery()
+        {
+            var result = new List<BonepileNPISerialAfter>();
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            await connection.OpenAsync();
+
+            const string query = @"
+SELECT /*+ LEADING(A) USE_NL(A B R107 KP R109X R109_OLD) */
+      A.SERIAL_NUMBER,
+      KP.PARENT_SN AS FG,
+      R107.MO_NUMBER,
+      A.MODEL_NAME,
+      B.PRODUCT_LINE,
+      A.WIP_GROUP AS WIP_GROUP_KANBAN,
+      R107.WIP_GROUP,
+      R107.ERROR_FLAG,
+      R107.WORK_FLAG,
+      rep_detail.DATA19_COMBINED,
+      R109X.TEST_GROUP,
+      R109X.TEST_TIME,
+      R109X.TEST_CODE,
+      R109X.ERROR_ITEM_CODE,
+      E.ERROR_DESC,
+
+      TRUNC(SYSDATE) - TRUNC(R109X.TEST_TIME) AS AGING,
+      TRUNC(SYSDATE) - TRUNC(R109_OLD.TEST_TIME) AS AGING_OLDEST
+
+FROM SFISM4.Z_KANBAN_TRACKING_T A
+JOIN SFIS1.C_MODEL_DESC_T B 
+    ON A.MODEL_NAME = B.MODEL_NAME
+JOIN SFISM4.R107 R107 
+    ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
+
+LEFT JOIN (
+  SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+  FROM (
+    SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+           ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+    FROM SFISM4.P_WIP_KEYPARTS_T kp
+    WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+      AND LENGTH(kp.SERIAL_NUMBER) IN (11,12,18,20,21,23)
+      AND LENGTH(kp.KEY_PART_SN)   IN (13,14)
+  ) WHERE rn = 1
+) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+
+LEFT JOIN (
+  SELECT *
+  FROM (
+    SELECT
+      base.SN,
+      r.TEST_GROUP,
+      r.TEST_TIME,
+      r.TEST_CODE,
+      r.ERROR_ITEM_CODE,
+      ROW_NUMBER() OVER (
+        PARTITION BY base.SN
+        ORDER BY r.TEST_TIME DESC, r.TEST_CODE DESC
+      ) AS rn
+    FROM (
+      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+      FROM SFISM4.Z_KANBAN_TRACKING_T A
+      UNION ALL
+      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+      FROM SFISM4.Z_KANBAN_TRACKING_T A
+      JOIN (
+        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+        FROM (
+          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+          FROM SFISM4.P_WIP_KEYPARTS_T kp
+          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+        ) WHERE rn = 1
+      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+    ) base
+    JOIN SFISM4.R109 r ON r.SERIAL_NUMBER = base.CAND_SN
+    WHERE r.TEST_TIME IS NOT NULL
+  )
+  WHERE rn = 1
+) R109X ON R109X.SN = A.SERIAL_NUMBER
+
+LEFT JOIN (
+    SELECT SERIAL_NUMBER,
+           LISTAGG(TRIM(DATA19), ' | ') 
+             WITHIN GROUP (ORDER BY MIN_DATE) AS DATA19_COMBINED
+    FROM (
+        SELECT DISTINCT SERIAL_NUMBER, TRIM(DATA19) AS DATA19,
+                        MIN(DATE3) AS MIN_DATE
+        FROM sfism4.R_REPAIR_TASK_DETAIL_T
+        WHERE UPPER(DATA17) IN ('CONFIRM', 'SAVE')
+          AND DATA19 IS NOT NULL
+          AND DATA19 != 'CONFIRM_PUT_B36R'
+          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+        GROUP BY SERIAL_NUMBER, TRIM(DATA19)
+    )
+    GROUP BY SERIAL_NUMBER
+) rep_detail
+ON rep_detail.SERIAL_NUMBER = A.SERIAL_NUMBER
+
+LEFT JOIN (
+  SELECT *
+  FROM (
+    SELECT
+      base.SN,
+      r.TEST_TIME,
+      ROW_NUMBER() OVER (
+        PARTITION BY base.SN
+        ORDER BY r.TEST_TIME ASC
+      ) AS rn
+    FROM (
+      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+      FROM SFISM4.Z_KANBAN_TRACKING_T A
+      UNION ALL
+      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+      FROM SFISM4.Z_KANBAN_TRACKING_T A
+      JOIN (
+        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+        FROM (
+          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+          FROM SFISM4.P_WIP_KEYPARTS_T kp
+          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+        ) WHERE rn = 1
+      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+    ) base
+    JOIN SFISM4.R109 r ON r.SERIAL_NUMBER = base.CAND_SN
+    WHERE r.TEST_TIME IS NOT NULL
+  )
+  WHERE rn = 1
+) R109_OLD ON R109_OLD.SN = A.SERIAL_NUMBER
+
+LEFT JOIN SFIS1.C_ERROR_CODE_T E 
+    ON E.ERROR_CODE = R109X.TEST_CODE
+
+WHERE
+    A.WIP_GROUP LIKE '%B36R%'
+    AND B.MODEL_SERIAL = 'ADAPTER'
+    AND R107.WIP_GROUP NOT LIKE '%BR2C%'
+    AND EXISTS (
+        SELECT 1
+        FROM sfism4.r117 r117
+        WHERE r117.SERIAL_NUMBER = A.SERIAL_NUMBER
+          AND r117.MO_NUMBER LIKE '5%'
+    )";
+
+            using var command = new OracleCommand(query, connection);
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                result.Add(new BonepileNPISerialAfter
+                {
+                    SerialNumber = reader["SERIAL_NUMBER"].ToString(),
+                    Fg = reader["FG"] != DBNull.Value ? reader["FG"].ToString() : null,
+                    MoNumber = reader["MO_NUMBER"].ToString(),
+                    ModelName = reader["MODEL_NAME"].ToString(),
+                    ProductLine = reader["PRODUCT_LINE"].ToString(),
+                    WipGroupKanban = reader["WIP_GROUP_KANBAN"] != DBNull.Value ? reader["WIP_GROUP_KANBAN"].ToString() : null,
+                    WipGroup = reader["WIP_GROUP"] != DBNull.Value ? reader["WIP_GROUP"].ToString() : null,
+                    ErrorFlag = reader["ERROR_FLAG"] != DBNull.Value ? reader["ERROR_FLAG"].ToString() : null,
+                    WorkFlag = reader["WORK_FLAG"] != DBNull.Value ? reader["WORK_FLAG"].ToString() : null,
+                    Repair = reader["DATA19_COMBINED"] != DBNull.Value ? reader["DATA19_COMBINED"].ToString() : null,
+                    TestGroup = reader["TEST_GROUP"] != DBNull.Value ? reader["TEST_GROUP"].ToString() : null,
+                    TestTime = reader["TEST_TIME"] != DBNull.Value ? Convert.ToDateTime(reader["TEST_TIME"]) : (DateTime?)null,
+                    TestCode = reader["TEST_CODE"] != DBNull.Value ? reader["TEST_CODE"].ToString() : null,
+                    ErrorItemCode = reader["ERROR_ITEM_CODE"] != DBNull.Value ? reader["ERROR_ITEM_CODE"].ToString() : null,
+                    ErrorDesc = reader["ERROR_DESC"] != DBNull.Value ? reader["ERROR_DESC"].ToString() : null,
+                    Aging = reader["AGING"] != DBNull.Value ? Convert.ToDouble(reader["AGING"]) : (double?)null,
+                    AgingOldest = reader["AGING_OLDEST"] != DBNull.Value ? Convert.ToDouble(reader["AGING_OLDEST"]) : (double?)null
+                });
             }
 
             return result;

@@ -1,4 +1,4 @@
-﻿let searchResultsSN = []; // Lưu kết quả tìm thấy
+let searchResultsSN = []; // Lưu kết quả tìm thấy
 let selectedSerialNumbers = [];
 
 async function searchSerialNumbers() {
@@ -13,7 +13,7 @@ async function searchSerialNumbers() {
     }
 
     try {
-        const response = await fetch('http://10.220.130.119:9090/api/Search/SearchProductsBySN', {
+        const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/SearchProductsBySN', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(serialNumbers)
@@ -95,7 +95,7 @@ function renderTable(results, targetElementId) {
 document.getElementById("submit-sn-btn").addEventListener("click", searchSerialNumbers);
 
 // Advanced Search
-const baseUrl = "http://10.220.130.119:9090/api/Search/AdvancedSearch";
+const baseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/AdvancedSearch";
 let currentPage = 1;
 let totalPages = 1;
 let searchResults = [];
@@ -286,69 +286,6 @@ function setupBorrowFeature() {
         }
     });
 
-    //borrowBtn.addEventListener("click", () => {
-    //    if (selectedSerialNumbers.length === 0) {
-    //        showError("Vui lòng chọn ít nhất một Serial Number!");
-    //        return;
-    //    }
-
-    //    Swal.fire({
-    //        title: "Xác nhận cho mượn",
-    //        input: "text",
-    //        inputLabel: "Chú ý: Nhập tên người mượn hoặc mã thẻ. Không được nhập 1 ký tự!",
-    //        inputPlaceholder: "",
-    //        showCancelButton: true,
-    //        confirmButtonText: "Xác Nhận",
-    //        cancelButtonText: "Hủy",
-    //        showLoaderOnConfirm: true,
-    //        preConfirm: async (borrower) => {
-    //            if (!borrower || borrower.trim() === "") {
-    //                Swal.showValidationMessage("Vui lòng nhập tên người mượn!");
-    //                return false;
-    //            }
-    //            if (!borrower || borrower.trim().length < 8) {
-    //                Swal.showValidationMessage("❌ Người mượn phải có ÍT NHẤT 8 ký tự!");
-    //                return false;
-    //            }
-    //            try {
-    //                showSpinner();
-    //                const borrowResponse = await fetch("http://10.220.130.119:9090/api/Borrow/Borrow", {
-    //                    method: "POST",
-    //                    headers: { "Content-Type": "application/json" },
-    //                    body: JSON.stringify({ Borrower: borrower.trim(), serialNumbers: selectedSerialNumbers }),
-    //                });
-
-    //                if (!borrowResponse.ok) throw new Error("Lỗi khi gửi yêu cầu mượn");
-
-    //                const handOverResponse = await fetch("http://10.220.130.119:9090/api/RepairStatus/hand-over-status", {
-    //                    method: "POST",
-    //                    headers: { "Content-Type": "application/json" },
-    //                    body: JSON.stringify({
-    //                        serialNumbers: selectedSerialNumbers.join(","),
-    //                        handOverStatus: "WAITING_HAND_OVER",
-    //                        tag: "Giao(Cho mượn từ Kho)"
-    //                    }),
-    //                });
-
-    //                const result = await handOverResponse.json();
-    //                if (result.message.replace(/"/g, '') !== "OK") throw new Error("Lỗi cập nhật trạng thái bàn giao");
-
-    //                return { success: true };
-    //            } catch (error) {
-    //                Swal.showValidationMessage(`Lỗi: ${error.message}`);
-    //                return false;
-    //            } finally {
-    //                hideSpinner();
-    //            }
-    //        },
-    //        allowOutsideClick: () => !Swal.isLoading()
-    //    }).then((result) => {
-    //        if (result.isConfirmed && result.value.success) {
-    //            showSuccess("Cho mượn thành công!");
-    //            location.reload(); // Tải lại trang nếu cần
-    //        }
-    //    });
-    //});
     borrowBtn.addEventListener("click", () => {
         if (selectedSerialNumbers.length === 0) {
             showError("Vui lòng chọn ít nhất một Serial Number!");
@@ -431,7 +368,7 @@ function setupBorrowFeature() {
 
                 try {
                     showSpinner();
-                    const borrowResponse = await fetch("http://10.220.130.119:9090/api/Borrow/Borrow", {
+                    const borrowResponse = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Borrow/Borrow", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ Borrower: trimmed, serialNumbers: selectedSerialNumbers }),
@@ -439,7 +376,7 @@ function setupBorrowFeature() {
 
                     if (!borrowResponse.ok) throw new Error("Lỗi khi gửi yêu cầu mượn");
 
-                    const handOverResponse = await fetch("http://10.220.130.119:9090/api/RepairStatus/hand-over-status", {
+                    const handOverResponse = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/hand-over-status", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -511,7 +448,7 @@ function setupNoteFeature() {
 
                 try {
                     showSpinner();
-                    const response = await fetch("http://10.220.130.119:9090/api/Product/UpdateProduct", {
+                    const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product/UpdateProduct", {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ serialNumbers: selectedSerialNumbers, note: note.trim() }),
@@ -581,7 +518,7 @@ function setupActionFeature() {
 
                 try {
                     showSpinner();
-                    const response = await fetch("http://10.220.130.119:9090/api/Product/UpdateAction", {
+                    const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product/UpdateAction", {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ serialNumbers: selectedSerialNumbers, action: action.trim() }),
@@ -678,7 +615,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Gọi API
-    fetch('http://10.220.130.119:9090/api/Search/GetWipGroups')
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/GetWipGroups')
         .then(response => {
             if (!response.ok) throw new Error('API lỗi');
             return response.json();
@@ -693,7 +630,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => console.error("Lỗi API:", error));
 
-    fetch('http://10.220.130.119:9090/api/Search/ModelName')
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/ModelName')
         .then(response => {
             if (!response.ok) throw new Error('API lỗi');
             return response.json();
@@ -721,16 +658,6 @@ function hideSpinner() {
         console.log("Spinner hidden");
     }
 
-    // Không đóng modal thủ công trong hideSpinner, để modal tự xử lý
-    // Chỉ xóa backdrop nếu không có modal nào hiển thị
-    const hasVisibleModal = document.querySelector('.modal.show');
-    if (!hasVisibleModal) {
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-            console.log("Backdrop removed (no visible modal)");
-        }
-    } else {
-        console.log("Modal still visible, skipping backdrop removal");
-    }
+    clearOrphanModalArtifacts();
+    syncModalStacking();
 }

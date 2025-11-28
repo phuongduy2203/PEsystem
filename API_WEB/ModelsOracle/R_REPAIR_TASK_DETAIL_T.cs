@@ -13,6 +13,7 @@ namespace API_WEB.ModelsOracle
         public string DATA11 { set; get; } = string.Empty;
         public string DATA12 { set; get; } = string.Empty;
         public DateTime DATE3 { set; get; }
+        public DateTime? TEST_TIME { set; get; }
         public string? TESTER { set; get; } = string.Empty;
         public string? DATA13 { set; get; } = string.Empty;
         public string? DATA17 { set; get; } = string.Empty;

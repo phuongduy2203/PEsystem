@@ -44,6 +44,10 @@ namespace API_WEB.ModelsDB
         public virtual DbSet<BonepileAfterProductLineAgingHistory> BonepileAfterProductLineAgingHistories { get; set; } = null!;
         public DbSet<BlacklistedToken> BlacklistedTokens { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public virtual DbSet<Cookbook> Cookbooks { get; set; } = null!;
+        public virtual DbSet<CookbookStep> CookbookSteps { get; set; } = null!;
+        public virtual DbSet<FaultRecord> FaultRecords { get; set; } = null!;
+        public virtual DbSet<RepairStepStatus> RepairStepStatuses { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Export>(entity =>
@@ -106,6 +110,37 @@ namespace API_WEB.ModelsDB
 
             modelBuilder.Entity<SumMaterial>()
                 .ToTable("SumMaterial");
+
+            modelBuilder.Entity<Cookbook>(entity =>
+            {
+                entity.HasKey(e => e.CookbookId);
+                entity.Property(e => e.CookbookId).ValueGeneratedOnAdd();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            });
+
+            modelBuilder.Entity<CookbookStep>(entity =>
+            {
+                entity.HasKey(e => e.StepId);
+                entity.Property(e => e.StepId).ValueGeneratedOnAdd();
+                entity.HasOne(e => e.Cookbook)
+                      .WithMany(c => c.Steps)
+                      .HasForeignKey(e => e.CookbookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<FaultRecord>(entity =>
+            {
+                entity.HasKey(e => e.FaultId);
+                entity.Property(e => e.FaultId).ValueGeneratedOnAdd();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            });
+
+            modelBuilder.Entity<RepairStepStatus>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            });
 
             OnModelCreatingPartial(modelBuilder);
 

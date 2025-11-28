@@ -9,7 +9,7 @@ using System.Drawing.Imaging;
 
 namespace PESystem.Areas.DataCloud.Controllers
 {
-    [Route("api/data")]
+    [Route("data")]
     [ApiController]
     public class DataController : ControllerBase
     {

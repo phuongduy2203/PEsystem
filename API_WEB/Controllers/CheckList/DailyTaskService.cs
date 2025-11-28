@@ -38,7 +38,7 @@ public class DailyTaskService : BackgroundService
                 try
                 {
                     var client = new HttpClient();
-                    await client.PostAsync("http://10.220.130.119:9090/api/CheckList/send-daily-alerts", null);
+                    await client.PostAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/CheckList/send-daily-alerts", null);
                 }
                 catch (Exception ex)
                 {

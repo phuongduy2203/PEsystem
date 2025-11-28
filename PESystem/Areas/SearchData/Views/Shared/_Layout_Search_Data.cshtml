@@ -8,42 +8,24 @@
     <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
     <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
     <link href="~/assets/areas/bonepile/css/bonepile.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
 
 </head>
 
 <body>
-
     <script>
         (function () {
-            const isSidebarFixed = localStorage.getItem('isSidebarFixed') == 'true';
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
             if (isSidebarFixed) {
                 document.documentElement.classList.add('sidebar-expanded');
-                document.write(`
-                                                        <style>
-                                                            #sidebar {width:260px;}
-                                                            #sidebar .nav-link span, #sidebar .dashboard-container span{opacity:1;}
-                                                            #mainContent { margin-left: 260px; }
-                                                            .header { left: 260px; width: calc(100% - 260px); }
-                                                        </style>
-                                                            `);
             } else {
                 document.documentElement.classList.remove('sidebar-expanded');
-                document.write(`
-                                                            <style>
-                                                                #sidebar { width: 70px; }
-                                                                #sidebar .nav-link span, #sidebar .dashboard-container span { opacity: 0; }
-                                                                #mainContent { margin-left: 70px; }
-                                                                .header { left: 70px; width: calc(100% - 70px); }
-                                                            </style>
-                                                        `);
             }
         })();
     </script>
-
-    <header class="header d-flex justify-content-between align-items-center" id="header">
-    </header>
 
     <!-- Sidebar dọc -->
     <div id="sidebar" class="sidebar">
@@ -55,7 +37,12 @@
             <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">
                 SEARCH DATA
             </span>
-            <span><input type="checkbox" id="toggleSidebarFixed" title="" /></span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
         </div>
         <nav class="nav flex-column">
             <!-- Menu Items -->
@@ -64,13 +51,46 @@
         </nav>
     </div>
 
-    <main id="mainContent">
-        <!--HTML CỦA SPINER-->
-        <div id="spinner-overlay">
-            <span class="loader"></span>
+    <ul class="d-flex align-items-center list-unstyled m-0 user-panel">
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="sidebar-avatar" id="avatarBtn">
+                <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+                <span class="sidebar-avatar-name">
+                    @User.FindFirst("FullName")?.Value
+                </span>
+            </div>
+        }
+
+    </ul>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="user-info-card" id="userInfoCard">
+            <div class="user-info-header">
+                <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+                <div class="user-info-text">
+                    <p class="user-name mb-0">@User.FindFirst("FullName")?.Value</p>
+                    <p class="user-email mb-0">@User.FindFirst("Email")?.Value</p>
+                </div>
+            </div>
+            <div class="user-info-actions">
+                <a class="menu-item" asp-action="ChangePassword" asp-controller="Auth">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </a>
+                <form asp-action="Logout" asp-controller="Auth" method="post" class="text-center">
+                    <button type="submit" class="btn btn-ne w-100">Đăng xuất</button>
+                </form>
+            </div>
         </div>
-        @RenderBody()
-    </main>
+    }
+
+
+    <!--HTML CỦA SPINER-->
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+    @RenderBody()
     <script src="~/lib/jquery-3.7.0.min.js"></script> <!-- jQuery -->
     <script src="~/lib/datatable/jquery.datatables.min.js"></script> <!-- DataTables core -->
     <script src="~/lib/datatables.bootstrap5.min.js"></script> <!-- Bootstrap5 integration -->

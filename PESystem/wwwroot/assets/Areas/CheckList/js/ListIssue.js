@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Gọi API lấy danh sách PROJECT_LINE
     function fetchProjectSuggestions() {
-        fetch("http://10.220.130.119:9090/api/CheckList/get-product-lines")
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-product-lines")
             .then(response => response.json())
             .then(data => {
                 // Xóa dữ liệu cũ trước khi thêm mới
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let projectValue = projectInput.value.trim();
         if (!projectValue) return; // Nếu Project trống, không gọi API
 
-        fetch("http://10.220.130.119:9090/api/CheckList/get-model-names", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-model-names", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("Picture", fileInput.files[0]);
         }
 
-        fetch("http://10.220.130.119:9090/api/CheckList/create-new-issue", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/create-new-issue", {
             method: "POST",
             body: formData
         })
@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /** 🔹 Lấy dữ liệu từ API */
     function fetchChecklistData() {
-        fetch("http://10.220.130.119:9090/api/CheckList/get-checklist", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-checklist", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -280,12 +280,12 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         // Gọi API kiểm tra department của user
-        fetch(`http://10.220.130.119:9090/api/CheckList/check-department/${currentUsername}`)
+        fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/check-department/${currentUsername}`)
             .then(response => response.json())
             .then(data => {
                 if (data.department === publisher) {
                     // Nếu khớp, tiếp tục xóa
-                    fetch(`http://10.220.130.119:9090/api/CheckList/delete-issue/${issueId}`, {
+                    fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/delete-issue/${issueId}`, {
                         method: "DELETE"
                     })
                         .then(response => response.json())
@@ -353,7 +353,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /** 🔹 Gọi API lấy chi tiết issue */
     function fetchIssueDetails(issueId) {
-        fetch("http://10.220.130.119:9090/api/CheckList/get-checklist", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-checklist", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -375,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <p><strong>FA:</strong><span data-editable="FA">${issue.fa}</span></p>
                     <p><strong>Action:</strong><span data-editable="Action">${issue.action}</span></p>
                     <p><strong>Picture:</strong></p>
-                    ${issue.linkPicture ? `<img src="http://10.220.130.119:9090/ChecklistPicture/${issue.id}.png" alt="Issue Image" style="max-width:100%">` : ""}
+                    ${issue.linkPicture ? `<img src="https://pe-vnmbd-nvidia-cns.myfiinet.com/api/ChecklistPicture/${issue.id}.png" alt="Issue Image" style="max-width:100%">` : ""}
 
                 `;
                 issueDetailsModal.show();
@@ -395,7 +395,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Gọi API để lấy chi tiết issue trước
-        fetch("http://10.220.130.119:9090/api/CheckList/get-checklist", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-checklist", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -415,7 +415,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /** 🔹 Kiểm tra quyền chỉnh sửa */
     function checkEditPermission(issue, currentUsername) {
-        fetch(`http://10.220.130.119:9090/api/CheckList/check-department/${currentUsername}`)
+        fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/check-department/${currentUsername}`)
             .then(response => response.json())
             .then(data => {
                 const userDepartment = data.department;
@@ -512,7 +512,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         // Gửi dữ liệu đến API
-        fetch("http://10.220.130.119:9090/api/CheckList/update-issue", {
+        fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/update-issue", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

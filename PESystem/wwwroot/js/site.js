@@ -1,176 +1,202 @@
-﻿(function () {
-    document.addEventListener('DOMContentLoaded', () => {
-        setupSidebar();
-    });
+document.addEventListener("DOMContentLoaded", () => {
+    setupSidebar();
+    setupUserInfo();
+    setupModalGuards();
+});
 
-    function setupSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-       const header = document.querySelector('.header');
-        const toggleCheckbox = document.getElementById('toggleSidebarFixed');
-        const sidebarToggleBtn = document.getElementById('sidebarToggle');
 
-        if (!sidebar || !mainContent || !header || !toggleCheckbox) {
-            console.error('Không tìm thấy một trong các phần tử: sidebar, mainContent, header, toggleCheckbox');
-            return;
-        }
-        const isMobile = () => window.innerWidth < 768;
+/* ======================== SIDEBAR ======================== */
+function setupSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const dashboardStage = document.querySelector('.dashboard-stage');
+    const toggleCheckbox = document.getElementById('toggleSidebarFixed');
+    const toggleIcon = document.querySelector('.fixed-checkbox i');
+    const sidebarToggleBtn = document.getElementById('sidebarToggle');
+    const rootElement = document.documentElement;
 
-        if (sidebarToggleBtn) {
-            sidebarToggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('mobile-show');
-            });
-        }
-
-        // Khởi tạo trạng thái từ localStorage
-        const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
-        toggleCheckbox.checked = isSidebarFixed;
-        setSidebarState(isSidebarFixed);
-
-        // Checkbox thay đổi
-        toggleCheckbox.addEventListener('change', (event) => {
-            const isChecked = event.target.checked;
-            localStorage.setItem('isSidebarFixed', isChecked);
-            setSidebarState(isChecked);
-        });
-
-        // Hover effect khi không cố định
-        sidebar.addEventListener('mouseenter', () => {
-            if (!toggleCheckbox.checked && !isMobile()) {
-                sidebar.classList.add('sidebar-hover'); // Chỉ mở rộng sidebar
-                document.querySelectorAll('#sidebar .nav-link span, #sidebar .dashboard-container span').forEach(span => {
-                    span.style.opacity = '1';
-                });
-            }
-        });
-
-        sidebar.addEventListener('mouseleave', () => {
-            if (!toggleCheckbox.checked && !isMobile()) {
-                sidebar.classList.remove('sidebar-hover');
-                document.querySelectorAll('#sidebar .nav-link span, #sidebar .dashboard-container span').forEach(span => {
-                    span.style.opacity = '0';
-                });
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            setSidebarState(toggleCheckbox.checked);
-        });
-
-        function setSidebarState(isFixed) {
-            if (isMobile()) {
-                sidebar.classList.remove('open', 'sidebar-hover');
-                document.documentElement.classList.remove('sidebar-expanded');
-                sidebar.style.width = '';
-                mainContent.style.marginLeft = '0';
-                header.style.left = '0';
-                header.style.width = '100%';
-                return;
-            }
-            sidebar.classList.remove('mobile-show');
-            if (isFixed) {
-                sidebar.classList.remove('sidebar-hover'); // Xóa trạng thái hover nếu có
-                sidebar.classList.add('open');
-                document.documentElement.classList.add('sidebar-expanded');
-                sidebar.style.width = '260px';
-                mainContent.style.marginLeft = '260px';
-                header.style.left = '260px';
-                header.style.width = 'calc(100% - 260px)';
-                document.querySelectorAll('#sidebar .nav-link span, #sidebar .dashboard-container span').forEach(span => {
-                    span.style.opacity = '1';
-                });
-            } else {
-                sidebar.classList.remove('open');
-                document.documentElement.classList.remove('sidebar-expanded');
-                sidebar.style.width = '70px';
-                mainContent.style.marginLeft = '70px';
-                header.style.left = '70px';
-                header.style.width = 'calc(100% - 70px)';
-                document.querySelectorAll('#sidebar .nav-link span, #sidebar .dashboard-container span').forEach(span => {
-                    span.style.opacity = '0';
-                });
-            }
-            // Đảm bảo transition hoạt động sau khi thay đổi trạng thái
-            sidebar.style.transition = 'width 0.25s ease';
-            mainContent.style.transition = 'margin-left 0.25s ease';
-            header.style.transition = 'left 0.25s ease, width 0.25s ease';
-            document.querySelectorAll('#sidebar .nav-link span, #sidebar .dashboard-container span').forEach(span => {
-                span.style.transition = 'opacity 0.25s ease';
-            });
-        }
+    if (!sidebar || !dashboardStage || !toggleCheckbox) {
+        console.error('Missing sidebar/dom elements');
+        return;
     }
 
-    // Hàm toggle search (giữ nguyên)
-    window.toggleSearch = function () {
-        const searchContainer = document.getElementById('searchContainer');
-        searchContainer.classList.toggle('expanded');
-    };
-})();
+    const isMobile = () => window.innerWidth < 768;
 
-// Sử dụng SweetAlert2 cho thông báo
+    /* Mobile toggle */
+    sidebarToggleBtn?.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-show');
+    });
+
+    /* Update icon */
+    const updateToggleIcon = (isFixed) => {
+        toggleIcon?.classList.toggle('ri-record-circle-line', isFixed);
+        toggleIcon?.classList.toggle('ri-checkbox-blank-circle-line', !isFixed);
+    };
+
+    /* Load state */
+    const isFixed = localStorage.getItem('isSidebarFixed') === 'true';
+    toggleCheckbox.checked = isFixed;
+    setSidebarState(isFixed);
+    updateToggleIcon(isFixed);
+
+    /* Checkbox change */
+    toggleCheckbox.addEventListener('change', (e) => {
+        const val = e.target.checked;
+        localStorage.setItem('isSidebarFixed', val);
+        setSidebarState(val);
+        updateToggleIcon(val);
+    });
+
+    /* Hover expand */
+    sidebar.addEventListener('mouseenter', () => {
+        if (!toggleCheckbox.checked && !isMobile()) {
+            sidebar.classList.add('sidebar-hover');
+        }
+    });
+
+    sidebar.addEventListener('mouseleave', () => {
+        if (!toggleCheckbox.checked && !isMobile()) {
+            sidebar.classList.remove('sidebar-hover');
+        }
+    });
+
+    /* Resize */
+    window.addEventListener('resize', () => {
+        setSidebarState(toggleCheckbox.checked);
+    });
+
+    /* Core logic */
+    function setSidebarState(isFixed) {
+        if (isMobile()) {
+            sidebar.classList.remove('open', 'sidebar-hover');
+            rootElement.classList.remove('sidebar-expanded');
+            dashboardStage.style.marginLeft = "0";
+            return;
+        }
+
+        sidebar.classList.remove('mobile-show');
+
+        if (isFixed) {
+            sidebar.classList.add('open');
+            rootElement.classList.add('sidebar-expanded');
+            dashboardStage.style.marginLeft = "250px";
+        } else {
+            sidebar.classList.remove('open');
+            rootElement.classList.remove('sidebar-expanded');
+            dashboardStage.style.marginLeft = "80px";
+        }
+    }
+}
+
+
+/* ======================== USER INFO DROPDOWN ======================== */
+function setupUserInfo() {
+    const avatarBtn = document.getElementById("avatarBtn");
+    const userInfoCard = document.getElementById("userInfoCard");
+
+    if (!avatarBtn || !userInfoCard) return;
+
+    avatarBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        userInfoCard.classList.toggle("show");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!userInfoCard.contains(e.target) && !avatarBtn.contains(e.target)) {
+            userInfoCard.classList.remove("show");
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        userInfoCard.classList.remove("show");
+    });
+}
+
+
+/* ======================== SWEET ALERT HELPERS ======================== */
 function showError(message) {
     Swal.fire({
         icon: 'error',
         title: 'Lỗi',
-        text: message,
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#3085d6',
+        text: message
     });
 }
-
-//function showSuccess(message) {
-//    Swal.fire({
-//        icon: 'success',
-//        title: 'Thành công',
-//        text: message,
-//        confirmButtonText: 'OK',
-//        confirmButtonColor: '#3085d6',
-//    });
-//}
 
 function showSuccess(message) {
-    Swal.fire({
-        title: message,
-        icon: "success",
-        draggable: true
-    });
-}
-function showWarning(message) {
-    Swal.fire({
-        title: message,
-        icon: "warning",
-        draggable: true
-    });
-}
-function showInfo(message) {
-    Swal.fire({
-        title: message,
-        icon: "info",
-        draggable: true
-    });
+    Swal.fire({ icon: "success", title: message });
 }
 
-// Hiển thị spinner
+function showWarning(message) {
+    Swal.fire({ icon: "warning", title: message });
+}
+
+function showInfo(message) {
+    Swal.fire({ icon: "info", title: message });
+}
+
+
+/* ======================== SPINNER ======================== */
 function showSpinner() {
     document.getElementById("spinner-overlay").style.display = "flex";
 }
 
-// Ẩn spinner
 function hideSpinner() {
-    const spinner = document.getElementById('spinner-overlay');
-    if (spinner) {
-        spinner.style.display = 'none';
-        console.log("Spinner hidden");
-    }
+    const spinner = document.getElementById("spinner-overlay");
+    if (spinner) spinner.style.display = "none";
 
-    const hasVisibleModal = document.querySelector('.modal.show');
-    if (!hasVisibleModal) {
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-            console.log("Backdrop removed (no visible modal)");
-        }
-    } else {
-        console.log("Modal still visible, skipping backdrop removal");
+    clearOrphanModalArtifacts();
+}
+
+
+/* ======================== MODAL GUARDRAILS ======================== */
+function setupModalGuards() {
+    // Clean up any stale backdrops that may have persisted from previous navigations
+    clearOrphanModalArtifacts();
+    syncModalStacking();
+
+    // When any modal begins to show, make sure old artifacts are cleared first
+    document.addEventListener("show.bs.modal", () => {
+        clearOrphanModalArtifacts();
+        // Stack adjustment after Bootstrap injects the backdrop
+        setTimeout(syncModalStacking, 0);
+    });
+
+    document.addEventListener("shown.bs.modal", syncModalStacking);
+
+    // When a modal hides, clear unused backdrops and body classes
+    document.addEventListener("hidden.bs.modal", () => {
+        clearOrphanModalArtifacts();
+        syncModalStacking();
+    });
+}
+
+function clearOrphanModalArtifacts() {
+    const visibleModals = document.querySelectorAll(".modal.show");
+
+    if (visibleModals.length === 0) {
+        document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("padding-right");
+        document.body.style.removeProperty("overflow");
+    }
+}
+
+function syncModalStacking() {
+    const backdrops = Array.from(document.querySelectorAll(".modal-backdrop"));
+    const modals = Array.from(document.querySelectorAll(".modal.show"));
+    const BASE_BACKDROP_Z = 1045;
+    const BASE_MODAL_Z = 1055;
+    const STACK_STEP = 20;
+
+    backdrops.forEach((backdrop, index) => {
+        backdrop.style.zIndex = BASE_BACKDROP_Z + (index * STACK_STEP);
+    });
+
+    modals.forEach((modal, index) => {
+        modal.style.zIndex = BASE_MODAL_Z + (index * STACK_STEP);
+    });
+
+    if (modals.length > 0) {
+        document.body.classList.add("modal-open");
     }
 }

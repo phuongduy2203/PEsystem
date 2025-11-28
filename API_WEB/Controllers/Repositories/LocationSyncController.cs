@@ -9,7 +9,7 @@ using System.Text;
 
 namespace API_WEB.Controllers.Repositories
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class LocationSyncController : ControllerBase
     {
@@ -128,8 +128,6 @@ namespace API_WEB.Controllers.Repositories
             }
             return sns;
         }
-
-        // Giữ nguyên: gửi trạng thái nhận kho (đường cập nhật Oracle chuẩn của bạn)
         private async Task SendReceivingStatusAsync(IEnumerable<string> serialNumbers, string owner, string location, string tag)
         {
             if (serialNumbers == null) return;
@@ -195,7 +193,7 @@ namespace API_WEB.Controllers.Repositories
             var json = JsonConvert.SerializeObject(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var resp = await client.PostAsync("http://10.220.130.119:9090/api/RepairStatus/receiving-status", content);
+            var resp = await client.PostAsync("https://sfc-portal.cns.myfiinet.com:443/sfcSmartRepair/api/receiving_status", content);
             resp.EnsureSuccessStatusCode();
         }
     }

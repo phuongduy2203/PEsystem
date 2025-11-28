@@ -22,7 +22,7 @@ using API_WEB.Helpers.Repositories;
 
 namespace API_WEB.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
     {

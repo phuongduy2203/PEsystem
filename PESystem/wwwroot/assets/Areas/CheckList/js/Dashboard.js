@@ -1,5 +1,5 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
-    fetch("http://10.220.130.119:9090/api/CheckList/get-checklist", {
+    fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/CheckList/get-checklist", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

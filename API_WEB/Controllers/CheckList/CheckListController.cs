@@ -14,7 +14,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_WEB.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class CheckListController : ControllerBase
     {
@@ -417,7 +417,7 @@ namespace API_WEB.Controllers
                             emailBody += $"<li><b>ID:</b> {issue.ID}, <b>Project:</b> {issue.Project}, <b>Model:</b> {issue.ModelName}, <b>Station:</b> {issue.Station}, <b>Error:</b> {issue.Error}, <b>RootCause:</b> {issue.RootCause}, <b>Location:</b> {issue.Location}, <b>Status:</b> {issue.Status}</li>";
                         }
                         emailBody += "</ul>";
-                        emailBody += $"<h3>Please sign in to address http://10.220.130.119:8000/CheckList to update</h3>";
+                        emailBody += $"<h3>Please sign in to address https://pe-vnmbd-nvidia-cns.myfiinet.com/CheckList to update</h3>";
                         emailBody += $"<h5>This is auto mail, please don't reply! </h5>";
 
 

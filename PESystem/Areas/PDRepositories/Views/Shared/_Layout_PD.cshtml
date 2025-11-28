@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/css/site.min.css?v=@DateTime.Now.Ticks" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/all-fa-icon/css/all.min.css" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/assets/areas/pdstock/css/pdstock.css?v=@DateTime.Now.Ticks" />
     <script src="~/lib/gsap-particles/particles.min.js"></script>
     <script src="~/lib/gsap-particles/gsap.min.js"></script>
@@ -19,42 +20,28 @@
             const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
             if (isSidebarFixed) {
                 document.documentElement.classList.add('sidebar-expanded');
-                document.write(`
-                            <style>
-                                #sidebar { width: 260px; }
-                                #sidebar .nav-link span, #sidebar .dashboard-container span { opacity: 1; }
-                                #mainContent { margin-left: 260px; }
-                                .header { left: 260px; width: calc(100% - 260px); }
-                            </style>
-                        `);
             } else {
                 document.documentElement.classList.remove('sidebar-expanded');
-                document.write(`
-                            <style>
-                                 #sidebar { width: 70px; }
-                                #sidebar .nav-link span, #sidebar .dashboard-container span { opacity: 0; }
-                                #mainContent { margin-left: 70px; }
-                                .header { left: 70px; width: calc(100% - 70px); }
-                            </style>
-                        `);
             }
         })();
     </script>
-    <header class="header d-flex justify-content-between align-items-center" id="header">
-    </header>
-
 
     <!-- Sidebar dọc -->
     <div id="sidebar" class="sidebar">
         <!-- Logo and Dashboard with fixed checkbox -->
         <div class="dashboard-container">
             <a href="@Url.Action("Home", "Home", new { area = "" })">
-                <img src="~/assets/img/repoPD.png" style="width:48px; height:48px;" class="logo" />
+                <img src="~/assets/img/repoPD.png" style="width:36px; height:36px;" class="logo" />
             </a>
             <span class="spanTitle" style="font-size: 0.8rem; font-weight: bold;">
                 PD REPOSITORY
             </span>
-            <span><input type="checkbox" id="toggleSidebarFixed" title="" /></span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
         </div>
         <nav class="nav flex-column">
             <!-- Menu Items -->
@@ -66,8 +53,11 @@
 
         </nav>
     </div>
-
-    @RenderBody()
+    <div class="dashboard-stage">
+        <div class="dashboard-wrapper">
+            @RenderBody()
+        </div>
+    </div>
     <script src="~/js/site.min.js" asp-append-version="true"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="~/assets/areas/pdstock/js/pdrepository.js"></script>

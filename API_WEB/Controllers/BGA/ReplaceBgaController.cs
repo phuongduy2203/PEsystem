@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_WEB.Controllers.BGA
 {
-    [Route("api/bga-replace")]
+    [Route("bga-replace")]
     [ApiController]
     public class ReplaceBgaController : ControllerBase
     {

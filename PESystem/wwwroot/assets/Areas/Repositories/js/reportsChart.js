@@ -9,7 +9,7 @@
             const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 7, 30, 0);
             const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 30, 0);
 
-            const response = await fetch("http://10.220.130.119:9090/api/product/report", {
+            const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/report", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -7,7 +7,7 @@ using System.Net.Http;
 namespace API_WEB.Controllers.App
 {
 
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class RetestResultController : Controller
     {
@@ -18,7 +18,7 @@ namespace API_WEB.Controllers.App
         {
             _sqlContext = sqlContext;
             _httpClient = httpClientFactory.CreateClient();
-            _oracleApiUrl = "http://10.220.130.119:9090/api/RepairStatus/repair-status";
+            _oracleApiUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/RepairStatus/repair-status";
         }
 
         [HttpPost("submit-with-img")]

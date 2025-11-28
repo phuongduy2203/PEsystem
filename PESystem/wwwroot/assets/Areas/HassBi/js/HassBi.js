@@ -40,6 +40,14 @@ function initializeDataTable() {
             this.api().columns.adjust();
         }
     });
+    //JS để click vào row thì giữ highlight
+    $('#hassbi-table tbody').on('click', 'tr', function () {
+        // Bỏ chọn các row khác
+        $('#hassbi-table tbody tr').removeClass('selected-row');
+
+        // Gán class highlight
+        $(this).addClass('selected-row');
+    });
 
     // Đồng bộ khi cửa sổ thay đổi kích thước
     $(window).on('resize', function () {
@@ -129,7 +137,7 @@ function generateTableHtml(data) {
 async function loadAllStatuses() {
     const resultsContainer = document.getElementById("data-results");
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/HassBi/search-all-statuses", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/search-all-statuses", {
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
@@ -178,7 +186,7 @@ document.getElementById("data-results").addEventListener("click", function (even
             if (result.isConfirmed) {
                 const updatedRemark = result.value;
                 try {
-                    const response = await fetch("http://10.220.130.119:9090/api/HassBi/update-remark", {
+                    const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/update-remark", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ moNumber, type, remark: updatedRemark })
@@ -228,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const checkbox = document.getElementById("swal-nvconfirm-checkbox");
                     const newStatus = checkbox.checked ? "Approve" : "Not Approve";
                     try {
-                        const response = await fetch("http://10.220.130.119:9090/api/HassBi/update-nvconfirm", {
+                        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/update-nvconfirm", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ moNumber, type, nvConfirm: newStatus })
@@ -268,7 +276,7 @@ document.getElementById("data-results").addEventListener("click", async function
         type = type === "HASS_SAMPLING" ? "HASS" : type === "BI_SAMPLING" ? "BI" : type;
 
         try {
-            const response = await fetch("http://10.220.130.119:9090/api/HassBi/get-failed-serial-numbers", {
+            const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/get-failed-serial-numbers", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ moNumber, type, status })
@@ -342,7 +350,7 @@ document.getElementById("Update-MO-status-btn").addEventListener("click", async 
     if (!result.isConfirmed) return;
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/HassBi/update-mo-status", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/update-mo-status", {
             method: "POST"
         });
 
@@ -392,7 +400,7 @@ $(document).ready(function () {
 
         // Gọi API và nạp dữ liệu vào DataTable
         $.ajax({
-            url: 'http://10.220.130.119:9090/api/HassBi/get-skipped-mos', // URL của API
+            url: 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/HassBi/get-skipped-mos', // URL của API
             method: 'GET',
             dataType: 'json',
             success: function (data) {

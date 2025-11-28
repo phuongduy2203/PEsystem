@@ -70,7 +70,7 @@
             }
 
             try {
-                const response = await fetch('http://10.220.130.119:9090/api/RepairStatus/info-allpart', {
+                const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/info-allpart', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -150,7 +150,7 @@
             }
 
             try {
-                const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/AddMaterial', {
+                const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/AddMaterial', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -230,7 +230,7 @@
 
     // Hàm tải và hiển thị dữ liệu trong DataTable
     function loadSumMaterialsTable() {
-        fetch('http://10.220.130.119:9090/api/MaterialSystem/GetAllSumMaterials', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/GetAllSumMaterials', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -280,6 +280,15 @@
                     drawCallback: function () {
                         attachTooltipEvents();
                     }
+                });
+
+                // === CLICK ROW TO HIGHLIGHT ===
+                $('#sumMaterialsTable tbody').on('click', 'tr', function () {
+                    // Bỏ highlight cũ
+                    $('#sumMaterialsTable tbody tr').removeClass('selected-row');
+
+                    // Nếu click chính row đó → toggle chọn
+                    $(this).toggleClass('selected-row');
                 });
 
                 // Xóa danh sách hàng được chọn khi bảng được tải lại
@@ -424,7 +433,7 @@
 
                 // Gửi từng hàng được chọn đến API BorrowMaterial
                 for (const row of selectedRows) {
-                    const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/BorrowMaterial', {
+                    const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/BorrowMaterial', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -517,7 +526,7 @@
 
                 //Gui tung hang duoc chon den API
                 for (const row of selectedRows) {
-                    const response = await fetch('http://10.220.130.119:9090/api/MaterialSystem/ExportDefectiveMaterial', {
+                    const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/ExportDefectiveMaterial', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

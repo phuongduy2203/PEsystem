@@ -8,110 +8,108 @@
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="scrap-interface nvidia-section">
-    <div class="section-heading text-center text-lg-start">
-        <h1 class="display-6">Tra cứu tiến độ Scrap</h1>
-        <p>Tổng hợp các chức năng kiểm tra trạng thái, lịch sử và tồn kho scrap trong giao diện đồng bộ.</p>
-    </div>
 
-    <div class="row g-4 align-items-stretch">
-        <div class="col-lg-3">
-            <div class="nvidia-card h-100">
-                <div class="nvidia-card-header">
-                    <h2>Chức năng</h2>
-                    <span class="badge-nvidia">Tracking</span>
-                </div>
-                <div class="nvidia-card-body">
-                    <form id="search-form" class="d-flex flex-column gap-3">
-                        <label for="search-options" class="form-label">Chọn chức năng cần sử dụng</label>
-                        <select id="search-options" class="form-select">
-                            <option selected disabled>SELECT FUNCTION</option>
-                            <option value="TASK_STOCK_STATUS">Checking scrap quaterly</option>
-                            <option value="SEARCH_STATUS">Tìm kiếm</option>
-                            <option value="SEARCH_HISTORY">Tra lịch sử SN</option>
-                        </select>
-                    </form>
-                </div>
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-3">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>Move MRB Scrap status</h2>
             </div>
-        </div>
-
-        <div class="col-lg-9">
-            <div class="d-flex flex-column gap-4">
-                <form id="task-stock-status-form" method="post" class="hidden scrap-card" data-search-type="TASK_STOCK_STATUS_FORM">
-                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Checking scrap quaterly</h3>
-                    <div class="d-flex justify-content-end">
-                        <button id="task-stock-status-btn" class="btn btn-ne" type="button">Data</button>
-                    </div>
-                </form>
-
-                <form id="search-status-form" method="post" class="hidden scrap-card" data-search-type="SEARCH_STATUS">
-                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Tìm kiếm trạng thái</h3>
-                    <div class="row g-3 align-items-stretch">
-                        <div class="col-md-4">
-                            <label for="search-status-update" class="form-label">Danh sách SN/Internal Task</label>
-                            <textarea name="SN/TASK" id="search-status-update" class="form-control" rows="8" placeholder="Nhập SN/Internal Task"></textarea>
-                        </div>
-                        <div class="col-md-4 d-flex flex-column gap-3">
-                            <div>
-                                <label for="search-status-options" class="form-label">Tùy chọn tìm kiếm</label>
-                                <select id="search-status-options" class="form-select">
-                                    <option selected disabled>SELECT STATUS</option>
-                                    <option value="1">Tìm kiếm theo SN</option>
-                                    <option value="2">Tìm kiếm theo Internal Task</option>
-                                    <option value="3">Tìm kiếm theo Task NV</option>
-                                </select>
-                            </div>
-                            <div class="d-flex flex-column flex-md-row gap-2">
-                                <button id="search-status-btn" class="btn btn-ne" type="button">Search</button>
-                                <button id="load-status-btn" class="btn btn-ne" type="button">Data</button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="allpart-card p-3 h-100">
-                                <h4 class="h6 text-uppercase fw-semibold mb-3">Mã trạng thái</h4>
-                                <ul class="list-unstyled mb-0 small">
-                                    <li><strong>0</strong> - Phế, chưa gửi xin task</li>
-                                    <li><strong>1</strong> - Phế, đã gửi xin task nhưng chưa có</li>
-                                    <li><strong>2</strong> - Chờ SPE approved phế</li>
-                                    <li><strong>3</strong> - Đã approved thay BGA</li>
-                                    <li><strong>4</strong> - Chờ approved thay BGA</li>
-                                    <li><strong>5</strong> - Đã có task, chờ chuyển kho phế</li>
-                                    <li><strong>6</strong> - Đã chuyển kho phế chờ MRB xác nhận</li>
-                                    <li><strong>7</strong> - MRB đã nhận bản phế</li>
-                                    <li><strong>8</strong> - Lỗi process, không thể sửa chữa</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                <form id="search-history-form" method="post" class="hidden scrap-card" data-search-type="SEARCH_HISTORY">
-                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Tra cứu lịch sử SN</h3>
-                    <div class="row g-3 align-items-stretch">
-                        <div class="col-md-6">
-                            <label for="history-search-update" class="form-label">Danh sách SN</label>
-                            <textarea name="SN" id="history-search-update" class="form-control" rows="8" placeholder="Nhập SN cần tra lịch sử (mỗi dòng 1 SN)"></textarea>
-                        </div>
-                        <div class="col-md-6 d-flex flex-column gap-3">
-                            <p class="text-muted small">Nhập danh sách SN để xem lịch sử thay đổi từ HistoryScrapList.</p>
-                            <div class="d-flex flex-column flex-md-row gap-2 mt-auto">
-                                <button id="history-search-btn" class="btn btn-ne" type="button">Search</button>
-                                <button id="history-download-btn" class="btn btn-ne" type="button">Data</button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-options" class="form-select">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="TASK_STOCK_STATUS">Checking scrap quaterly</option>
+                        <option value="SEARCH_STATUS">Search</option>
+                        <option value="SEARCH_HISTORY">Search history</option>
+                    </select>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="mt-5 d-flex flex-column gap-4">
-        <div id="task-stock-status-result" class="hidden scrap-card"></div>
-        <div id="search-status-result" class="hidden scrap-card"></div>
-        <div id="history-search-result" class="hidden scrap-card"></div>
+    <div class="col-lg-9">
+        <div class="d-flex flex-column gap-4">
+            <form id="task-stock-status-form" method="post" class="hidden scrap-card" data-search-type="TASK_STOCK_STATUS_FORM">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Checking scrap quaterly</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="task-stock-status-btn" class="btn btn-ne" type="button">Data</button>
+                </div>
+            </form>
+
+            <form id="search-status-form" method="post" class="hidden scrap-card" data-search-type="SEARCH_STATUS">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Search status</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-4">
+                        <label for="search-status-update" class="form-label">List SN/ Task</label>
+                        <textarea name="SN/TASK" id="search-status-update" class="form-control" rows="8" placeholder="Input SN/Internal Task"></textarea>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <div>
+                            <label for="search-status-options" class="form-label">Search option</label>
+                            <select id="search-status-options" class="form-select">
+                                <option selected disabled>SELECT STATUS</option>
+                                <option value="1">Search by SN</option>
+                                <option value="2">Search by Internal Task</option>
+                                <option value="3">Search by Task NV</option>
+                            </select>
+                        </div>
+                        <div class="d-flex flex-column flex-md-row gap-2">
+                            <button id="search-status-btn" class="btn btn-ne" type="button">Search</button>
+                            <button id="load-status-btn" class="btn btn-ne" type="button">Data</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="allpart-card p-3 h-100">
+                            <h4 class="h6 text-uppercase fw-semibold mb-3">Status code</h4>
+                            <ul class="list-unstyled mb-0 small">
+                                <li><strong>0</strong> - Scrap, waiting approve task</li>
+                                <li><strong>2</strong> - Waitting SPE approve scrap</li>
+                                <li><strong>3</strong> - Approved replace BGA</li>
+                                <li><strong>4</strong> - Waitting SPE approve replace BGA</li>
+                                <li><strong>5</strong> - Had TaskNumber, Waiting move MRB</li>
+                                <li><strong>6</strong> - Moved MRB, Waiting MRB check</li>
+                                <li><strong>7</strong> - Moved MRB Done</li>
+                                <li><strong>8</strong> - Process defect, can't repair</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <form id="search-history-form" method="post" class="hidden scrap-card" data-search-type="SEARCH_HISTORY">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Search history SN</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <label for="history-search-update" class="form-label">List SN</label>
+                        <textarea name="SN" id="history-search-update" class="form-control" rows="8" placeholder="Input SN (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-6 d-flex flex-column gap-3">
+                        <p class="text-muted small">Input list SN for search history</p>
+                        <div class="d-flex flex-column flex-md-row gap-2 mt-auto">
+                            <button id="history-search-btn" class="btn btn-ne" type="button">Search</button>
+                            <button id="history-download-btn" class="btn btn-ne" type="button">Data</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
+
+<div class="mt-5 d-flex flex-column gap-4">
+    <div id="task-stock-status-result" class="hidden scrap-card"></div>
+    <div id="search-status-result" class="hidden scrap-card"></div>
+    <div id="history-search-result" class="hidden scrap-card"></div>
 </div>
 
 @section Scripts {
     <script src="~/assets/areas/scrap/js/progress.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        .flowchart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+    </style>
 }

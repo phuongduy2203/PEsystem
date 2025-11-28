@@ -1,6 +1,74 @@
-﻿// Module: ApiService - Quản lý tất cả các gọi API
+﻿
+var SearchFaNormalizer = (function () {
+    const existing = typeof window !== 'undefined' ? window.SearchFaNormalizer : undefined;
+    if (existing) {
+        return existing;
+    }
+    const hasValue = (value) => value !== undefined && value !== null && value !== '';
+    const fieldMappings = {
+        seriaL_NUMBER: ['seriaL_NUMBER'],
+        productLine: ['producT_LINE'],
+        modeL_NAME: ['modeL_NAME'],
+        wiP_GROUP: ['wiP_GROUP'],
+        tesT_GROUP: ['tesT_GROUP'],
+        tesT_CODE: ['erroR_CODE'],
+        datA1: ['erroR_DESC'],
+        datA11: ['status'],
+        datA12: ['pR_STATUS'],
+        datA13: ['handover'],
+        datA14: ['DATA14', 'data14'],
+        datA15: ['DATA15', 'data15'],
+        datA17: ['action'],
+        datA18: ['position'],
+        datA19: ['kanbaN_WIP'],
+        datE3: ['datE3'],
+        tester: ['tester'],
+        mO_NUMBER: ['mO_NUMBER'],
+    };
+
+    function normalizeItem(item = {}) {
+        if (!item || typeof item !== 'object') {
+            return {};
+        }
+        const normalized = { ...item };
+        Object.entries(fieldMappings).forEach(([targetKey, sourceKeys]) => {
+            if (hasValue(normalized[targetKey])) {
+                return;
+            }
+            for (const sourceKey of sourceKeys) {
+                if (hasValue(item[sourceKey])) {
+                    normalized[targetKey] = item[sourceKey];
+                    break;
+                }
+            }
+        });
+        return normalized;
+    }
+
+    function normalizeData(data) {
+        if (!Array.isArray(data)) {
+            return [];
+        }
+        return data.map(normalizeItem);
+    }
+
+    function normalizeResponse(response) {
+        if (!response || typeof response !== 'object') {
+            return { success: false, data: [] };
+        }
+        return { ...response, data: normalizeData(response.data) };
+    }
+
+    const api = { normalizeItem, normalizeData, normalizeResponse };
+    if (typeof window !== 'undefined') {
+        window.SearchFaNormalizer = api;
+    }
+    return api;
+})();
+
+// Module: ApiService - Quản lý tất cả các gọi API
 const ApiService = (function () {
-    const BASE_URL = 'http://10.220.130.119:9090/api';
+    const BASE_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api';
 
     async function fetchAPI(endpoint, method, body = null) {
         const options = {
@@ -43,7 +111,10 @@ const ApiService = (function () {
     }
 
     return {
-        searchFA: (payload) => fetchAPI('/SearchFA/search', 'POST', payload),
+        searchFA: async (payload) => {
+            const response = await fetchAPI('/SearchFA/search', 'POST', payload);
+            return SearchFaNormalizer.normalizeResponse(response);
+        },
         searchHistory: (payload) => fetchAPI('/SearchFA/search-history-by-list', 'POST', payload),
         getFullName: (username) => fetchAPI(`/SearchFA/get-fullname?username=${username}`, 'GET'),
         getProductLines: () => fetchAPI('/FixGuide/GetProductLines', 'GET'),
@@ -167,9 +238,9 @@ const DataTableManager = (function () {
                     data-detail="${encodedDetail}">
                     Chi tiết
             </button>`,
-            `<button class="btn btn-warning btn-sm save-repair-history" 
+            `<button class="btn btn-warning btn-sm open-repair-view"
                     data-serial-number="${item.seriaL_NUMBER}">
-                    Thêm
+                    Sửa chữa
             </button>`,
             `<button class="btn btn-info btn-sm btn-repair-detail"
                     data-serial-number="${item.seriaL_NUMBER}">
@@ -355,7 +426,7 @@ const FormHandler = (function () {
         $('#sn-table tbody').on('click', '.btn-delete', handleRowDelete);
         $('#sn-table tbody').on('click', '.view-detail', ModalManager.handleViewDetail);
         $('#sn-table tbody').on('click', '.btn-repair-detail', RepairHistoryManager.handleRepairDetailClick);
-        $('#sn-table tbody').on('click', '.save-repair-history', RepairHistoryManager.handleSaveRepairHistoryClick);
+        $('#sn-table tbody').on('click', '.open-repair-view', RepairHistoryManager.handleOpenRepairView);
         $('#refreshButton').on('click', handleRefresh);
     }
 
@@ -1104,50 +1175,15 @@ const RepairHistoryManager = (function () {
         }
     }
 
-    function handleSaveRepairHistoryClick() {
+    function handleOpenRepairView() {
         const serialNumber = String($(this).data('serial-number'));
-        const currentRow = DataTableManager.getRowData(serialNumber);
-
-        if (!currentRow) return;
-
-        $('#save-serial-number').text(serialNumber);
-        $('#save-notes').val('');
-        ModalManager.showModal('#save-repair-modal');
-
-        $('#confirm-save-repair').off('click').on('click', async () => {
-            const notes = $('#save-notes').val().trim();
-            if (!notes) {
-                showWarning("Vui lòng nhập ghi chú!");
-                return;
-            }
-
-            const payload = {
-                serialNumbers: serialNumber,
-                type: currentRow[8],
-                status: currentRow[8],
-                employeeId: $('#analysisPerson').val(),
-                notes: notes,
-                tag: "save"
-            };
-
-            try {
-                const result = await ApiService.repairStatus(payload);
-                const cleanMessage = result.message.replace(/"/g, '').trim();
-                if (result.success && cleanMessage === "OK") {
-                    showSuccess("Lưu lịch sử sửa chữa thành công!");
-                    ModalManager.hideModal('#save-repair-modal');
-                } else {
-                    showError("Lỗi khi lưu lịch sử sửa chữa!");
-                }
-            } catch (error) {
-                showError("Lỗi khi gọi API!");
-            }
-        });
+        const targetUrl = `/SmartFA/Analysis/Repair?serialNumber=${encodeURIComponent(serialNumber)}`;
+        window.open(targetUrl, '_blank');
     }
 
     return {
         handleRepairDetailClick,
-        handleSaveRepairHistoryClick
+        handleOpenRepairView
     };
 })();
 
@@ -1229,9 +1265,9 @@ const HandoverManager = (function () {
                     showError('Không thể nhận bản!');
                 }
             } catch (error) {
-            showError('Lỗi khi gọi API!');
-        }
-    });
+                showError('Lỗi khi gọi API!');
+            }
+        });
     }
 
     function handleManualReceive() {
@@ -1285,75 +1321,113 @@ const HandoverManager = (function () {
 
 // Module: ChartManager - handle charts for location and handover status
 const ChartManager = (function () {
-    let locationChart, handoverChart, onlineChart, agingChart;
+    let locationChart;
+    let onlineChart;
+    let agingChart;
     let locationDetails = [];
     let agingDetails = {};
     let currentStatusData = [];
     let currentLocationData = [];
     let currentAgingData = [];
+    let resizeListenerAttached = false;
+
+    function ensureContainerHeight(container, defaultHeight = 360) {
+        if (!container.style.height) {
+            container.style.height = `${defaultHeight}px`;
+        }
+    }
+
+    function disposeExistingChart(container) {
+        if (!container) return null;
+        const existing = echarts.getInstanceByDom(container);
+        if (existing) {
+            existing.dispose();
+        }
+    }
+
+    function initChart(container) {
+        if (!container) return null;
+        if (typeof echarts === 'undefined') {
+            console.error('ECharts library is not loaded.');
+            return null;
+        }
+        ensureContainerHeight(container);
+        disposeExistingChart(container);
+        container.innerHTML = '';
+        return echarts.init(container);
+    }
+
+    function showEmptyState(container, message) {
+        if (!container) return;
+        container.innerHTML = `<div class="text-center text-muted py-5">${message}</div>`;
+    }
 
 
     async function drawLocationChart() {
         const container = document.getElementById('locationChart');
         if (!container) return;
         const result = await ApiService.getLocationCounts();
-        if (!result || !result.locations) return;
+        if (!result || !result.locations || !result.locations.length) {
+            currentLocationData = [];
+            locationDetails = [];
+            if (locationChart) {
+                locationChart.dispose();
+                locationChart = null;
+            }
+            showEmptyState(container, 'Không có dữ liệu vị trí');
+            return;
+        }
 
         locationDetails = result.locations;
+        currentLocationData = [];
         const labels = result.locations.map(l => l.location);
         const counts = result.locations.map(l => l.totalCount);
 
-        if (locationChart) locationChart.destroy();
+        locationChart = initChart(container);
+        if (!locationChart) return;
 
-        const options = {
-            series: [{ name: 'So luon', data: counts }],
-            chart: {
-                height: 350,
+        const option = {
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            grid: { left: '3%', right: '3%', top: '3%', bottom: '3%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: labels,
+                axisLabel: { interval: 0, rotate: 25 }
+            },
+            yAxis: { type: 'value', name: 'Số lượng' },
+            series: [{
+                name: 'Số lượng',
                 type: 'bar',
-                events: {
-                    dataPointSelection: function (event, chartContext, config) {
-                        const idx = config.dataPointIndex;
-                        const loc = labels[idx];
-                        const detail = locationDetails.find(l => l.location === loc);
-                        if (detail) {
-                            showLocationDetailModal(loc, detail.details);
-                        }
+                data: counts,
+                barMaxWidth: 30,
+                itemStyle: {
+                    borderRadius: [0, 0, 0, 0],
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#4facfe' },
+                        { offset: 1, color: '#00f2fe' }
+                    ])
+                },
+                emphasis: {
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#34d399' },
+                            { offset: 1, color: '#059669' }
+                        ])
                     }
                 }
-            },
-            title: { text: 'Số lượng SN trong RE', align: 'center' },
-            plotOptions: {
-                bar: {
-                    borderRadius: 10,
-                    columnWidth: '50%'
-                }
-            },
-            dataLabels: { enabled: false },
-            stroke: { width: 0 },
-            grid: { row: { colors: ['#fff', '#f2f2f2'] } },
-            xaxis: {
-                categories: labels,
-                labels: { rotate: -45 },
-                tickPlacement: 'on'
-            },
-            yaxis: { title: { text: 'Số lượng' } },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'light',
-                    type: 'horizontal',
-                    shadeIntensity: 0.25,
-                    gradientToColors: undefined,
-                    inverseColors: true,
-                    opacityFrom: 0.85,
-                    opacityTo: 0.85,
-                    stops: [50, 0, 100]
-                }
-            }
+            }]
         };
 
-        locationChart = new ApexCharts(container, options);
-        locationChart.render();
+        locationChart.setOption(option);
+        locationChart.on('click', params => {
+            if (params.componentType === 'series') {
+                const loc = labels[params.dataIndex];
+                const detail = locationDetails.find(l => l.location === loc);
+                if (detail) {
+                    showLocationDetailModal(loc, detail.details);
+                }
+            }
+        });
     }
 
     async function drawOnlineStatusChart() {
@@ -1361,59 +1435,54 @@ const ChartManager = (function () {
         if (!container) return;
 
         const result = await ApiService.getStatusCounts('ONLINE');
-        if (!result || !result.success) return;
+        if (!result || !result.success || !result.data || !result.data.length) {
+            if (onlineChart) {
+                onlineChart.dispose();
+                onlineChart = null;
+            }
+            showEmptyState(container, 'Không có dữ liệu trạng thái ONLINE');
+            return;
+        }
 
         const labels = result.data.map(d => d.status);
         const counts = result.data.map(d => d.count);
+        currentStatusData = [];
 
-        if (onlineChart) onlineChart.destroy();
+        onlineChart = initChart(container);
+        if (!onlineChart) return;
 
-        const options = {
-            series: [{ name: 'Số lượng', data: counts }],
-            chart: {
-                height: 350,
+        const option = {
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            grid: { left: '3%', right: '4%', bottom: '5%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: labels,
+                axisLabel: { interval: 0, rotate: 0 }
+            },
+            yAxis: { type: 'value', name: 'Số lượng' },
+            series: [{
+                name: 'Số lượng',
                 type: 'bar',
-                events: {
-                    dataPointSelection: function (event, chartContext, config) {
-                        const idx = config.dataPointIndex;
-                        const status = labels[idx];
-                        handleStatusChartClick(status, 'online');
-                    }
+                data: counts,
+                barMaxWidth: 35,
+                itemStyle: {
+                    borderRadius: [0, 0, 0, 0],
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#a18cd1' },
+                        { offset: 1, color: '#fbc2eb' }
+                    ])
                 }
-            },
-            title: { text: 'Số lượng SN Online', align: 'center' },
-            plotOptions: {
-                bar: {
-                    borderRadius: 10,
-                    columnWidth: '50%'
-                }
-            },
-            dataLabels: { enabled: false },
-            stroke: { width: 0 },
-            grid: { row: { colors: ['#fff', '#f2f2f2'] } },
-            xaxis: {
-                categories: labels,
-                labels: { rotate: -45 },
-                tickPlacement: 'on'
-            },
-            yaxis: { title: { text: 'Số lượng' } },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'light',
-                    type: 'horizontal',
-                    shadeIntensity: 0.25,
-                    gradientToColors: undefined,
-                    inverseColors: true,
-                    opacityFrom: 0.85,
-                    opacityTo: 0.85,
-                    stops: [50, 0, 100]
-                }
-            }
+            }]
         };
 
-        onlineChart = new ApexCharts(container, options);
-        onlineChart.render();
+        onlineChart.setOption(option);
+        onlineChart.off('click');
+        onlineChart.on('click', params => {
+            if (params.componentType === 'series') {
+                const status = labels[params.dataIndex];
+                handleStatusChartClick(status, 'online');
+            }
+        });
     }
 
     async function drawAgingChart() {
@@ -1421,41 +1490,86 @@ const ChartManager = (function () {
         if (!container) return;
 
         const result = await ApiService.getAgingCounts();
-        if (!result || !result.success) return;
+        if (!result || !result.success) {
+            currentAgingData = [];
+            agingDetails = {};
+            if (agingChart) {
+                agingChart.dispose();
+                agingChart = null;
+            }
+            showEmptyState(container, 'Không có dữ liệu Aging');
+            return;
+        }
 
         agingDetails = result.details || {};
+        currentAgingData = [];
 
         const series = [result.data.lessThanOneDay, result.data.oneToThreeDays, result.data.moreThanThreeDays];
         const labels = ['< 1 ngày', '1-3 ngày', '> 3 ngày'];
 
-        if (agingChart) agingChart.destroy();
+        const pieData = [
+            { key: 'lessThanOneDay', name: labels[0], value: series[0] },
+            { key: 'oneToThreeDays', name: labels[1], value: series[1] },
+            { key: 'moreThanThreeDays', name: labels[2], value: series[2] }
+        ];
 
-        const options = {
-            series: series,
-            chart: {
-                height: 350,
+        agingChart = initChart(container);
+        if (!agingChart) return;
+
+        const option = {
+            title: { text: 'Aging', left: 'center' },
+            tooltip: { trigger: 'item', formatter: '{b}<br/>Số lượng: {c} ({d}%)' },
+            legend: { bottom: 0 },
+            series: [{
+                name: 'Aging',
                 type: 'pie',
-                events: {
-                    dataPointSelection: function (event, chartContext, config) {
-                        const idx = config.dataPointIndex;
-                        const key = idx === 0 ? 'lessThanOneDay' : idx === 1 ? 'oneToThreeDays' : 'moreThanThreeDays';
-                        currentAgingData = agingDetails[key] || [];
-                        showAgingDetailModal(labels[idx], currentAgingData);
+                radius: ['35%', '65%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 0,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    formatter: '{b}: {c}'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 12,
+                        fontWeight: 'bold'
                     }
-                }
-            },
-            labels: labels,
-            legend: { position: 'bottom' }
+                },
+                data: pieData
+            }]
         };
 
-        agingChart = new ApexCharts(container, options);
-        agingChart.render();
+        agingChart.setOption(option);
+        agingChart.off('click');
+        agingChart.on('click', params => {
+            if (params.componentType === 'series') {
+                const dataItem = pieData[params.dataIndex];
+                const key = dataItem?.key;
+                currentAgingData = key ? (agingDetails[key] || []) : [];
+                showAgingDetailModal(dataItem.name, currentAgingData);
+            }
+        });
     }
 
     async function init() {
         await drawLocationChart();
         await drawOnlineStatusChart();
         await drawAgingChart();
+
+        if (!resizeListenerAttached) {
+            window.addEventListener('resize', () => {
+                if (locationChart) locationChart.resize();
+                if (onlineChart) onlineChart.resize();
+                if (agingChart) agingChart.resize();
+            });
+            resizeListenerAttached = true;
+        }
     }
 
     async function handleStatusChartClick(selectedStatus, chartType) {
@@ -1623,6 +1737,7 @@ $(document).ready(function () {
     GuideManager.setup();
     StatusManager.setup();
     HandoverManager.setup();
+    BackToTop.setup();
     ChartManager.init();
     const exportSnTableBtn = document.getElementById('exportSnTableExcelBtn');
     if (exportSnTableBtn) {
@@ -1764,5 +1879,4 @@ $(document).ready(function () {
             hideSpinner();
         });
     }
-    BackToTop.setup();
 });

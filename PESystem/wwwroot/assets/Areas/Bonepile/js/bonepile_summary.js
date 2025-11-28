@@ -1,12 +1,80 @@
-// Bonepile Summary (Before + After) – rewritten with concurrency & normalization
+// Bonepile Summary dashboard aligned with the Bonepile After layout
+// and upgraded to use ECharts for visualizations.
+
 document.addEventListener('DOMContentLoaded', async function () {
-    // ===== API endpoints =====
-    const apiBase = 'http://10.220.130.119:9090/api/Bonepile2';
+    const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2';
     const beforeDetailUrl = `${apiBase}/adapter-repair-records`;
-
     const afterDetailUrl = `${apiBase}/bonepile-after-kanban-basic`;
+    const locationUrl = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/FindLocations';
 
-    const locationUrl = 'http://10.220.130.119:9090/api/Search/FindLocations';
+    const beforeStatuses = [
+        'ScrapHasTask',
+        'ScrapLackTask',
+        'WaitingApprovalScrap',
+        'WaitingApprovalBGA',
+        'ApprovedBGA',
+        'ReworkFG',
+        'WaitingCheckOut',
+        'RepairInRE',
+        'RepairInPD',
+        "Can'tRepairProcess",
+        'B36V',
+        'WaitingLink',
+        'Linked'
+    ];
+
+    const statusAliases = {
+        CantRepairProcess: "Can'tRepairProcess",
+        "Can't Repair Process": "Can'tRepairProcess",
+        'Scrap Lack Task': 'ScrapLackTask',
+        'Scrap Has Task': 'ScrapHasTask'
+    };
+
+    const statusColorMap = {
+        ScrapHasTask: '#05b529',
+        ScrapLackTask: '#ffc107',
+        WaitingApprovalScrap: '#dc3545',
+        WaitingApprovalBGA: '#17a2b8',
+        ApprovedBGA: '#17b86d',
+        ReworkFG: '#6c757d',
+        WaitingCheckOut: '#fe8307',
+        RepairInRE: '#ff8307',
+        RepairInPD: '#ffba69',
+        WaitingLink: '#17a2b8',
+        Linked: '#28a745',
+        B36V: '#28a745',
+        "Can'tRepairProcess": '#ffc107'
+    };
+
+    const statusDisplayMap = {
+        ScrapHasTask: 'Scrap Has Task',
+        ScrapLackTask: 'Scrap Lacks Task',
+        WaitingApprovalScrap: 'Pending Scrap SPE Approval',
+        WaitingApprovalBGA: 'Pending BGA SPE Approval',
+        ApprovedBGA: 'Approved BGA',
+        ReworkFG: 'Rework FG',
+        WaitingCheckOut: 'Waiting Check Out',
+        RepairInRE: 'Repair In RE',
+        RepairInPD: 'Repair In PD',
+        WaitingLink: 'Waiting Link',
+        Linked: 'Linked',
+        B36V: 'B36V',
+        "Can'tRepairProcess": "Can't Repair Process"
+    };
+
+    const kpiValueMap = {};
+    document.querySelectorAll('.donut-box[data-status]').forEach(box => {
+        const status = box.dataset.status;
+        const valueEl = box.querySelector('.donut-percent');
+        if (status && valueEl) {
+            kpiValueMap[status] = valueEl;
+        }
+    });
+
+    const statusChart = initChart('statusBarChart');
+    const charts = statusChart ? [statusChart] : [];
+
+    let dataTable = null;
 
     function normalizeSn(sn) {
         return (sn || '').toString().trim().toUpperCase();
@@ -25,153 +93,112 @@ document.addEventListener('DOMContentLoaded', async function () {
         }, {});
     }
 
-    // ===== Status lists to request =====
-    const beforeStatuses = [
-        "ScrapLackTask",
-        "ScrapHasTask",
-        "WaitingApprovalScrap",
-        "ApprovedBGA",
-        "WaitingApprovalBGA",
-        "ReworkFG",
-        "WaitingCheckOut",
-        "RepairInRE",
-        "RepairInPD",
-        "Can'tRepairProcess",
-        "B36V"
-    ];
-
-    // Chuẩn hoá status về key hợp lệ
     function normalizeStatus(status) {
-        if (!status) return "Unknown";
-        status = status.trim();
-        // Nếu status nằm trong danh sách
-        if (beforeStatuses.includes(status)) return status;
-        // Nếu không khớp, trả về chính status hoặc "Other"
-        return status;
+        if (status === null || status === undefined) return 'Unknown';
+        const raw = status.toString().trim();
+        if (!raw) return 'Unknown';
+        const alias = statusAliases[raw] || raw;
+        return alias;
     }
-
-    // ===== Colors =====
-    const statusColorMap = {
-        'ScrapLackTask': '#ffc107',
-        'ScrapHasTask': '#05b529',
-        'WaitingApprovalScrap': '#dc3545',
-        'WaitingApprovalBGA': '#17b86d',
-        'ReworkFG': '#6c757d',
-        'RepairInRE': '#ff8307',
-        'RepairInPD': '#fe8307',
-        'WaitingCheckOut': '#fe8307',
-        'WaitingLink': '#17a2b8',
-        'Linked': '#28a745',
-        'ApprovedBGA': '#17b86d',
-        'B36V': '#28a745',
-        'Can\'tRepairProcess': '#ffc107'
-    };
 
     function uniq(arr) {
         return Array.from(new Set(arr));
     }
+
     function nowLocalStringTZ7() {
         const now = new Date();
-        const offset = 7 * 60; // +07:00
+        const offset = 7 * 60;
         const localDate = new Date(now.getTime() + offset * 60 * 1000);
         const dateStr = localDate.toISOString().slice(0, 10).replace(/-/g, '');
         const timeStr = localDate.toTimeString().slice(0, 8).replace(/:/g, '');
         return `${dateStr}_${timeStr}`;
     }
 
-    // ===== Chart (BAR - SẮP XẾP GIẢM DẦN) =====
-    function renderBarChart(statusCounts, total) {
-        // ✅ SẮP XẾP GIẢM DẦN THEO COUNT
-        const sortedStatusCounts = [...statusCounts].sort((a, b) => b.count - a.count);
-        const labels = sortedStatusCounts.map(s => s.status);
-        const dataVals = sortedStatusCounts.map(s => s.count);
-        const percentages = dataVals.map(v => total > 0 ? ((v / total) * 100).toFixed(1) : 0);
+    function initChart(elementId) {
+        if (typeof echarts === 'undefined') {
+            console.warn('ECharts library is not loaded.');
+            return null;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with id "${elementId}" not found.`);
+            return null;
+        }
+        return echarts.init(element);
+    }
 
-        const donutEl = document.getElementById('statusDonutChart');
-        if (!donutEl) return;
-
-        const ctx = donutEl.getContext('2d');
-        new Chart(ctx, {
-            type: 'bar', // ✅ THAY ĐỔI: Từ 'doughnut' sang 'bar'
-            data: {
-                labels,
-                datasets: [{
-                    data: dataVals,
-                    backgroundColor: labels.map(l => statusColorMap[l] || '#ccc'),
-                    borderWidth: 1,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            callback: value => value
-                        },
-                        grid: { display: true }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 20,
-                            boxHeight: 20,
-                            generateLabels: chart => {
-                                const d = chart.data;
-                                return d.labels.map((label, i) => ({
-                                    text: `${label} (${percentages[i]}%)`,
-                                    fillStyle: d.datasets[0].backgroundColor[i],
-                                    strokeStyle: d.datasets[0].backgroundColor[i],
-                                    lineWidth: 1,
-                                    hidden: isNaN(d.datasets[0].data[i]) || d.datasets[0].data[i] === 0,
-                                    index: i
-                                }));
-                            }
-                        },
-                        maxWidth: 300,
-                        align: 'center'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const label = ctx.label || '';
-                                const value = ctx.raw || 0;
-                                const percent = percentages[ctx.dataIndex];
-                                return `${label}: ${value} (${percent}%)`;
-                            }
-                        }
-                    },
-                    datalabels: { // ✅ THÊM: Hiển thị % trên đỉnh cột
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (value, ctx) => {
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${percentage}%`;
-                        },
-                        color: '#000',
-                        font: { weight: 'bold', size: 12 },
-                        display: context => context.dataset.data[context.dataIndex] > 0
-                    }
-                }
-            },
-            plugins: [ChartDataLabels] // ✅ YÊU CẦU plugin
+    function updateKpis(statusCountsMap, total) {
+        const totalEl = document.getElementById('totalCount');
+        if (totalEl) {
+            totalEl.textContent = total;
+        }
+        Object.entries(kpiValueMap).forEach(([status, element]) => {
+            const value = statusCountsMap[status] || 0;
+            element.textContent = value;
         });
     }
 
-    // ===== Dashboard (KPI + BAR CHART) – run BEFORE/AFTER count concurrently =====
+    function renderBarChart(statusCounts, total) {
+        if (!statusChart) return;
+
+        const sortedStatusCounts = [...statusCounts].sort((a, b) => b.count - a.count);
+        const categories = sortedStatusCounts.map(item => statusDisplayMap[item.status] || item.status);
+        const seriesData = sortedStatusCounts.map(item => ({
+            value: item.count,
+            status: item.status,
+            percent: total > 0 ? (item.count / total * 100) : 0,
+            itemStyle: {
+                color: statusColorMap[item.status] || '#5470c6'
+            }
+        }));
+
+        statusChart.setOption({
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                formatter: params => {
+                    if (!Array.isArray(params) || !params.length) return '';
+                    const data = params[0].data;
+                    const label = params[0].axisValueLabel;
+                    const percentText = data.percent ? ` (${data.percent.toFixed(1)}%)` : ' (0%)';
+                    return `${label}: ${data.value}${percentText}`;
+                }
+            },
+            grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: categories,
+                axisLabel: {
+                    interval: 0,
+                    rotate: categories.length > 6 ? 25 : 0
+                }
+            },
+            yAxis: {
+                type: 'value',
+                minInterval: 1
+            },
+            series: [{
+                type: 'bar',
+                barMaxWidth: 36,
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: params => {
+                        const { percent } = params.data;
+                        return `${percent ? percent.toFixed(1) : 0}%`;
+                    },
+                    fontWeight: 'bold'
+                },
+                data: seriesData
+            }]
+        });
+    }
+
     async function fetchBeforeOverview(statuses = beforeStatuses) {
         const params = {};
         if (Array.isArray(statuses) && statuses.length > 0) {
             params.statuses = statuses;
         }
-
         const response = await axios.get(beforeDetailUrl, { params });
         return response.data;
     }
@@ -191,41 +218,37 @@ document.addEventListener('DOMContentLoaded', async function () {
             const statusCountsMap = {};
 
             (beforeOverview?.statusCounts || []).forEach(s => {
-                const k = normalizeStatus(s.status ?? s.Status);
-                const c = Number(s.count ?? s.Count ?? 0);
-                statusCountsMap[k] = (statusCountsMap[k] || 0) + c;
+                const key = normalizeStatus(s.status ?? s.Status);
+                const count = Number(s.count ?? s.Count ?? 0);
+                if (!key) return;
+                statusCountsMap[key] = (statusCountsMap[key] || 0) + count;
             });
 
             afterBasic.forEach(a => {
-                const k = normalizeStatus(a.status || a.Status || '');
-                statusCountsMap[k] = (statusCountsMap[k] || 0) + 1;
+                const key = normalizeStatus(a.status || a.Status || '');
+                if (!key) return;
+                statusCountsMap[key] = (statusCountsMap[key] || 0) + 1;
             });
 
             const statusCounts = Object.keys(statusCountsMap).map(k => ({ status: k, count: statusCountsMap[k] }));
             const total = beforeTotal + afterTotal;
 
-            const totalEl = document.getElementById('totalCount');
-            if (totalEl) totalEl.innerText = total;
-
-            // ✅ SỬ DỤNG BAR CHART THAY VÌ DONUT
+            updateKpis(statusCountsMap, total);
             renderBarChart(statusCounts, total);
 
-            await loadTableData(afterBasic, beforeOverview); // then render table
-        } catch (e) {
-            console.error('Error loading dashboard', e);
+            await loadTableData(afterBasic, beforeOverview);
+        } catch (error) {
+            console.error('Error loading dashboard', error);
             alert('Không thể tải dữ liệu dashboard.');
         } finally {
             hideSpinner();
         }
     }
 
-    // ===== Table – run BEFORE detail + AFTER basic concurrently, then testinfo + locations concurrently =====
-    let dataTable;
     async function loadTableData(afterBasicData, beforeOverview) {
         try {
             showSpinner();
 
-            // 1) BEFORE detail; AFTER basic may come from caller
             let beforeResponse = beforeOverview;
             if (!beforeResponse) {
                 beforeResponse = await fetchBeforeOverview();
@@ -234,26 +257,23 @@ document.addEventListener('DOMContentLoaded', async function () {
             const beforeData = beforeResponse?.data || [];
             let afterBasic = afterBasicData ? [...afterBasicData] : [];
 
-            // If caller didn't supply after data, fetch it now
             if (!afterBasicData) {
                 const afterRes = await axios.get(afterDetailUrl);
                 afterBasic = afterRes.data?.data || [];
             }
 
-            // 2) SN list for AFTER testinfo + locations
             const afterSNs = uniq(afterBasic.map(a => normalizeSn(a.sn || a.SN)).filter(Boolean));
             const beforeSNs = uniq(beforeData.map(b => normalizeSn(b.sn || b.SN)).filter(Boolean));
             const locationRequestSNs = uniq(afterSNs.concat(beforeSNs));
 
-            // 3) locations (chịu lỗi cục bộ)
             let locationMap = {};
             try {
                 const locRes = await axios.post(locationUrl, locationRequestSNs);
                 locationMap = buildLocationMap(locRes.data?.data);
-            } catch (e) {
-                console.warn('Location fetch failed:', e);
+            } catch (locError) {
+                console.warn('Location fetch failed:', locError);
             }
-            // 4) Map BEFORE rows
+
             const mappedBefore = beforeData.map(b => ({
                 type: 'Before',
                 sn: b.sn || b.SN,
@@ -274,7 +294,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 repair: b.repair || b.Repair || ''
             }));
 
-            // 5) Map AFTER rows (+merge locaation)
             const mappedAfter = afterBasic.map(a => {
                 const sn = a.sn || a.SN;
                 const normalizedSn = normalizeSn(sn);
@@ -299,13 +318,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 };
             });
 
-            // 6) Combine & render DataTable
             const combined = mappedBefore.concat(mappedAfter);
 
             if (dataTable) {
                 dataTable.clear().rows.add(combined).draw();
             } else {
-                dataTable = $('#summaryTable').DataTable({
+                dataTable = $('#sumMaterialsTable').DataTable({
                     data: combined,
                     scrollX: true,
                     columns: [
@@ -349,15 +367,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                         $('.dataTables_filter input[type="search"]').attr('placeholder', 'Tìm kiếm');
                     }
                 });
+                //JS để click vào row thì giữ highlight
+                $('#sumMaterialsTable tbody').on('click', 'tr', function () {
+                    // Bỏ chọn các row khác
+                    $('#sumMaterialsTable tbody tr').removeClass('selected-row');
+
+                    // Gán class highlight
+                    $(this).addClass('selected-row');
+                });
             }
-        } catch (e) {
-            console.error('Error loading table', e);
+        } catch (error) {
+            console.error('Error loading table', error);
             alert('Không thể tải dữ liệu bảng.');
         } finally {
             hideSpinner();
         }
     }
 
-    // ===== Kick off =====
     await loadDashboardData();
 });

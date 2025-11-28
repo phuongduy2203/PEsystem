@@ -1,175 +1,164 @@
 ﻿@{
     ViewData["Title"] = "Home";
-}
-@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<div class="wrapper d-flex">
-    <div class="row g-4">
-        <!-- Tăng khoảng cách giữa các mục -->
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "SmartFA" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/smartfa.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size: 14px; color: black !important;">SMART FA</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+<div class="module-grid">
+    <!-- SMART FA -->
+    <a href="@Url.Action("Index", "Home", new { area = "SmartFA" })" class="module-item">
+        <img src="~/assets/img/smartfa.png" />
+        <span>SMART FA</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "Repositories" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/repository.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">REPOSITORY</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- REPOSITORY -->
+    <a href="@Url.Action("Index", "Home", new { area = "Repositories" })" class="module-item">
+        <img src="~/assets/img/repository.png" />
+        <span>REPOSITORY</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "PDRepositories" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/repoPD.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">PD REPOSITORY</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- PD REPOSITORY -->
+    <a href="@Url.Action("Index", "Home", new { area = "PDRepositories" })" class="module-item">
+        <img src="~/assets/img/repoPD.png" />
+        <span>PD REPOSITORY</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "DataCloud" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/dataCloud.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">DATA CLOUD</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- DATA CLOUD -->
+    <a href="@Url.Action("Index", "Home", new { area = "DataCloud" })" class="module-item">
+        <img src="~/assets/img/dataCloud.png" />
+        <span>DATA CLOUD</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "HassBi" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/logo-hass-bi.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">HASS-BI</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- HASS BI -->
+    <a href="@Url.Action("Index", "Home", new { area = "HassBi" })" class="module-item">
+        <img src="~/assets/img/logo-hass-bi.png" />
+        <span>HASS-BI</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "DDR" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/logo-DDR.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">DDR TOOL</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- DDR TOOL -->
+    <a href="@Url.Action("Index", "Home", new { area = "DDR" })" class="module-item">
+        <img src="~/assets/img/logo-DDR.png" />
+        <span>DDR TOOL</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "CheckList" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/check_list.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Check List</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- Check List -->
+    <a href="@Url.Action("Index", "Home", new { area = "CheckList" })" class="module-item">
+        <img src="~/assets/img/check_list.png" />
+        <span>CHECK LIST</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "Scrap" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/scrap.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Scrap</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- Scrap -->
+    <a href="@Url.Action("Index", "Home", new { area = "Scrap" })" class="module-item">
+        <img src="~/assets/img/scrap.png" />
+        <span>SCRAP</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "MaterialSystem" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/material-logo.jpg" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Material Control</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- Material Control -->
+    <a href="@Url.Action("Index", "Home", new { area = "MaterialSystem" })" class="module-item">
+        <img src="~/assets/img/material-logo.jpg" />
+        <span>MATERIAL CONTROL</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Bonepile", new { area = "Bonepile" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/bonepile.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Bonepile</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- Bonepile -->
+    <a href="@Url.Action("Index", "Bonepile", new { area = "Bonepile" })" class="module-item">
+        <img src="~/assets/img/bonepile.png" />
+        <span>BONEPILE</span>
+    </a>
 
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "DCLC", new { area = "Allpart" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/Allpart.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Check Data</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "SearchData" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/searching.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">SEARCH DATA</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "SFC" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/excel.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">SFC EXPORT</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <!-- Replace BGA control -->
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Process", "Home", new { area = "BGA" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/bga.png" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">Replace BGA control</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <!-- NPI document -->
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="@Url.Action("Index", "Home", new { area = "NPI" })" class="text-decoration-none">
-                <div class="card shadow-sm text-center custom-card">
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="~/assets/img/Document.jpg" class="logo mb-2" />
-                        <span class="fw-bold text-muted" style="font-size:14px; color: black !important;">NPI DOCUMENT</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+    <!-- Check Data -->
+    <a href="@Url.Action("Index", "DCLC", new { area = "Allpart" })" class="module-item">
+        <img src="~/assets/img/Allpart.png" />
+        <span>CHECK DATA</span>
+    </a>
 
-    </div>
+    <!-- Search Data -->
+    <a href="@Url.Action("Index", "Home", new { area = "SearchData" })" class="module-item">
+        <img src="~/assets/img/searching.png" />
+        <span>SEARCH DATA</span>
+    </a>
+
+    <!-- SFC EXPORT -->
+    <a href="@Url.Action("Index", "Home", new { area = "SFC" })" class="module-item">
+        <img src="~/assets/img/excel.png" />
+        <span>SFC EXPORT</span>
+    </a>
+
+    <!-- Replace BGA Control -->
+    <a href="@Url.Action("Process", "Home", new { area = "BGA" })" class="module-item">
+        <img src="~/assets/img/bga.png" />
+        <span>REPLACE BGA CONTROL</span>
+    </a>
+
+    <!-- NPI Document -->
+    <a href="@Url.Action("Index", "Home", new { area = "NPI" })" class="module-item">
+        <img src="~/assets/img/Document.jpg" />
+        <span>NPI DOCUMENT</span>
+    </a>
+
 </div>
 
+<!-- ===========================
+      CSS PRO EDITION
+=========================== -->
+<style>
+    .dashboard-wrapper {
+        padding: 10px;
+    }
+    /* ===== GRID LAYOUT PRO ===== */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 18px;
+        padding-bottom: 32px;
+    }
+
+    .module-item {
+        aspect-ratio: 1 / 1; /* 🔥 Tạo hình vuông */
+        max-width: 150px;
+        border-radius: 14px;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Căn giữa icon + text */
+        align-items: center;
+        background: rgba(255,255,255,0.25);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        transition: 0.25s ease;
+        backdrop-filter: blur(6px);
+    }
+
+        .module-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .module-item img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            margin-bottom: 6px; /* cách text một chút */
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+        }
+
+        .module-item span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #222 !important;
+        }
+
+
+    /* Fade-In Animation */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

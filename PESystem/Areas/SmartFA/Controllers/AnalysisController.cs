@@ -7,7 +7,13 @@ namespace PESystem.Areas.SmartFA.Controllers
     {
         public IActionResult Index()
         {
-            return PartialView(); // Return full view for direct navigation
+            return View(); // Return full view for direct navigation
+        }
+
+        public IActionResult Repair(string serialNumber)
+        {
+            ViewData["SerialNumber"] = serialNumber;
+            return View("repair");
         }
 
     }

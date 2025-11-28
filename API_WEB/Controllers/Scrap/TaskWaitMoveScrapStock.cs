@@ -26,7 +26,7 @@ namespace API_WEB.Controllers.Scrap
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true // Bỏ qua kiểm tra chứng chỉ
             };
             _httpClient = new HttpClient(handler);
-            _httpClient.BaseAddress = new Uri("https://10.220.130.217:443/SfcSmartRepair/");
+            _httpClient.BaseAddress = new Uri("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 

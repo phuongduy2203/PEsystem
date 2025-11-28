@@ -50,25 +50,28 @@
     }
 </style>
 
-<section class="section dashboard">
-    <div id="ctr-box" class="" style="display: flex;align-items: center;gap: 10px;">
-        <!-- update MO/status Button -->
-        <button id="Update-MO-status-btn" class="btn btn-ne">
-            <i class="fas fa-sync-alt"></i> REFRESH
-        </button>
-        <button id="skip-btn" class="btn btn-ne">
-            MO SKIP
-        </button>
-        <!-- Export Button -->
-        <button id="HassBi-ExportExcel-btn" class="btn btn-ne">
-            <i class="fas fa-file-export"></i>EXCEL
-        </button>
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <div id="ctr-box" class="" style="display: flex;align-items: center;gap: 10px;">
+            <!-- update MO/status Button -->
+            <button id="Update-MO-status-btn" class="btn btn-ne">
+                <i class="fas fa-sync-alt"></i> REFRESH
+            </button>
+            <button id="skip-btn" class="btn btn-ne">
+                MO SKIP
+            </button>
+            <!-- Export Button -->
+            <button id="HassBi-ExportExcel-btn" class="btn btn-ne">
+                <i class="fas fa-file-export"></i>EXCEL
+            </button>
+        </div>
+        <div id="result-box">
+            <!-- hiển thị kho dữ liệu -->
+            <div id="data-results"></div>
+        </div>
     </div>
-    <div id="result-box">
-        <!-- hiển thị kho dữ liệu -->
-        <div id="data-results"></div>
-    </div>
-</section>
+</div>
+
 
 <div class="modal fade" id="skippedMoModal" tabindex="-1" aria-labelledby="skippedMoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">

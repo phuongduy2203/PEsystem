@@ -1,9 +1,4 @@
-﻿body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f8f9fa;
-}
-
-#drive-header {
+﻿#drive-header {
     background-color: #f1f3f4;
     border-bottom: 1px solid #dadce0;
     padding: 10px 20px;
@@ -26,7 +21,8 @@
 
 #data-cloud-results {
     overflow: auto;
-    max-height: 100%;
+    border-radius: 12px;
+    height: calc(100vh - 80px); /* trừ header + breadcrumb */
     border: none;
     padding: 10px;
     background-color: #ffffff;
@@ -77,8 +73,6 @@
 .data-item[custom-type="Folder"] i {
     color: #F5D471;
 }
-
-
 
 .context-menu {
     position: fixed;

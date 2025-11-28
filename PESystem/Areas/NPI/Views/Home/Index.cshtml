@@ -6,7 +6,6 @@
     ViewData["Title"] = "NPI Document";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -54,14 +53,14 @@
                                 var project = projectSummary.Project;
                                 var totalCategories = projectSummary.TotalCategoryCount;
                                 var progressText = totalCategories > 0
-                                    ? $"{projectSummary.UploadedCategoryCount}/{totalCategories}"
-                                    : projectSummary.UploadedCategoryCount.ToString();
+                                ? $"{projectSummary.UploadedCategoryCount}/{totalCategories}"
+                                : projectSummary.UploadedCategoryCount.ToString();
                                 var progressLabel = totalCategories > 0
-                                    ? $"Đã tải {projectSummary.UploadedCategoryCount}/{totalCategories} hạng mục"
-                                    : $"Đã tải {projectSummary.UploadedCategoryCount} hạng mục";
+                                ? $"Đã tải {projectSummary.UploadedCategoryCount}/{totalCategories} hạng mục"
+                                : $"Đã tải {projectSummary.UploadedCategoryCount} hạng mục";
                                 var badgeClasses = projectSummary.UploadedCategoryCount > 0
-                                    ? "badge rounded-pill bg-light text-dark border border-primary px-3 py-2"
-                                    : "badge rounded-pill bg-light text-muted border border-secondary px-3 py-2";
+                                ? "badge rounded-pill bg-light text-dark border border-primary px-3 py-2"
+                                : "badge rounded-pill bg-light text-muted border border-secondary px-3 py-2";
                                 var modalKey = new string(project.Id.Where(char.IsLetterOrDigit).ToArray());
                                 modalKey = string.IsNullOrWhiteSpace(modalKey) ? Guid.NewGuid().ToString("N") : modalKey;
                                 <tr>
@@ -81,7 +80,7 @@
                                             <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#editProjectModal_@modalKey">
                                                 <i class="bi bi-pencil-square"></i><span>Sửa</span>
                                             </button>
-                        
+
                                             <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#deleteProjectModal_@modalKey">
                                                 <i class="bi bi-trash"></i><span>Xoá</span>
                                             </button>

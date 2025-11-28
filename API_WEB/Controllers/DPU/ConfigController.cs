@@ -13,7 +13,7 @@ using System.Diagnostics;
 
 namespace API_WEB.Controllers.DPU
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ConfigController : ControllerBase
     {

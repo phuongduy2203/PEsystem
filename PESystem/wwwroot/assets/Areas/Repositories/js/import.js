@@ -13,7 +13,7 @@
     const serialLimitWarning = document.getElementById("serial-limit-warning");
     const duplicateWarning = document.getElementById("duplicate-warning");
 
-    const apiBaseUrl = "http://10.220.130.119:9090/api/Product"; // Đường dẫn API base
+    const apiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product"; // Đường dẫn API base
     let trayData = []; // Số serial đã tồn tại trong tray từ API TrayInfo
 
     var maxSlots = 20; // Gia tri mac dinh

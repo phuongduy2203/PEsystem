@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (borrowReturnEl) {
         try {
-            const res = await fetch("http://10.220.130.119:9090/api/product/borrowed/daily");
+            const res = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/borrowed/daily");
             const json = await res.json();
             if (json.success) {
                 const chart = echarts.init(borrowReturnEl);
@@ -76,9 +76,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 chart.on('click', function (params) {
                     if (params.name === 'Borrowed') {
-                        showDetails('http://10.220.130.119:9090/api/product/borrowed/daily/details?type=borrowed');
+                        showDetails('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/borrowed/daily/details?type=borrowed');
                     } else if (params.name === 'Returned') {
-                        showDetails('http://10.220.130.119:9090/api/product/borrowed/daily/details?type=returned');
+                        showDetails('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/borrowed/daily/details?type=returned');
                     }
                 });
                 window.addEventListener('resize', () => chart.resize());
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (borrowAgingEl) {
         try {
-            const res = await fetch("http://10.220.130.119:9090/api/product/borrowed/aging");
+            const res = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/borrowed/aging");
             const json = await res.json();
             if (json.success) {
                 const labels = json.aging.map(a => a.days);
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     series: [{ type: 'line', data: values, smooth: true, color: '#ff771d' }]
                 });
                 chart.on('click', function (params) {
-                    showDetails(`http://10.220.130.119:9090/api/product/borrowed/aging/details?days=${params.name}`);
+                    showDetails(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/product/borrowed/aging/details?days=${params.name}`);
                 });
                 window.addEventListener('resize', () => chart.resize());
             }

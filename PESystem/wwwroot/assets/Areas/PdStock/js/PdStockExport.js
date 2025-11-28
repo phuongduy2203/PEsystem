@@ -32,10 +32,10 @@ document.getElementById('PD-repo-exprot-input').addEventListener('keypress', fun
         let url;
         switch (searchOptionValue) {
             case 'exportByCartonNo':
-                url = 'http://10.220.130.119:9090/DdRepositorys/GetByCartonNo';
+                url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetByCartonNo';
                 break;
             case 'exportBySn':
-                url = 'http://10.220.130.119:9090/DdRepositorys/GetBySerialNumber';
+                url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetBySerialNumber';
                 break;
             default:
                 resultsSection.innerHTML = '<p class="data-alert">Please select a valid search option.</p>';
@@ -151,7 +151,7 @@ document.getElementById('PdStock-exprort-btn').addEventListener('click', functio
     console.log("Data to send:", deleteData); // Kiểm tra dữ liệu JSON trước khi gửi
 
     // Gửi dữ liệu tới API
-    fetch('http://10.220.130.119:9090/DdRepositorys/DeleteBySerialNumbers', {
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/DeleteBySerialNumbers', {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'

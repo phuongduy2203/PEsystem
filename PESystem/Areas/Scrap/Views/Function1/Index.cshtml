@@ -5,26 +5,19 @@
     Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
 }
 
-<div class="scrap-interface nvidia-section">
-    <div class="section-heading text-center text-lg-start">
-        <h1 class="display-6">SN - Wait SPE Approve</h1>
-        <p>Theo dõi và thao tác nhanh với các serial number đang chờ SPE phê duyệt.</p>
-    </div>
 
     <div class="row g-4 align-items-stretch">
         <div class="col-lg-4">
             <div class="nvidia-card h-100">
                 <div class="nvidia-card-header">
-                    <h2>Chức năng</h2>
-                    <span class="badge-nvidia">Approval</span>
+                <h2>Waitting SPE Approve</h2>
                 </div>
                 <div class="nvidia-card-body">
                     <form id="search-form" class="d-flex flex-column gap-3">
-                        <label for="search-options" class="form-label">Chọn chức năng thao tác</label>
                         <select id="search-options" class="form-select">
                             <option selected disabled>SELECT FUNCTION</option>
                             <option value="INPUT_SN_1">INPUT SN</option>
-                            <option value="SN_WAIT_SPE_APPROVE">SN WAIT SPE APPROVE</option>
+                            <option value="SN_WAIT_SPE_APPROVE">SNs Waitting SPE approve</option>
                         </select>
                     </form>
                 </div>
@@ -34,16 +27,16 @@
         <div class="col-lg-8">
             <div class="d-flex flex-column gap-4">
                 <form id="input-sn-1-form" method="post" class="hidden scrap-card" data-search-type="INPUT_SN">
-                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Nhập Serial Number</h3>
+                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Input Serial Number</h3>
                     <div class="row g-3 align-items-stretch">
                         <div class="col-md-4">
                             <label for="sn-input-1" class="form-label">Serial Number</label>
-                            <textarea name="serialNumbers" id="sn-input-1" class="form-control" rows="9" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                            <textarea name="serialNumbers" id="sn-input-1" class="form-control" rows="9" placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
                         </div>
                         <div class="col-md-4 d-flex flex-column gap-3">
                             <div>
                                 <label for="description-input-1" class="form-label">Description</label>
-                                <input type="text" id="description-input-1" name="description" class="form-control" placeholder="Nhập mô tả">
+                            <input type="text" id="description-input-1" name="description" class="form-control" placeholder="Input Description">
                             </div>
                             <div>
                                 <label for="bp-options" class="form-label">Type Bonepile</label>
@@ -72,9 +65,9 @@
                 </form>
 
                 <form id="custom-form" method="post" class="hidden scrap-card" data-search-type="SN_WAIT_LIST_FORM">
-                    <h3 class="h5 mb-3 text-uppercase fw-semibold">Xuất danh sách</h3>
+                    <h3 class="h5 mb-3 text-uppercase fw-semibold">DATA</h3>
                     <div class="d-flex justify-content-end">
-                        <button id="sn-wait-list-btn" class="btn btn-ne" type="button">Data</button>
+                        <button id="sn-wait-list-btn" class="btn btn-ne" type="button">Export</button>
                     </div>
                 </form>
             </div>
@@ -85,7 +78,6 @@
         <div id="input-sn-1-result" class="hidden scrap-card"></div>
 
         <div id="sn-wait-approve-result" class="hidden scrap-card">
-            <h3 class="h5 mb-3 text-uppercase fw-semibold">SN đang chờ SPE phê duyệt</h3>
             <div class="table-responsive table-container scrap-table-container">
                 <table id="table-sn-wait-approve" class="mt-2 table table-hover table-striped datatable-table nvidia-table nvidia-table--spacious scrap-table--comfortable" style="width:100%">
                     <thead>
@@ -103,8 +95,13 @@
             </div>
         </div>
     </div>
-</div>
-
 @section Scripts {
     <script src="~/assets/areas/scrap/js/function1.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        .flowchart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+    </style>
 }

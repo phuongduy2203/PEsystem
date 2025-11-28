@@ -1,4 +1,72 @@
-﻿
+﻿var SearchFaNormalizer = (function () {
+    const existing = typeof window !== 'undefined' ? window.SearchFaNormalizer : undefined;
+    if (existing) {
+        return existing;
+    }
+    const hasValue = (value) => value !== undefined && value !== null && value !== '';
+    const fieldMappings = {
+        seriaL_NUMBER: ['SERIAL_NUMBER', 'serialNumber', 'SerialNumber', 'serial_number'],
+        productLine: ['PRODUCT_LINE', 'productLine', 'ProductLine'],
+        modeL_NAME: ['MODEL_NAME', 'modelName', 'ModelName'],
+        wiP_GROUP: ['WIP_GROUP', 'wipGroup', 'WipGroup'],
+        tesT_GROUP: ['TEST_GROUP', 'testGroup', 'TestGroup'],
+        tesT_CODE: ['TEST_CODE', 'testCode', 'ERROR_CODE', 'errorCode'],
+        datA1: ['DATA1', 'data1', 'ERROR_DESC', 'errorDesc'],
+        datA11: ['DATA11', 'data11', 'STATUS', 'status'],
+        datA12: ['DATA12', 'data12', 'PR_STATUS', 'prStatus'],
+        datA13: ['DATA13', 'data13', 'HANDOVER', 'handover'],
+        datA14: ['DATA14', 'data14'],
+        datA15: ['DATA15', 'data15'],
+        datA17: ['DATA17', 'data17', 'ACTION', 'action'],
+        datA18: ['DATA18', 'data18', 'POSITION', 'position', 'LOCATION', 'location'],
+        datA19: ['DATA19', 'data19', 'KANBAN_WIP', 'kanbanWip'],
+        datE3: ['DATE3', 'date3'],
+        tester: ['TESTER', 'tester'],
+        mO_NUMBER: ['MO_NUMBER', 'moNumber'],
+        mo_NUMBER: ['MO_NUMBER', 'moNumber']
+    };
+
+    function normalizeItem(item = {}) {
+        if (!item || typeof item !== 'object') {
+            return {};
+        }
+        const normalized = { ...item };
+        Object.entries(fieldMappings).forEach(([targetKey, sourceKeys]) => {
+            if (hasValue(normalized[targetKey])) {
+                return;
+            }
+            for (const sourceKey of sourceKeys) {
+                if (hasValue(item[sourceKey])) {
+                    normalized[targetKey] = item[sourceKey];
+                    break;
+                }
+            }
+        });
+        return normalized;
+    }
+
+    function normalizeData(data) {
+        if (!Array.isArray(data)) {
+            return [];
+        }
+        return data.map(normalizeItem);
+    }
+
+    function normalizeResponse(response) {
+        if (!response || typeof response !== 'object') {
+            return { success: false, data: [] };
+        }
+        return { ...response, data: normalizeData(response.data) };
+    }
+
+    const api = { normalizeItem, normalizeData, normalizeResponse };
+    if (typeof window !== 'undefined') {
+        window.SearchFaNormalizer = api;
+    }
+    return api;
+})();
+
+
 document.addEventListener("DOMContentLoaded", () => {
     loadModelNames();
     loadStatusOptions();
@@ -6,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadModelNames() {
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/SearchFA/get-unique-modelnames");
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/get-unique-modelnames");
         const data = await response.json();
         if (data.success) {
             const modelNameDropdown = document.getElementById("modelName");
@@ -26,7 +94,7 @@ async function loadModelNames() {
 
 async function loadStatusOptions() {
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/SearchFA/get-unique-status");
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/get-unique-status");
         const data = await response.json();
         if (data.success) {
             const statusDropdown = document.getElementById("status");
@@ -55,12 +123,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const modelNameSelect = document.getElementById("modelName");
     const resultsBody = document.getElementById("results-body");
     const searchResults = document.getElementById("search-results");
-    const paginationInfo = document.getElementById("pagination-info");
-    const prevPageBtn = document.getElementById("prev-page-btn");
-    const nextPageBtn = document.getElementById("next-page-btn");
-
-    let currentPage = 1;
-    const pageSize = 10;
 
     // Gửi yêu cầu tìm kiếm
     async function submitSearch() {
@@ -77,10 +139,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 showWarning("Vui lòng nhập SN!");
                 return;
             }
-            url = "http://10.220.130.119:9090/api/SearchFA/search-history-by-list";
+            url = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/search-history-by-list";
             payload = serialNumbers; // Gửi danh sách SN
         } else {
-            url = "http://10.220.130.119:9090/api/SearchFA/search";
+            url = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SearchFA/search";
             payload = {
                 SerialNumbers: serialNumbers, // Gửi danh sách SN
                 Status: document.getElementById("status").value,
@@ -104,7 +166,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const result = await response.json();
 
             if (result.success) {
-                displayResults(result.data);
+                const normalizedData = SearchFaNormalizer.normalizeData(result.data);
+                displayResults(normalizedData);
             } else {
                 showError("Error!");
             }
@@ -169,9 +232,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         searchResults.style.display = "block";
-
-        // Cập nhật phân trang
-        updatePagination(data.length);
     }
 
 
@@ -208,29 +268,6 @@ document.addEventListener("DOMContentLoaded", function () {
             modal.remove();
         });
     }
-
-
-    // Cập nhật phân trang
-    function updatePagination(totalResults) {
-        const totalPages = Math.ceil(totalResults / pageSize);
-        paginationInfo.textContent = `Trang ${currentPage}/${totalPages}`;
-
-        prevPageBtn.style.display = currentPage > 1 ? "inline-block" : "none";
-        nextPageBtn.style.display = currentPage < totalPages ? "inline-block" : "none";
-    }
-
-    // Xử lý sự kiện cho phân trang
-    prevPageBtn.addEventListener("click", () => {
-        if (currentPage > 1) {
-            currentPage--;
-            submitSearch();
-        }
-    });
-
-    nextPageBtn.addEventListener("click", () => {
-        currentPage++;
-        submitSearch();
-    });
 
     // Gắn chức năng tìm kiếm vào nút
     window.submitSearch = submitSearch;

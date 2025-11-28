@@ -14,7 +14,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace API_WEB.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SAPController : ControllerBase
     {

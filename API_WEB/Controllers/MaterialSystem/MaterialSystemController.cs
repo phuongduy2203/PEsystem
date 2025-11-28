@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API_WEB.Controllers.MaterialSystem
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class MaterialSystemController : ControllerBase
     {

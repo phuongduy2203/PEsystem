@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace API_WEB.Controllers.Repositories
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SearchController : ControllerBase
     {

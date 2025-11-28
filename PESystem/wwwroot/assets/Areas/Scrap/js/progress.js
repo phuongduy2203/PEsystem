@@ -216,7 +216,7 @@ async function loadFindBoardStatus() {
 
     try {
         // Gọi API để lấy dữ liệu FindBoardStatus
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/checking-scrap-quarterly", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/checking-scrap-quarterly", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -300,7 +300,7 @@ async function searchStatus(searchType, searchValues) {
 
     try {
         // Gọi API /api/Scrap/detail-task-status
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/detail-task-status", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/detail-task-status", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -516,7 +516,7 @@ async function searchHistoryBySN(snValues) {
     window.historySearchData = null;
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/history-by-sn", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/history-by-sn", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Gọi API để lấy dữ liệu FindBoardStatus
-            const response = await fetch("http://10.220.130.119:9090/api/Scrap/checking-scrap-quarterly", {
+            const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/checking-scrap-quarterly", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -739,83 +739,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error:", error);
         }
     });
-
-    // Xử lý sự kiện khi nhấn nút "Update" trong form UPDATE_STATUS
-    /*document.getElementById("update-status-btn").addEventListener("click", async function () {
-        const resultDiv = document.getElementById("update-status-result");
-
-        // Lấy danh sách SN từ textarea
-        const snInput = document.getElementById("sn-status-update").value.trim();
-        const sNs = snInput.split(/\r?\n/).map(sn => sn.trim()).filter(sn => sn);
-
-        // Lấy trạng thái từ dropdown
-        const status = document.getElementById("status-options").value;
-
-        // Kiểm tra dữ liệu đầu vào
-        if (!sNs.length) {
-            resultDiv.innerHTML = `
-                <div class="alert alert-warning">
-                    <strong>Cảnh báo:</strong> Vui lòng nhập ít nhất một Serial Number hợp lệ.
-                </div>
-            `;
-            return;
-        }
-
-        if (!status || (status !== "1" && status !== "2")) {
-            resultDiv.innerHTML = `
-                <div class="alert alert-warning">
-                    <strong>Cảnh báo:</strong> Vui lòng chọn trạng thái hợp lệ (Đã tìm thấy hoặc Đã chuyển kho phế).
-                </div>
-            `;
-            return;
-        }
-
-        // Hiển thị thông báo "đang xử lý"
-        resultDiv.innerHTML = `
-            <div class="alert alert-info">
-                <strong>Thông báo:</strong> Đang cập nhật trạng thái...
-            </div>
-        `;
-
-        const requestData = {
-            sNs: sNs,
-            status: status
-        };
-
-        try {
-            // Gọi API /api/Scrap/update-status-find-board
-            const response = await fetch("http://10.220.130.119:9090/api/Scrap/update-status-find-board", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                resultDiv.innerHTML = `
-                    <div class="alert alert-success">
-                        <strong>Thành công:</strong> ${result.message}
-                    </div>
-                `;
-            } else {
-                resultDiv.innerHTML = `
-                    <div class="alert alert-danger">
-                        <strong>Lỗi:</strong> ${result.message}
-                    </div>
-                `;
-            }
-        } catch (error) {
-            resultDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>Lỗi:</strong> Không thể kết nối đến API. Vui lòng kiểm tra lại.
-                </div>
-            `;
-            console.error("Error:", error);
-        }
-    });*/
 
     // Xử lý sự kiện khi nhấn nút "Search" trong form SEARCH_STATUS
     document.getElementById("search-status-btn").addEventListener("click", async function () {

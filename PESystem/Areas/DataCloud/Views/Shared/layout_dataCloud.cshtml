@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
     <link href="~/assets/areas/datacloud/css/datacloud.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
     <script src="~/lib/gsap-particles/particles.min.js"></script>
     <script src="~/lib/gsap-particles/gsap.min.js"></script>
@@ -25,37 +27,22 @@
         })();
     </script>
 
-    <header class="header d-flex justify-content-between align-items-center" id="header">
-        <div class="container-fluid d-flex align-items-center">
-            <button class="btn btn-link text-decoration-none d-md-none me-2" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <input type="text" id="search-input" class="form-control" placeholder="Search..." style="max-width: 300px;">
-        </div>
-
-        <ul class="d-flex align-items-center">
-            @if (User.Identity.IsAuthenticated)
-            {
-                <li class="nav-item dropdown">
-                    <a class="nav-link d-flex align-items-center avatar-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="~/assets/img/avatar.png" class="user-avatar" alt="User" style="width: 40px; height: 40px;">
-                        <span class="d-none d-md-block ps-2">@User.Identity.Name</span>
-                    </a>
-                </li>
-            }
-        </ul>
-    </header>
     <!-- Sidebar dọc -->
     <div id="sidebar" class="sidebar">
         <!-- Logo and Dashboard with fixed checkbox -->
         <div class="dashboard-container">
             <a href="@Url.Action("Home", "Home", new { area = "" })">
-                <img src="~/assets/img/dataCloud.png" style="width:48px; height:48px;" class="logo" />
+                <img src="~/assets/img/dataCloud.png" style="width:36px; height:36px;" class="logo" />
             </a>
             <span class="spanTitle" style="font-size: 1.3rem; font-weight: bold;">
                 DataCloud
             </span>
-            <span><input type="checkbox" id="toggleSidebarFixed" title="" /></span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
         </div>
         <nav class="nav flex-column">
             <!-- Menu Items -->
@@ -65,12 +52,10 @@
         </nav>
     </div>
 
-    <main id="mainContent">
-        <div id="spinner-overlay">
-            <span class="loader"></span>
-        </div>
-        @RenderBody()
-    </main>
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>

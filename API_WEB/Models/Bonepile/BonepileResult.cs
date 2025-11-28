@@ -165,4 +165,58 @@
         public string ERROR_DESC { get; set; }
         public double? AGING { get; set; }
     }
+
+    public class BonepileNPISerialBefore
+    {
+        public string SerialNumber { get; set; }
+        public string ModelName { get; set; }
+        public string ProductLine { get; set; }
+        public string MoNumber { get; set; }
+        public string ErrorFlag { get; set; }
+        public string WorkFlag { get; set; }
+        public string WipGroup { get; set; }
+        public string TestGroup { get; set; }
+        public DateTime? TestTime { get; set; }
+        public string TestCode { get; set; }
+        public string ErrorItemCode { get; set; }
+        public string ErrorDesc { get; set; }
+        public string Data11 { get; set; }
+        public string Repair { get; set; }
+        public string StationTest { get; set; }
+        public string Data2 { get; set; }
+        public string Data5 { get; set; }
+        public DateTime? PassTime { get; set; }
+        public DateTime? CheckinDate { get; set; }
+        public string AgingDay { get; set; }
+    }
+
+    public class BonepileNPISerialAfter
+    {
+        public string SerialNumber { get; set; }
+        public string Fg { get; set; }
+        public string MoNumber { get; set; }
+        public string ModelName { get; set; }
+        public string ProductLine { get; set; }
+        public string WipGroupKanban { get; set; }
+        public string WipGroup { get; set; }
+        public string ErrorFlag { get; set; }
+        public string WorkFlag { get; set; }
+        public string Repair { get; set; }
+        public string TestGroup { get; set; }
+        public DateTime? TestTime { get; set; }
+        public string TestCode { get; set; }
+        public string ErrorItemCode { get; set; }
+        public string ErrorDesc { get; set; }
+        public double? Aging { get; set; }
+        public double? AgingOldest { get; set; }
+    }
+
+    public class BonepileNPIProductLineResponse
+    {
+        public string ProductLine { get; set; }
+        public int BeforeCount { get; set; }
+        public int AfterCount { get; set; }
+        public List<BonepileNPISerialBefore> BeforeDetails { get; set; }
+        public List<BonepileNPISerialAfter> AfterDetails { get; set; }
+    }
 }

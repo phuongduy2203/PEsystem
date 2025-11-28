@@ -30,7 +30,7 @@
             return;
         }
 
-        fetch('http://10.220.130.119:9090/api/Search/GetKeyPartDetails', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/GetKeyPartDetails', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

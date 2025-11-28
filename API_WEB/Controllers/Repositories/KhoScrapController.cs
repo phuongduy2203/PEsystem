@@ -15,7 +15,7 @@ using API_WEB.Helpers.Repositories;
 
 namespace API_WEB.Controllers.Repositories
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class KhoScrapController : ControllerBase
     {

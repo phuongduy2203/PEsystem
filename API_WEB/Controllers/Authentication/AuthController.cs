@@ -13,7 +13,7 @@ using System.Security.Cryptography;
 namespace API_WEB.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly CSDL_NE _context;

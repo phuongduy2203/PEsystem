@@ -30,7 +30,7 @@
                     loadData: function () {
                         return $.ajax({
                             type: "GET",
-                            url: "/api/Admin/GetUsers",
+                            url: "/Admin/GetUsers",
                             contentType: "application/json"
                         }).then(response => {
                             if (response && response.success && Array.isArray(response.data)) {
@@ -67,7 +67,7 @@
 
                         return $.ajax({
                             type: "POST",
-                            url: "/api/Admin/CreateUser",
+                            url: "/Admin/CreateUser",
                             data: JSON.stringify({
                                 username: item.username,
                                 password: item.password,
@@ -132,7 +132,7 @@
 
                         return $.ajax({
                             type: "POST",
-                            url: "/api/Admin/EditUser",
+                            url: "/Admin/EditUser",
                             data: JSON.stringify(requestData),
                             contentType: "application/json",
                             dataType: "json"
@@ -159,7 +159,7 @@
                     deleteItem: function (item) {
                         return $.ajax({
                             type: "DELETE",
-                            url: "/api/Admin/DeleteUser/" + item.userId,
+                            url: "/Admin/DeleteUser/" + item.userId,
                             contentType: "application/json"
                         }).then(response => {
                             if (response && response.success) {

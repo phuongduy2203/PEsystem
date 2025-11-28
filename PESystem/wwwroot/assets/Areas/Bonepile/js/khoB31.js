@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", async function () {
-    const apiBase = "http://10.220.130.119:9090/api/Bonepile2";
+    const apiBase = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2";
     const apiCountUrl = `${apiBase}/adapter-mo-status-count`;
     const apiDetailUrl = `${apiBase}/adapter-mo-records`;
+    const locationUrl = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/FindLocations';
 
     // Định nghĩa tất cả trạng thái hợp lệ
     const validStatuses = [
@@ -20,11 +21,56 @@ document.addEventListener("DOMContentLoaded", async function () {
         "ApprovedBGA": "#17b86d",
         "WaitingApproveScrap": "#dc3545",
         "WAITING_LINK": "#6c757d",
-        "LINKED": "#ff8307"
+        "LINKED": "#ff8307",
+        "WaitingApprovalBGA": "#1f8ef1"
     };
+
+    const statusDisplayMap = {
+        "ScrapLacksTask": "Scrap Lacks Task",
+        "ScrapHasScrap": "Scrap Has Task",
+        "ApprovedBGA": "Approved BGA",
+        "WaitingApproveScrap": "Waiting Approve Scrap",
+        "WAITING_LINK": "Waiting Link",
+        "LINKED": "Linked",
+        "WaitingApprovalBGA": "Waiting Approval BGA"
+    };
+
+    const fallbackColors = ["#ff8307", "#05b529", "#ffc107", "#75b507", "#17a2b8", "#17b86d", "#dc3545", "#6c757d"];
 
     let dataTable;
     let modalTable;
+    const charts = [];
+    let statusChart = registerChart(initChart('statusDonutChart'));
+
+    function initChart(elementId) {
+        if (typeof echarts === 'undefined') {
+            console.warn('ECharts library is not loaded.');
+            return null;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with id "${elementId}" not found.`);
+            return null;
+        }
+        return echarts.init(element);
+    }
+
+    function registerChart(chart) {
+        if (chart && !charts.includes(chart)) {
+            charts.push(chart);
+        }
+        return chart || null;
+    }
+
+    function resizeCharts() {
+        charts.forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    }
+
+    window.addEventListener('resize', resizeCharts);
 
     // Load KPI + Donut chart
     async function loadDashboardData() {
@@ -40,69 +86,105 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.getElementById("waitingScrapCount").innerText = statusCounts.find(s => s.status === "WaitingApproveScrap")?.count || 0;
             document.getElementById("waitingLinkCount").innerText = statusCounts.find(s => s.status === "WAITING_LINK")?.count || 0;
             document.getElementById("linkedCount").innerText = statusCounts.find(s => s.status === "LINKED")?.count || 0;
+            document.getElementById("approvedBGACount").innerText = statusCounts.find(s => s.status === "ApprovedBGA")?.count || 0;
+            document.getElementById("waitingBGACount").innerText = statusCounts.find(s => s.status === "WaitingApprovalBGA")?.count || 0;
 
             // Tính phần trăm cho biểu đồ
             const total = statusCounts.reduce((sum, s) => sum + s.count, 0);
             const percentages = statusCounts.map(s => total > 0 ? ((s.count / total) * 100).toFixed(1) : 0);
 
-            // Vẽ Donut chart với phần trăm
-            const donutCtx = document.getElementById("statusDonutChart").getContext("2d");
-            new Chart(donutCtx, {
-                type: "doughnut",
-                data: {
-                    labels: statusCounts.map(s => s.status),
-                    datasets: [{
-                        data: statusCounts.map(s => s.count),
-                        backgroundColor: statusCounts.map(s => statusColorMap[s.status] || "#ccc"),
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                boxWidth: 20,
-                                boxHeight: 20,
-                                generateLabels: (chart) => {
-                                    const data = chart.data;
-                                    return data.labels.map((label, i) => ({
-                                        text: `${label} (${percentages[i]}%)`,
-                                        fillStyle: data.datasets[0].backgroundColor[i],
-                                        strokeStyle: data.datasets[0].backgroundColor[i],
-                                        lineWidth: 1,
-                                        hidden: isNaN(data.datasets[0].data[i]) || data.datasets[0].data[i] === 0,
-                                        index: i
-                                    }));
-                                }
-                            },
-                            maxWidth: 300,
-                            align: "center"
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const percentage = percentages[context.dataIndex];
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            formatter: (value, ctx) => {
-                                const total = statusCounts.reduce((sum, d) => sum + d.count, 0);
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${percentage}%`;
-                            },
-                            color: '#000', // Màu chữ
-                            font: { weight: 'bold', size: 12 }
-                        }
+            const summaryBody = document.getElementById("statusSummaryBody");
+            if (summaryBody) {
+                summaryBody.innerHTML = statusCounts.map((status, index) => {
+                    const displayName = statusDisplayMap[status.status] || status.status || '';
+                    const percentLabel = total > 0 ? `${percentages[index]}%` : '0%';
+                    return `<tr><td>${displayName}</td><td>${status.count || 0}</td><td>${percentLabel}</td></tr>`;
+                }).join("");
+            }
 
-                    }
-                },
-                plugins: [ChartDataLabels]
+            const chartData = statusCounts.map((status, index) => {
+                const value = status.count || 0;
+                const rawStatus = status.status || '';
+                const displayName = statusDisplayMap[rawStatus] || rawStatus;
+                const color = statusColorMap[rawStatus] || fallbackColors[index % fallbackColors.length];
+                return {
+                    value,
+                    name: displayName,
+                    rawStatus,
+                    itemStyle: { color }
+                };
             });
+
+            if (!statusChart) {
+                statusChart = registerChart(initChart('statusDonutChart'));
+            }
+
+            if (statusChart) {
+                const hasData = chartData.some(item => item.value > 0);
+                statusChart.setOption({
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        formatter: params => {
+                            const p = params[0];
+                            return `${p.name}: ${p.value} (${p.percent || 0}%)`;
+                        }
+                    },
+                    grid: {
+                        left: '4%',
+                        right: '4%',
+                        bottom: '10%',
+                        top: '10%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: chartData.map(item => item.name),
+                        axisLabel: {
+                            rotate: 20,
+                            color: '#003d99',
+                            fontWeight: 500,
+                            fontSize: 11
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#c3d9ff' }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { show: false },
+                        splitLine: {
+                            lineStyle: { color: 'rgba(0,0,0,0.1)' }
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Trạng thái',
+                            type: 'bar',
+                            data: chartData.map(item => ({
+                                value: item.value,
+                                itemStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: item.itemStyle.color },
+                                        { offset: 1, color: '#a1c4fd' }
+                                    ]),
+                                    borderRadius: [6, 6, 0, 0]
+                                }
+                            })),
+                            barWidth: '50%',
+                            label: {
+                                show: true,
+                                position: 'top',
+                                color: '#1e2a45',
+                                fontSize: 11,
+                                fontWeight: 600
+                            }
+                        }
+                    ]
+                }, true);
+
+                requestAnimationFrame(resizeCharts);
+            }
             // Load dữ liệu bảng ban đầu (Tất cả trạng thái)
             await loadTableData(validStatuses);
         } catch (error) {
@@ -208,6 +290,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                             await loadTableData(statuses);
                         });
 
+                        //JS để click vào row thì giữ highlight
+                        $('#sumMaterialsTable tbody').on('click', 'tr', function () {
+                            // Bỏ chọn các row khác
+                            $('#sumMaterialsTable tbody tr').removeClass('selected-row');
+
+                            // Gán class highlight
+                            $(this).addClass('selected-row');
+                        });
 
                         // Set placeholder cho ô search
                         $('.dataTables_filter input[type="search"]').attr('placeholder', 'Tìm kiếm');

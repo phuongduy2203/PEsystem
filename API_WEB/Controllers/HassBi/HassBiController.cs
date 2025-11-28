@@ -10,7 +10,7 @@ using Oracle.ManagedDataAccess.Client;
 namespace API_WEB.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class HassBiController : ControllerBase
     {
         private readonly CSDL_NE HassBiDB;

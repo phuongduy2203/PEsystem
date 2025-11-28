@@ -1,7 +1,7 @@
 let selectedInternalTasks = new Set(); // Cho CREATE_TASK_FORM
 let selectedHistoryInternalTasks = new Set(); // Cho HISTORY_APPLY
 
-const LOCATION_API_URL = 'http://10.220.130.119:9090/api/Search/FindLocations';
+const LOCATION_API_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Search/FindLocations';
 
 function normalizeSerialNumber(value) {
     return (value ?? '').toString().trim().toUpperCase();
@@ -97,7 +97,7 @@ async function callSmartRepairApi(snList, status, task = "") {
     };
 
     try {
-        const response = await fetch("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", {
+        const response = await fetch("https://sfc-portal.cns.myfiinet.com/api/SfcSmartRepair/api/repair_scrap", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)

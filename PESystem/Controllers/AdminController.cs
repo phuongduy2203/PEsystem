@@ -13,7 +13,7 @@ namespace PESystem.Controllers
 {
     [Authorize(Roles = "SuperAdmin")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class AdminController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

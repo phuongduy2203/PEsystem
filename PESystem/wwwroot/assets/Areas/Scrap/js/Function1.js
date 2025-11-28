@@ -140,7 +140,7 @@ async function loadScrapStatusTwo(resultDiv) {
     `;
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-scrap-status-two-and-four", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/get-scrap-status-two-and-four", {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
@@ -290,7 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 createdBy: createdBy
             };
 
-            const inputSnResponse = await fetch("http://10.220.130.119:9090/api/Scrap/input-sn-wait-spe-approve", {
+            const inputSnResponse = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/input-sn-wait-spe-approve", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -315,7 +315,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         task: null
                     };
 
-                    const repairScrapResponse = await fetch("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/api/repair_scrap", {
+                    const repairScrapResponse = await fetch("https://sfc-portal.cns.myfiinet.com/api/SfcSmartRepair/api/repair_scrap", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"

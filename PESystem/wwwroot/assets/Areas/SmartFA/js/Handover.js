@@ -1,5 +1,73 @@
-﻿const config = {
-    apiBaseUrl: "http://10.220.130.119:9090",
+﻿var SearchFaNormalizer = (function () {
+    const existing = typeof window !== 'undefined' ? window.SearchFaNormalizer : undefined;
+    if (existing) {
+        return existing;
+    }
+    const hasValue = (value) => value !== undefined && value !== null && value !== '';
+    const fieldMappings = {
+        seriaL_NUMBER: ['SERIAL_NUMBER', 'serialNumber', 'SerialNumber', 'serial_number'],
+        productLine: ['PRODUCT_LINE', 'productLine', 'ProductLine'],
+        modeL_NAME: ['MODEL_NAME', 'modelName', 'ModelName'],
+        wiP_GROUP: ['WIP_GROUP', 'wipGroup', 'WipGroup'],
+        tesT_GROUP: ['TEST_GROUP', 'testGroup', 'TestGroup'],
+        tesT_CODE: ['TEST_CODE', 'testCode', 'ERROR_CODE', 'errorCode'],
+        datA1: ['DATA1', 'data1', 'ERROR_DESC', 'errorDesc'],
+        datA11: ['DATA11', 'data11', 'STATUS', 'status'],
+        datA12: ['DATA12', 'data12', 'PR_STATUS', 'prStatus'],
+        datA13: ['DATA13', 'data13', 'HANDOVER', 'handover'],
+        datA14: ['DATA14', 'data14'],
+        datA15: ['DATA15', 'data15'],
+        datA17: ['DATA17', 'data17', 'ACTION', 'action'],
+        datA18: ['DATA18', 'data18', 'POSITION', 'position', 'LOCATION', 'location'],
+        datA19: ['DATA19', 'data19', 'KANBAN_WIP', 'kanbanWip'],
+        datE3: ['DATE3', 'date3'],
+        tester: ['TESTER', 'tester'],
+        mO_NUMBER: ['MO_NUMBER', 'moNumber'],
+        mo_NUMBER: ['MO_NUMBER', 'moNumber']
+    };
+
+    function normalizeItem(item = {}) {
+        if (!item || typeof item !== 'object') {
+            return {};
+        }
+        const normalized = { ...item };
+        Object.entries(fieldMappings).forEach(([targetKey, sourceKeys]) => {
+            if (hasValue(normalized[targetKey])) {
+                return;
+            }
+            for (const sourceKey of sourceKeys) {
+                if (hasValue(item[sourceKey])) {
+                    normalized[targetKey] = item[sourceKey];
+                    break;
+                }
+            }
+        });
+        return normalized;
+    }
+
+    function normalizeData(data) {
+        if (!Array.isArray(data)) {
+            return [];
+        }
+        return data.map(normalizeItem);
+    }
+
+    function normalizeResponse(response) {
+        if (!response || typeof response !== 'object') {
+            return { success: false, data: [] };
+        }
+        return { ...response, data: normalizeData(response.data) };
+    }
+
+    const api = { normalizeItem, normalizeData, normalizeResponse };
+    if (typeof window !== 'undefined') {
+        window.SearchFaNormalizer = api;
+    }
+    return api;
+})();
+
+const config = {
+    apiBaseUrl: "https://pe-vnmbd-nvidia-cns.myfiinet.com",
     endpoints: {
         getStatusCounts: "/api/SearchFA/get-status-counts",
         search: "/api/SearchFA/search",
@@ -174,9 +242,10 @@ async function handleChartClick(selectedStatus, handoverStatus, chartType) {
     try {
         const result = await fetchApi(config.endpoints.search, payload);
         if (result.success) {
+            const normalizedData = SearchFaNormalizer.normalizeData(result.data);
             const filteredData = chartType === "online"
-                ? result.data.filter(item => item.datA18 !== null && item.datA18 !== "TRONG_KHO" && item.datA13 !== "WAITING_HAND_OVER")
-                : result.data;
+                ? normalizedData.filter(item => item.datA18 !== null && item.datA18 !== "TRONG_KHO" && item.datA13 !== "WAITING_HAND_OVER")
+                : normalizedData;
             updateModalSNTable(filteredData);
             new bootstrap.Modal(document.getElementById("statusModal")).show();
         } else {

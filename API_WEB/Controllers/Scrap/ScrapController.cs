@@ -14,7 +14,7 @@ using Oracle.ManagedDataAccess.Client;
 
 namespace API_WEB.Controllers.Scrap
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ScrapController : ControllerBase
     {
@@ -33,7 +33,7 @@ namespace API_WEB.Controllers.Scrap
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true // Bỏ qua kiểm tra chứng chỉ
             };
             _httpClient = new HttpClient(handler);
-            _httpClient.BaseAddress = new Uri("https://10.220.130.216:443/SfcSmartRepair/");
+            _httpClient.BaseAddress = new Uri("https://sfc-portal.cns.myfiinet.com/SfcSmartRepair/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -1803,49 +1803,53 @@ namespace API_WEB.Controllers.Scrap
         {
             try
             {
-                // Kiểm tra dữ liệu đầu vào
+                // ----------------------------
+                // 1. Kiểm tra dữ liệu đầu vào
+                // ----------------------------
                 if (request == null || request.SNs == null || !request.SNs.Any())
                 {
                     return BadRequest(new { message = "Danh sách SN không được để trống." });
                 }
 
-                // Kiểm tra ApplyTaskStatus hợp lệ (ví dụ: chỉ cho phép 5,6,7 theo yêu cầu)
+                if (string.IsNullOrEmpty(request.Type) || (request.Type != "check" && request.Type != "update"))
+                {
+                    return BadRequest(new { message = "Type phải là 'check' hoặc 'update'." });
+                }
+
                 if (request.ApplyTaskStatus != 5 && request.ApplyTaskStatus != 6 && request.ApplyTaskStatus != 7)
                 {
                     return BadRequest(new { message = "ApplyTaskStatus phải là 5, 6 hoặc 7." });
                 }
 
-                // Kiểm tra danh sách SN trong bảng ScrapList
+                // ------------------------------------------------
+                // 2. Kiểm tra SN có tồn tại trong ScrapList không
+                // ------------------------------------------------
                 var existingSNs = await _sqlContext.ScrapLists
                     .Where(s => request.SNs.Contains(s.SN))
                     .ToListAsync();
 
-                // Tìm các SN không tồn tại trong bảng ScrapList
                 var nonExistingSNs = request.SNs.Except(existingSNs.Select(s => s.SN)).ToList();
                 if (nonExistingSNs.Any())
                 {
                     return BadRequest(new { message = $"Các SN sau không tồn tại trong bảng ScrapList: {string.Join(", ", nonExistingSNs)}" });
                 }
 
-                // Xác định trạng thái hiện tại yêu cầu dựa trên ApplyTaskStatus đầu vào
+                // -------------------------------------------------------------
+                // 3. Xác định ApplyTaskStatus hiện tại phải là gì trước khi đổi
+                // -------------------------------------------------------------
                 int requiredCurrentStatus;
                 switch (request.ApplyTaskStatus)
                 {
-                    case 6:
-                        requiredCurrentStatus = 5;
-                        break;
-                    case 7:
-                        requiredCurrentStatus = 6;
-                        break;
-                    case 5:
-                        requiredCurrentStatus = 7;
-                        break;
+                    case 6: requiredCurrentStatus = 5; break;
+                    case 7: requiredCurrentStatus = 6; break;
+                    case 5: requiredCurrentStatus = 7; break;
                     default:
-                        // Không nên xảy ra vì đã kiểm tra ở trên, nhưng để an toàn
                         return BadRequest(new { message = "ApplyTaskStatus không hợp lệ." });
                 }
 
-                // Kiểm tra trạng thái hiện tại của tất cả SN
+                // -------------------------------------------------------------
+                // 4. Kiểm tra trạng thái hiện tại
+                // -------------------------------------------------------------
                 var invalidSNs = existingSNs
                     .Where(s => s.ApplyTaskStatus != requiredCurrentStatus)
                     .Select(s => $"{s.SN} (trạng thái hiện tại: {s.ApplyTaskStatus})")
@@ -1853,26 +1857,41 @@ namespace API_WEB.Controllers.Scrap
 
                 if (invalidSNs.Any())
                 {
-                    return BadRequest(new { message = $"Các SN sau không có trạng thái hiện tại đúng ({requiredCurrentStatus}): {string.Join(", ", invalidSNs)}" });
+                    return BadRequest(new { message = $"Các SN sau không có trạng thái đúng ({requiredCurrentStatus}): {string.Join(", ", invalidSNs)}" });
                 }
 
-                // Cập nhật ApplyTaskStatus và ApplyTime cho các SN hợp lệ
+                // -------------------------------------------------------------
+                // 5. Nếu type = check → chỉ validate và trả kết quả
+                // -------------------------------------------------------------
+                if (request.Type == "check")
+                {
+                    return Ok(new
+                    {
+                        message = "CHECK_OK",
+                        nextStatus = request.ApplyTaskStatus
+                    });
+                }
+
+                // -------------------------------------------------------------
+                // 6. Nếu type = update → thực hiện update dữ liệu
+                // -------------------------------------------------------------
                 foreach (var record in existingSNs)
                 {
                     record.ApplyTaskStatus = request.ApplyTaskStatus;
-                    record.ApplyTime = DateTime.Now; // Cập nhật thời gian áp dụng
+                    record.ApplyTime = DateTime.Now;
                 }
 
                 await AddHistoryEntriesAsync(existingSNs);
                 await _sqlContext.SaveChangesAsync();
 
-                return Ok(new { message = "Cập nhật ApplyTaskStatus thành công cho danh sách SN." });
+                return Ok(new { message = "UPDATE-OK" });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật dữ liệu.", error = ex.Message });
             }
         }
+
 
         // API: Đồng bộ dữ liệu từ ScrapList với SFISM4.R_REPAIR_SCRAP
         [HttpPost("sync-scrap")]
@@ -2153,6 +2172,7 @@ namespace API_WEB.Controllers.Scrap
     // Thêm class request mới UpdateApplyTaskStatusRequest
     public class UpdateApplyTaskStatusRequest
     {
+        public string Type { get; set; } = string.Empty; // "check" hoặc "update"
         public List<string> SNs { get; set; } = new List<string>();
         public int ApplyTaskStatus { get; set; }
     }

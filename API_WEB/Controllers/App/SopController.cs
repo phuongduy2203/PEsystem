@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace API_WEB.Controllers.App
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SopController : ControllerBase
     {

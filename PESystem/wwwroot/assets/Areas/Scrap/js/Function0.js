@@ -140,7 +140,7 @@ async function loadScrapStatusTwo(resultDiv) {
     `;
 
     try {
-        const response = await fetch("http://10.220.130.119:9090/api/Scrap/get-scrap-status-eight", {
+        const response = await fetch("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Scrap/get-scrap-status-eight", {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"

@@ -7,236 +7,180 @@ using API_WEB.ModelsOracle;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
-using Microsoft.Extensions.Logging; // Thêm logging
 using DocumentFormat.OpenXml.InkML;
 using System.Linq;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 
 namespace API_WEB.Controllers.SmartFA
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class SearchFAController : ControllerBase
     {
-        private const string V = "SearchProductsBySNInternal trả về success = false: {Message}";
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
-        private readonly HttpClient _httpClient; // Thêm HttpClient để gọi API
-        public SearchFAController(CSDL_NE sqlContext, OracleDbContext oracleContext, HttpClient httpClient)
+        public SearchFAController(CSDL_NE sqlContext, OracleDbContext oracleContext)
         {
             _sqlContext = sqlContext ?? throw new ArgumentNullException(nameof(sqlContext));
             _oracleContext = oracleContext ?? throw new ArgumentNullException(nameof(oracleContext));
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> SearchRepairTasks([FromBody] SearchRequestNe request)
+        public async Task<IActionResult> SearchRepairTask([FromBody] SearchRequestNe request)
         {
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+
             try
             {
-                // 1. Truy vấn OracleDataRepairTask và chỉ lấy SERIAL_NUMBER với MODEL_SERIAL != "SWITCH"
-                var oracleTasks = await (
-                    from task in _oracleContext.OracleDataRepairTask
-                    join modelDesc in _oracleContext.OracleDataCModelDesc
-                    on task.MODEL_NAME equals modelDesc.MODEL_NAME
-                    join wipGroup in _oracleContext.OracleDataR107 // Join với bảng r107
-                    on task.SERIAL_NUMBER equals wipGroup.SERIAL_NUMBER
-                    join kanBanWIP in _oracleContext.OracleDataZKanbanTracking
-                    on task.SERIAL_NUMBER equals kanBanWIP.SERIAL_NUMBER into kanBanJoin
-                    from kanBanWIP in kanBanJoin.DefaultIfEmpty() // Left join để xử lý trường hợp SN không có trong z_kanban_tracking
-                    where modelDesc.MODEL_SERIAL != "SWITCH" // Điều kiện lọc MODEL_SERIAL
-                          && !(wipGroup.WIP_GROUP.Contains("BR2C") || wipGroup.WIP_GROUP.Contains("BCFA"))
-                          && (string.IsNullOrEmpty(request.Data1) || EF.Functions.Like(task.DATA1, $"%{request.Data1}%"))
-                          && (request.SerialNumbers == null || !request.SerialNumbers.Any() || request.SerialNumbers.Contains(task.SERIAL_NUMBER))
-                          && (string.IsNullOrEmpty(request.ModelName) || task.MODEL_NAME == request.ModelName)
-                          && (string.IsNullOrEmpty(request.TestCode) || task.TEST_CODE == request.TestCode)
-                          && (string.IsNullOrEmpty(request.Status) || task.DATA11 == request.Status)
-                          && (string.IsNullOrEmpty(request.HandoverStatus) || task.DATA13 == request.HandoverStatus)
-                    select new
-                    {
-                        task.SERIAL_NUMBER,
-                        task.MODEL_NAME,
-                        task.MO_NUMBER,
-                        task.TEST_GROUP,
-                        task.TEST_CODE,
-                        task.DATA1,
-                        task.DATA11,
-                        task.DATA12,
-                        task.DATE3,
-                        task.TESTER,
-                        task.DATA13,
-                        task.DATA17,
-                        task.DATA18,
-                        WIP_GROUP = wipGroup.WIP_GROUP, // Từ r107
-                        KANBAN_WIP = kanBanWIP != null ? kanBanWIP.WIP_GROUP : null // Từ z_kanban_tracking, null nếu không tìm thấy
-                    }
-                ).ToListAsync();
+                await connection.OpenAsync();
+                var searchQuery = @"
+                 SELECT 
+                    task.SERIAL_NUMBER,
+                    task.MODEL_NAME,
+                    task.MO_NUMBER,
+                    task.TEST_GROUP,
+                    task.TEST_CODE AS ERROR_CODE,
+                    task.DATA1 AS ERROR_DESC,
+                    task.DATA11 AS STATUS,
+                    task.DATA12 AS PR_STATUS,
+                    task.DATE3,
+                    task.TESTER,
+                    task.DATA13 as HANDOVER,
+                    task.DATA17 as ACTION,
+                    task.DATA18 as POSITION,
+                    cmd.PRODUCT_LINE,
+                    r107.WIP_GROUP,
+                    CASE WHEN zkt.WIP_GROUP IS NOT NULL THEN zkt.WIP_GROUP
+                        ELSE 'Before'
+                    END AS KANBAN_WIP
+                FROM SFISM4.R_REPAIR_TASK_T task
+                JOIN SFIS1.C_MODEL_DESC_T md ON task.MODEL_NAME = md.MODEL_NAME
+                JOIN SFISM4.R107 r107 ON task.SERIAL_NUMBER = r107.SERIAL_NUMBER
+                LEFT JOIN SFISM4.Z_KANBAN_TRACKING_T zkt 
+                    ON task.SERIAL_NUMBER = zkt.SERIAL_NUMBER
+                LEFT JOIN SFIS1.C_MODEL_DESC_T cmd 
+                    ON task.MODEL_NAME = cmd.MODEL_NAME
+                WHERE md.MODEL_SERIAL <> 'SWITCH'
+                AND r107.WIP_GROUP NOT LIKE '%BR2C%'";
+                var parameters = new List<OracleParameter>();
 
-                if (!oracleTasks.Any())
+                if (!string.IsNullOrEmpty(request.Data1))
                 {
-                    return Ok(new
-                    {
-                        success = false,
-                        message = "Không tìm thấy dữ liệu phù hợp.",
-                        data = new List<object>()
-                    });
+                    searchQuery += " AND task.DATA1 LIKE :p_data1 ";
+                    parameters.Add(new OracleParameter("p_data1", $"%{request.Data1}%"));
                 }
 
-                // 2. Xác định giá trị KANBAN_WIP dựa trên MODEL_NAME và z_kanban_tracking
-                var tasksWithKanbanWip = oracleTasks.Select(task => new
+                if (!string.IsNullOrEmpty(request.ModelName))
                 {
-                    task.SERIAL_NUMBER,
-                    task.MODEL_NAME,
-                    task.MO_NUMBER,
-                    task.TEST_GROUP,
-                    task.TEST_CODE,
-                    task.DATA1,
-                    task.DATA11,
-                    task.DATA12,
-                    task.DATE3,
-                    task.TESTER,
-                    task.DATA13,
-                    task.DATA17,
-                    task.DATA18,
-                    task.WIP_GROUP,
-                    KANBAN_WIP = task.MODEL_NAME.StartsWith("900") ? "After" :
-                                 (task.KANBAN_WIP != null ? task.KANBAN_WIP : "Before")
-                }).ToList();
+                    searchQuery += " AND task.MODEL_NAME = :p_model ";
+                    parameters.Add(new OracleParameter("p_model", request.ModelName));
+                }
 
-                // 3. Lấy danh sách ModelName từ tasksWithKanbanWip
-                var modelNames = tasksWithKanbanWip.Select(t => t.MODEL_NAME).Distinct().ToList();
-
-                // 4. Truy vấn ProductLine từ SFIS1.C_MODEL_DESC_T
-                string productLineQuery = $@"
-            SELECT MODEL_NAME, PRODUCT_LINE
-            FROM SFIS1.C_MODEL_DESC_T
-            WHERE MODEL_NAME IN ({string.Join(",", modelNames.Select(mn => $"'{mn}'"))})";
-
-                var productLineResults = await _oracleContext.OracleDataCModelDesc
-                    .FromSqlRaw(productLineQuery)
-                    .AsNoTracking()
-                    .Select(pl => new
-                    {
-                        MODEL_NAME = pl.MODEL_NAME,
-                        PRODUCT_LINE = pl.PRODUCT_LINE ?? ""
-                    })
-                    .ToListAsync();
-
-                // 5. Kết hợp ProductLine với tasksWithKanbanWip
-                var oracleWithProductLine = tasksWithKanbanWip.Select(task => new
+                if (!string.IsNullOrEmpty(request.TestCode))
                 {
-                    task.SERIAL_NUMBER,
-                    task.MODEL_NAME,
-                    task.MO_NUMBER,
-                    task.TEST_GROUP,
-                    task.TEST_CODE,
-                    task.DATA1,
-                    task.DATA11,
-                    task.DATA12,
-                    task.DATE3,
-                    task.TESTER,
-                    task.DATA13,
-                    task.DATA17,
-                    task.DATA18,
-                    task.WIP_GROUP,
-                    task.KANBAN_WIP,
-                    ProductLine = productLineResults.FirstOrDefault(pl => pl.MODEL_NAME == task.MODEL_NAME)?.PRODUCT_LINE ?? "N/A"
-                });
+                    searchQuery += " AND task.TEST_CODE = :p_testcode ";
+                    parameters.Add(new OracleParameter("p_testcode", request.TestCode));
+                }
 
-                // 6. Truy vấn dữ liệu từ bảng Product và ScrapList (SQL Server)
-                var serialNumbers = oracleWithProductLine.Select(t => t.SERIAL_NUMBER).ToList();
-                var products = await _sqlContext.Products
-                    .AsNoTracking()
-                    .Include(p => p.Shelf)
-                    .Where(product => serialNumbers.Contains(product.SerialNumber))
-                    .Select(product => new
+                if (!string.IsNullOrEmpty(request.Status))
+                {
+                    searchQuery += " AND task.DATA11 = :p_status ";
+                    parameters.Add(new OracleParameter("p_status", request.Status));
+                }
+
+                if (!string.IsNullOrEmpty(request.HandoverStatus))
+                {
+                    searchQuery += " AND task.DATA13 = :p_handover ";
+                    parameters.Add(new OracleParameter("p_handover", request.HandoverStatus));
+                }
+
+                // Filter SN list
+                if (request.SerialNumbers != null && request.SerialNumbers.Any())
+                {
+                    string inClause = string.Join(",", request.SerialNumbers.Select((sn, idx) => $":sn{idx}"));
+                    searchQuery += $" AND task.SERIAL_NUMBER IN ({inClause}) ";
+
+                    int i = 0;
+                    foreach (var sn in request.SerialNumbers)
                     {
-                        product.SerialNumber,
-                        ShelfCode = product.Shelf != null ? product.Shelf.ShelfCode : null,
-                        product.ColumnNumber,
-                        product.LevelNumber,
-                        product.TrayNumber,
-                        product.PositionInTray,
-                        product.BorrowStatus
-                    })
-                    .ToListAsync();
+                        parameters.Add(new OracleParameter($"sn{i++}", sn));
+                    }
+                }
 
-                //New query ScrapList
-                var scrapList = await _sqlContext.ScrapLists.AsNoTracking().Where(scrap => serialNumbers.Contains(scrap.SN))
-                    .Select(scrap => new
+                var cmd = new OracleCommand(searchQuery, connection);
+                cmd.BindByName = true;
+                foreach (var p in parameters)
+                {
+                    cmd.Parameters.Add(p);
+                }
+                var results = new List<OracleRepairResult>();
+                await using var reder = await cmd.ExecuteReaderAsync();
+                while(await reder.ReadAsync())
+                {
+                    results.Add(new OracleRepairResult
                     {
-                        scrap.SN,
-                        ScrapStatus = scrap.ApplyTaskStatus == 0 || scrap.ApplyTaskStatus == 1 ? "SPE Approved Scrap" :
-                             scrap.ApplyTaskStatus == 2 ? "Waiting Approve" :
-                             scrap.ApplyTaskStatus == 3 ? "SPE approve to BGA" : ""
-                    }).ToListAsync();
-
-                // 7. Kết hợp dữ liệu Oracle và SQL Server
-                var combinedResults = oracleWithProductLine
-                    .GroupJoin(
-                        products,
-                        oracle => oracle.SERIAL_NUMBER,
-                        product => product.SerialNumber,
-                        (oracle, productGroup) => new
-                        {
-                            OracleTask = oracle,
-                            ProductData = productGroup.FirstOrDefault()
-                        }
-                    ).GroupJoin(
-                    scrapList,
-                        combined => combined.OracleTask.SERIAL_NUMBER,
-                        scrap => scrap.SN,
-                        (combined, scrapGroup) => new
-                        {
-                            combined.OracleTask,
-                            combined.ProductData,
-                            ScrapData = scrapGroup.FirstOrDefault()
-                        }
-                     )
-                    .Select(result => new
-                    {
-                        result.OracleTask.SERIAL_NUMBER,
-                        result.OracleTask.MODEL_NAME,
-                        result.OracleTask.MO_NUMBER,
-                        result.OracleTask.TEST_GROUP,
-                        result.OracleTask.TEST_CODE,
-                        result.OracleTask.DATA1,
-                        result.OracleTask.DATA11,
-                        result.OracleTask.DATA12,
-                        result.OracleTask.DATE3,
-                        result.OracleTask.TESTER,
-                        result.OracleTask.DATA13,
-                        result.OracleTask.DATA17,
-                        result.OracleTask.DATA18,
-                        result.OracleTask.WIP_GROUP,
-                        result.OracleTask.KANBAN_WIP,
-                        result.OracleTask.ProductLine,
-                        ShelfCode = result.ProductData?.ShelfCode ?? "",
-                        ColumnNumber = result.ProductData?.ColumnNumber,
-                        LevelNumber = result.ProductData?.LevelNumber,
-                        TrayNumber = result.ProductData?.TrayNumber,
-                        PositionInTray = result.ProductData?.PositionInTray,
-                        BorrowStatus = result.ProductData?.BorrowStatus,
-                        ScrapStatus = result.ScrapData?.ScrapStatus ?? ""
-                    })
-                    .ToList();
-
+                        SERIAL_NUMBER = reder["SERIAL_NUMBER"]?.ToString(),
+                        MODEL_NAME = reder["MODEL_NAME"]?.ToString(),
+                        MO_NUMBER = reder["MO_NUMBER"]?.ToString(),
+                        TEST_GROUP = reder["TEST_GROUP"]?.ToString(),
+                        ERROR_CODE = reder["ERROR_CODE"]?.ToString(),
+                        ERROR_DESC = reder["ERROR_DESC"]?.ToString(),
+                        STATUS = reder["STATUS"]?.ToString(),
+                        PR_STATUS = reder["PR_STATUS"]?.ToString(),
+                        DATE3 = reder["DATE3"] as DateTime?,
+                        TESTER = reder["TESTER"]?.ToString(),
+                        HANDOVER = reder["HANDOVER"]?.ToString(),
+                        ACTION = reder["ACTION"]?.ToString(),
+                        POSITION = reder["POSITION"]?.ToString(),
+                        PRODUCT_LINE = reder["PRODUCT_LINE"]?.ToString(),
+                        WIP_GROUP = reder["WIP_GROUP"]?.ToString(),
+                        KANBAN_WIP = reder["KANBAN_WIP"]?.ToString()
+                    });
+                }
                 return Ok(new
                 {
                     success = true,
-                    totalResults = combinedResults.Count,
-                    data = combinedResults
+                    count = results.Count,
+                    data = results
                 });
+            }
+            catch (OracleException ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Database error: {ex.Message}" });
             }
             catch (Exception ex)
             {
-                // Ghi log chi tiết lỗi
-                Console.WriteLine($"Lỗi: {ex.Message}");
-                Console.WriteLine($"Chi tiết: {ex.StackTrace}");
-                return StatusCode(500, new { success = false, message = ex.Message });
+                return StatusCode(500, new { success = false, message = $"System error: {ex.Message}" });
             }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                    await connection.CloseAsync();
+            }
+        }
+
+        public class OracleRepairResult
+        {
+            public string SERIAL_NUMBER { get; set; }
+            public string MODEL_NAME { get; set; }
+            public string MO_NUMBER { get; set; }
+            public string TEST_GROUP { get; set; }
+            public string ERROR_CODE { get; set; }
+            public string ERROR_DESC { get; set; }
+            public string STATUS { get; set; }
+            public string PR_STATUS { get; set; }
+            public DateTime? DATE3 { get; set; }
+            public string TESTER { get; set; }
+            public string HANDOVER { get; set; }
+            public string ACTION { get; set; }
+            public string POSITION { get; set; }
+            public string WIP_GROUP { get; set; }
+            public string KANBAN_WIP { get; set; }
+            public string PRODUCT_LINE { get; set; }
         }
 
         [HttpGet("get-fullname")]
@@ -266,7 +210,6 @@ namespace API_WEB.Controllers.SmartFA
             }
         }
 
-        //Lay FullName theo trong ID
         [HttpPost("get-fullname-batch")]
         public IActionResult GetFullNameBatch([FromBody] List<string> usernames)
         {
@@ -275,30 +218,6 @@ namespace API_WEB.Controllers.SmartFA
                 .ToDictionary(u => u.Username, u => u.FullName);
 
             return Ok(new { success = true, data = users });
-        }
-
-        //Lay FullName theo list
-        [HttpPost("get-fullname-batch-list")]
-        public async Task<IActionResult> GetFullNameBatchList([FromBody] List<string> usernames)
-        {
-            if (usernames == null || usernames.Count == 0)
-            {
-                return BadRequest(new { success = false, message = "Danh sách ID không được để trống!" });
-            }
-
-            try
-            {
-                // Lay danh sách FullName tu SQL Server
-                var users = await _sqlContext.Users
-                    .Where(u => usernames.Contains(u.Username))
-                    .ToDictionaryAsync(u => u.Username, u => u.FullName);
-
-                return Ok(new { success = true, data = users });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
         }
 
         [HttpGet("get-unique-modelnames")]
@@ -449,9 +368,9 @@ namespace API_WEB.Controllers.SmartFA
                         DATA12 = detail.DATA12 ?? "",
                         DATE3 = detail.DATE3,
                         TESTER = detail.TESTER ?? "",
-                        DATA17 = detail.DATA17 ?? "",//type
+                        DATA17 = detail.DATA17 ?? "",//Type
                         DATA18 = detail.DATA18 ?? "",//Location
-                        DATA19 = detail.DATA19 ?? "",//L?ch s? s?a ch?a.
+                        DATA19 = detail.DATA19 ?? "",//Lich su sua chua.
                     })
                     .ToListAsync();
 
@@ -679,8 +598,7 @@ namespace API_WEB.Controllers.SmartFA
                 });
             }
         }
-
-
+         
         // API lấy dữ liệu từ R109 theo SerialNumber với repair_time mới nhất
         [HttpPost("get-repair-owner-data-by-sn")]
         public async Task<IActionResult> GetRepairOwnerDataBySerial([FromBody] SerialNumberRequest request)
@@ -739,6 +657,221 @@ namespace API_WEB.Controllers.SmartFA
                 {
                     success = true,
                     data = allResults
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        // API lấy dữ liệu từ R109 theo SerialNumber với repair_time mới nhất
+        [HttpPost("get-repair-data")]
+        public async Task<IActionResult> GetRepairDatal([FromBody] SerialNumberRequest request)
+        {
+            try
+            {
+                var serialNumbers = request?.SerialNumbers?
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Distinct()
+                    .ToList() ?? new List<string>();
+
+                if (!serialNumbers.Any())
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "SerialNumber không được để trống!",
+                    });
+                }
+
+                const int batchSize = 1000;
+                var allResults = new List<RepairOwnerBySerialResult>();
+
+                for (int i = 0; i < serialNumbers.Count; i += batchSize)
+                {
+                    var batch = serialNumbers.Skip(i).Take(batchSize);
+                    var serialList = string.Join(",", batch.Select(sn => $"'{sn.Replace("'", "''")}'"));
+
+                    string query = $@"
+                           SELECT 
+                                   NVL(r.SERIAL_NUMBER,'') AS SerialNumber,
+                                   NVL(r.MODEL_NAME,'') AS ModelName,
+                                   NVL(r.REASON_CODE,'') AS ReasonCode,
+                                   NVL(r.TEST_CODE,'') AS TestCode,
+                                   NVL(c.ERROR_DESC,'') AS ErrorDesc,
+                                   NVL(r.REPAIRER,' ') AS Repairer,
+                                   NVL(r.TEST_GROUP,'') AS TestGroup,
+                                   NVL(r.ERROR_ITEM_CODE,' ') AS ErrorItemCode,
+                                   NVL(TO_CHAR(r.REPAIR_TIME,'YYYY/MM/DD HH24:MI:SS'),' ') AS RepairTime,
+                                   ROW_NUMBER() OVER(PARTITION BY r.SERIAL_NUMBER ORDER BY NVL(r.REPAIR_TIME, TO_DATE('1970-01-01','YYYY-MM-DD')) ASC) AS RN
+                            FROM SFISM4.R109 r
+                            INNER JOIN SFIS1.C_ERROR_CODE_T c ON r.TEST_CODE = c.ERROR_CODE
+                            WHERE r.REPAIR_TIME IS NOT NULL AND r.SERIAL_NUMBER IN ({serialList})";
+
+                    var batchResults = await _oracleContext.Set<RepairOwnerBySerialResult>()
+                        .FromSqlRaw(query)
+                        .ToListAsync();
+
+                    allResults.AddRange(batchResults);
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    data = allResults
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        //API HUONG DAN REPAIR
+        [HttpPost("get-repair-suggestions")]
+        public async Task<IActionResult> GetRepairSuggestions([FromBody] RepairSuggestionRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request?.SerialNumber))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "SerialNumber không được để trống!",
+                });
+            }
+
+            try
+            {
+                using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await connection.OpenAsync();
+
+                const string query = @"
+SELECT *
+FROM (
+    SELECT 
+        C.REASON_CODE,
+        C.ERROR_ITEMS,
+        C.CNT,
+        ROUND((C.CNT / T.TOTAL_CNT) * 100, 2) AS RATE_PERCENT
+    FROM
+        (
+            SELECT 
+                REASON_CODE,
+                ERROR_ITEMS,
+                COUNT(*) AS CNT
+            FROM 
+                (
+                    SELECT 
+                        R.REPAIR_TIME,
+                        R.REASON_CODE,
+                        LISTAGG(
+                            UPPER(TRIM(REPLACE(R.ERROR_ITEM_CODE, CHR(9), '')))
+                        , ', ') 
+                        WITHIN GROUP (ORDER BY 
+                            UPPER(TRIM(REPLACE(R.ERROR_ITEM_CODE, CHR(9), '')))
+                        ) AS ERROR_ITEMS
+                    FROM SFISM4.R_REPAIR_T R
+                    WHERE R.MODEL_NAME = (
+                            SELECT MODEL_NAME FROM (
+                                SELECT MODEL_NAME
+                                FROM SFISM4.R_REPAIR_T
+                                WHERE SERIAL_NUMBER = :serial
+                                ORDER BY TEST_TIME DESC
+                            ) WHERE ROWNUM = 1
+                        )
+                      AND R.TEST_CODE = (
+                            SELECT TEST_CODE FROM (
+                                SELECT TEST_CODE
+                                FROM SFISM4.R_REPAIR_T
+                                WHERE SERIAL_NUMBER = :serial
+                                ORDER BY TEST_TIME DESC
+                            ) WHERE ROWNUM = 1
+                        )
+                      AND R.TEST_GROUP = (
+                            SELECT TEST_GROUP FROM (
+                                SELECT TEST_GROUP
+                                FROM SFISM4.R_REPAIR_T
+                                WHERE SERIAL_NUMBER = :serial
+                                ORDER BY TEST_TIME DESC
+                            ) WHERE ROWNUM = 1
+                        )
+                      AND R.REPAIR_TIME IS NOT NULL
+                    GROUP BY 
+                        R.REPAIR_TIME, 
+                        R.REASON_CODE
+                )
+            GROUP BY REASON_CODE, ERROR_ITEMS
+        ) C,
+        (
+            SELECT COUNT(*) AS TOTAL_CNT
+            FROM (
+                SELECT DISTINCT REPAIR_TIME
+                FROM SFISM4.R_REPAIR_T R
+                WHERE R.MODEL_NAME = (
+                        SELECT MODEL_NAME FROM (
+                            SELECT MODEL_NAME
+                            FROM SFISM4.R_REPAIR_T
+                            WHERE SERIAL_NUMBER = :serial
+                            ORDER BY TEST_TIME DESC
+                        ) WHERE ROWNUM = 1
+                    )
+                AND R.TEST_CODE = (
+                        SELECT TEST_CODE FROM (
+                            SELECT TEST_CODE
+                            FROM SFISM4.R_REPAIR_T
+                            WHERE SERIAL_NUMBER = :serial
+                            ORDER BY TEST_TIME DESC
+                        ) WHERE ROWNUM = 1
+                    )
+                AND R.TEST_GROUP = (
+                        SELECT TEST_GROUP FROM (
+                            SELECT TEST_GROUP
+                            FROM SFISM4.R_REPAIR_T
+                            WHERE SERIAL_NUMBER = :serial
+                            ORDER BY TEST_TIME DESC
+                        ) WHERE ROWNUM = 1
+                    )
+                AND R.REPAIR_TIME IS NOT NULL
+            )
+        ) T
+    ORDER BY C.CNT DESC
+)
+WHERE ROWNUM <= 3";
+
+                using var command = new OracleCommand(query, connection)
+                {
+                    BindByName = true
+                };
+
+                command.Parameters.Add(new OracleParameter("serial", request.SerialNumber));
+
+                var suggestions = new List<RepairSuggestionResult>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    suggestions.Add(new RepairSuggestionResult
+                    {
+                        ReasonCode = reader["REASON_CODE"]?.ToString() ?? string.Empty,
+                        ErrorItems = reader["ERROR_ITEMS"]?.ToString() ?? string.Empty,
+                        Count = reader["CNT"] != DBNull.Value ? Convert.ToInt32(reader["CNT"]) : 0,
+                        RatePercent = reader["RATE_PERCENT"] != DBNull.Value ? Convert.ToDecimal(reader["RATE_PERCENT"]) : 0m
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    data = suggestions
                 });
             }
             catch (Exception ex)
@@ -810,6 +943,235 @@ namespace API_WEB.Controllers.SmartFA
                 });
             }
         }
+
+
+        //=======THỐNG KÊ SỐ LƯỢNG VI-RE===============
+        [HttpPost("get-vi-re-confirm-data")]
+        public async Task<IActionResult> GetViReConfirmData([FromBody] TimeRequest request)
+        {
+            try
+            {
+                if (request == null || request.StartDate == default || request.EndDate == default)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Date không được để trống!"
+                    });
+                }
+
+                var filteredData = await _oracleContext.OracleDataRepairTaskDetail
+                    .Where(detail => detail.DATA12 != null
+                        && detail.DATA12.Trim().ToUpper() == "VI-RE"
+                        && (detail.DATA19 == null || detail.DATA19 != "CONFIRM_PUT_B36R")
+                        && detail.DATA17 != null
+                        && detail.DATA17.Trim().ToUpper() == "CONFIRM"
+                        && detail.DATE3 >= request.StartDate && detail.DATE3 <= request.EndDate)
+                    .Select(detail => new ViReConfirmDetailDto
+                    {
+                        SerialNumber = detail.SERIAL_NUMBER,
+                        MONumber = detail.MO_NUMBER,
+                        ModelName = detail.MODEL_NAME,
+                        TestTime = detail.TEST_TIME,
+                        TestCode = detail.TEST_CODE,
+                        Tester = detail.TESTER,
+                        TestGroup = detail.TEST_GROUP,
+                        ErrorDesc = detail.DATA1,
+                        Status = detail.DATA11,
+                        PreStatus = detail.DATA12,
+                        Date3 = detail.DATE3
+                    })
+                    .ToListAsync();
+
+                var grouped = filteredData
+                    .GroupBy(item => string.IsNullOrWhiteSpace(item.Tester) ? "UNKNOWN" : item.Tester!.Trim())
+                    .Select(group =>
+                    {
+                        var orderedDetails = group
+                            .OrderByDescending(x => x.TestTime ?? x.Date3)
+                            .ToList();
+
+                        var okCount = orderedDetails.Count(detail => IsOkStatus(detail.Status));
+                        var ngCount = Math.Max(orderedDetails.Count - okCount, 0);
+
+                        return new ViReConfirmOwnerDto
+                        {
+                            Owner = group.Key,
+                            Count = orderedDetails.Count,
+                            OkCount = okCount,
+                            NgCount = ngCount,
+                            Details = orderedDetails
+                        };
+                    })
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    totalCount = filteredData.Count,
+                    totalOk = grouped.Sum(x => x.OkCount),
+                    totalNg = grouped.Sum(x => x.NgCount),
+                    data = grouped
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+        //===========THỐNG KÊ SỐ LƯỢNG CONFIRM CHECK LIST ===============
+        [HttpPost("get-check-list-confirm-data")]
+        public async Task<IActionResult> GetCheckListConfirmData([FromBody] TimeRequest request)
+        {
+            try
+            {
+                if (request == null || request.StartDate == default || request.EndDate == default)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Date không được để trống!"
+                    });
+                }
+
+                var filteredData = await _oracleContext.OracleDataRepairTaskDetail
+                    .Where(detail => detail.DATA12 != null
+                        && detail.DATA11.Trim().ToUpper() == "CHECK_LIST"
+                        && (detail.DATA19 == null || detail.DATA19 != "CONFIRM_PUT_B36R")
+                        && detail.DATA17 != null
+                        && detail.DATA17.Trim().ToUpper() == "CONFIRM"
+                        && detail.DATE3 >= request.StartDate && detail.DATE3 <= request.EndDate)
+                    .Select(detail => new CheckListConfirmDetailDto
+                    {
+                        SerialNumber = detail.SERIAL_NUMBER,
+                        MONumber = detail.MO_NUMBER,
+                        ModelName = detail.MODEL_NAME,
+                        TestTime = detail.TEST_TIME,
+                        TestCode = detail.TEST_CODE,
+                        Tester = detail.TESTER,
+                        TestGroup = detail.TEST_GROUP,
+                        ErrorDesc = detail.DATA1,
+                        Status = detail.DATA11,
+                        PreStatus = detail.DATA12,
+                        Date3 = detail.DATE3
+                    })
+                    .ToListAsync();
+
+                if (!filteredData.Any())
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        totalCount = 0,
+                        totalOk = 0,
+                        totalNg = 0,
+                        data = new List<CheckListConfirmOwnerDto>()
+                    });
+                }
+
+                var serialNumbers = filteredData
+                    .Select(item => item.SerialNumber?.Trim())
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (!serialNumbers.Any())
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        totalCount = 0,
+                        totalOk = 0,
+                        totalNg = 0,
+                        data = new List<CheckListConfirmOwnerDto>()
+                    });
+                }
+
+                // Giữ nguyên toàn bộ filteredData là validData
+                var validData = filteredData;
+
+                var grouped = validData
+                    .GroupBy(item => string.IsNullOrWhiteSpace(item.Tester) ? "UNKNOWN" : item.Tester!.Trim())
+                    .Select(group =>
+                    {
+                        var orderedDetails = group
+                            .OrderByDescending(x => x.TestTime ?? x.Date3)
+                            .ToList();
+
+                        var okCount = orderedDetails.Count(detail => IsOkStatus(detail.Status));
+                        var ngCount = Math.Max(orderedDetails.Count - okCount, 0);
+
+                        return new CheckListConfirmOwnerDto
+                        {
+                            Owner = group.Key,
+                            Count = orderedDetails.Count,
+                            OkCount = okCount,
+                            NgCount = ngCount,
+                            Details = orderedDetails
+                        };
+                    })
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    totalCount = validData.Count,
+                    totalOk = grouped.Sum(x => x.OkCount),
+                    totalNg = grouped.Sum(x => x.NgCount),
+                    data = grouped
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        private static readonly string OkStatusNormalized = RemoveDiacritics("CHỜ TRẢ").ToUpperInvariant();
+
+        private static bool IsOkStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            var normalized = RemoveDiacritics(status).ToUpperInvariant();
+            return normalized == OkStatusNormalized;
+        }
+
+        private static string RemoveDiacritics(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return string.Empty;
+            }
+
+            var normalizedString = input.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder(normalizedString.Length);
+
+            foreach (var c in normalizedString)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+        }
+        //================END====================
+
 
         // API tổng hợp summary owner theo thời gian
         [HttpPost("get-summary-owner")]
@@ -1015,7 +1377,6 @@ namespace API_WEB.Controllers.SmartFA
                         WHERE ROWNUM = 1
                         ";
 
-                // K?t n?i co s? d? li?u Oracle và th?c hi?n truy v?n
                 using (var command = _oracleContext.Database.GetDbConnection().CreateCommand())
                 {
                     command.CommandText = query;
@@ -1334,43 +1695,6 @@ namespace API_WEB.Controllers.SmartFA
                 });
             }
         }
-
-        //[HttpGet("get-error-codes")]
-        //public async Task<IActionResult> GetErrorCodes()
-        //{
-        //    try
-        //    {
-        //        // Sử dụng truy vấn SQL thô
-        //        var sqlQuery = "SELECT ERROR_CODE, NVL(ERROR_DESC, '') AS ERROR_DESC FROM SFIS1.C_ERROR_CODE_T WHERE ROWNUM <= 1000";
-        //        var errorCodes = await _oracleContext.Set<ErrorCode>()
-        //            .FromSqlRaw(sqlQuery)
-        //            .ToListAsync();
-
-        //        // Log số lượng bản ghi để debug
-        //        Console.WriteLine($"Số lượng mã lỗi được lấy: {errorCodes.Count}");
-
-        //        return Ok(new
-        //        {
-        //            success = true,
-        //            errorCodes = errorCodes.Select(e => new
-        //            {
-        //                e.ERROR_CODE,
-        //                ERROR_DESC = e.ERROR_DESC
-        //            })
-        //        });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Lỗi khi lấy mã lỗi: {ex}");
-        //        return StatusCode(500, new
-        //        {
-        //            success = false,
-        //            message = "Lỗi khi lấy danh sách Error Codes",
-        //            error = ex.Message,
-        //            stackTrace = ex.StackTrace
-        //        });
-        //    }
-        //}
 
         [HttpGet("get-error-codes")]
         public async Task<IActionResult> GetErrorCodes([FromQuery] string term = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10)

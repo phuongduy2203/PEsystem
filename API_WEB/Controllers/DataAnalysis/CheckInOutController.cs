@@ -15,7 +15,7 @@ using DocumentFormat.OpenXml.Drawing.Charts;
 namespace API_WEB.Controllers.SmartFA
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class CheckInOutController : ControllerBase
     {
         private readonly OracleDbContext _oracleContext;
@@ -1138,7 +1138,7 @@ namespace API_WEB.Controllers.SmartFA
                             AND a.P_SENDER IN ('V3209541', 'V0928908', 'V0945375', 'V3211693', 'V0904136', 'V1097872', 'V3231778')
                             AND (r107.ERROR_FLAG NOT IN ('0','1') OR r107.SERIAL_NUMBER IS NULL)
                             AND a.STATION_NAME NOT LIKE '%REPAIR_B36R%'
-                            AND (r107.wip_group not like '%STOCKIN-KANBAN_OUT' or r107_v2.WIP_GROUP not like '%STOCKIN-KANBAN_OUT')
+                            AND (r107.wip_group not like '%STOCKIN-KANBAN_OUT' or r107_v2.WIP_GROUP like '%B36R')
                         )
                         OR
                         (
@@ -1303,6 +1303,120 @@ namespace API_WEB.Controllers.SmartFA
                 return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
             }
         }
+
+        [HttpPost("get-test-result-list")]
+        public async Task<IActionResult> GetTestResultList([FromBody] List<string> serialNumbers)
+        {
+            if (serialNumbers == null || serialNumbers.Count == 0)
+                return BadRequest(new { success = false, message = "serialNumbers list is required." });
+
+            var snList = serialNumbers
+                .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                .Select(sn => sn.Trim().ToUpper())
+                .Distinct()
+                .ToList();
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            try
+            {
+                await connection.OpenAsync();
+
+                // 1️⃣ Generate placeholder params :sn0, :sn1, ...
+                var paramNames = snList.Select((sn, i) => $":sn{i}").ToList();
+
+                // 2️⃣ Query: lấy SFG và FG test mới nhất, chỉ lấy GROUP_NAME LIKE '%OFF%'
+                var sql = $@"
+            SELECT 
+                FINAL.KEY_PART_SN,
+                FINAL.TEST_SN,
+                FINAL.GROUP_NAME,
+                FINAL.DATA1,
+                FINAL.DATA2,
+                FINAL.PASS_DATE
+            FROM (
+                SELECT
+                    KP.KEY_PART_SN,
+                    R.SERIAL_NUMBER AS TEST_SN,
+                    R.GROUP_NAME,
+                    R.DATA1,
+                    R.DATA2,
+                    R.PASS_DATE,
+                    ROW_NUMBER() OVER (PARTITION BY KP.KEY_PART_SN ORDER BY R.PASS_DATE DESC) rn
+                FROM SFISM4.R_ULT_RESULT_T R
+                JOIN (
+                    SELECT KEY_PART_SN, SN
+                    FROM (
+                        SELECT B.KEY_PART_SN, B.KEY_PART_SN AS SN
+                        FROM (
+                            SELECT {string.Join(" AS KEY_PART_SN FROM DUAL UNION ALL SELECT ", snList.Select(s => $"'{s}'"))} AS KEY_PART_SN FROM DUAL
+                        ) B
+                        UNION ALL
+                        SELECT B.KEY_PART_SN, LKP.SERIAL_NUMBER AS SN
+                        FROM (
+                            SELECT {string.Join(" AS KEY_PART_SN FROM DUAL UNION ALL SELECT ", snList.Select(s => $"'{s}'"))} AS KEY_PART_SN FROM DUAL
+                        ) B
+                        LEFT JOIN (
+                            SELECT x.KEY_PART_SN, x.SERIAL_NUMBER
+                            FROM (
+                                SELECT 
+                                    kp.KEY_PART_SN,
+                                    kp.SERIAL_NUMBER,
+                                    ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                                FROM SFISM4.P_WIP_KEYPARTS_T kp
+                                WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                            ) x WHERE x.rn = 1
+                        ) LKP ON LKP.KEY_PART_SN = B.KEY_PART_SN
+                        WHERE LKP.SERIAL_NUMBER IS NOT NULL
+                    ) KP0
+                    GROUP BY KEY_PART_SN, SN
+                ) KP
+                  ON R.SERIAL_NUMBER = KP.SN
+            ) FINAL
+            WHERE FINAL.rn = 1
+            ORDER BY FINAL.PASS_DATE DESC";
+
+                var results = new List<object>();
+
+                await using var cmd = new OracleCommand(sql, connection);
+                cmd.BindByName = true;
+
+                // 3️⃣ Execute
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    results.Add(new
+                    {
+                        serialNumber = reader["KEY_PART_SN"]?.ToString(),
+                        testSn = reader["TEST_SN"]?.ToString(),
+                        groupName = reader["GROUP_NAME"]?.ToString(),
+                        data1 = reader["DATA1"]?.ToString(),
+                        data2 = reader["DATA2"]?.ToString(),
+                        passDate = reader["PASS_DATE"] as DateTime?
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    count = results.Count,
+                    data = results
+                });
+            }
+            catch (OracleException ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Database error: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"System error: {ex.Message}" });
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                    await connection.CloseAsync();
+            }
+        }
+
 
     }
 }

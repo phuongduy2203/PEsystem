@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_WEB.Controllers.SmartFA
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class RepairTaskDetailController : ControllerBase
     {

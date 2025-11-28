@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'http://10.220.130.119:9090/api/MaterialSystem';
+    const API_BASE_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem';
     const tableSelector = '#borrowingSummaryTable';
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const returnBtn = document.getElementById('return-btn');
@@ -144,6 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSelectAllCheckboxState();
             }
         });
+
+        // === CLICK ROW TO HIGHLIGHT ===
+        $('#borrowingSummaryTable tbody').on('click', 'tr', function () {
+            // Bỏ highlight cũ
+            $('#borrowingSummaryTable tbody tr').removeClass('selected-row');
+
+            // Nếu click chính row đó → toggle chọn
+            $(this).toggleClass('selected-row');
+        });
+
 
         $(tableSelector + ' tbody').off('change', '.row-checkbox').on('change', '.row-checkbox', function () {
             const rowIndex = $(this).data('row-index');

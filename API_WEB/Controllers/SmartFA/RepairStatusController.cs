@@ -10,7 +10,7 @@ using System.Net.Security;
 using System.Text;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class RepairStatusController : ControllerBase
 {
     public RepairStatusController(OracleDbContext oracleDbContext, ICellUpdateTracker cellUpdateTracker)
@@ -37,7 +37,7 @@ public class RepairStatusController : ControllerBase
     {
         try
         {
-            var apiUrl = "https://10.220.130.216:443/SfcSmartRepair/api/repair_Status";
+            var apiUrl = "https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/repair_Status";
             return await SendPostRequest(apiUrl, request);
         }
         catch (Exception ex)
@@ -45,7 +45,7 @@ public class RepairStatusController : ControllerBase
             return StatusCode(500, new { success = false, message = ex.Message });
         }
     }
-    private const string ResetLocationEndpoint = "https://10.220.130.216:443/sfcSmartRepair/api/receiving_status";
+    private const string ResetLocationEndpoint = "https://sfc-portal.cns.myfiinet.com:443/sfcSmartRepair/api/receiving_status";
 
     [HttpPost("receiving-status/reset-location")]
     public async Task<IActionResult> ResetLocationForData18Async()
@@ -149,7 +149,7 @@ public class RepairStatusController : ControllerBase
     {
         try
         {
-            var apiUrl = "https://10.220.130.216:443/SfcSmartRepair/api/hand_over_status";
+            var apiUrl = "https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/hand_over_status";
             return await SendPostRequest(apiUrl, request);
         }
         catch (Exception ex)
@@ -164,7 +164,7 @@ public class RepairStatusController : ControllerBase
     {
         try
         {
-            var apiUrl = "https://10.220.130.216:443/SfcSmartRepair/api/receiving_status";
+            var apiUrl = "https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/receiving_status";
             var result = await SendPostRequest(apiUrl, request);
 
             if (result is OkObjectResult)

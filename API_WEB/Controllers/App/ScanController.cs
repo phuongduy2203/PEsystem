@@ -6,7 +6,7 @@ using static API_WEB.Controllers.MaterialSystem.MaterialSystemController;
 
 namespace API_WEB.Controllers.App
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ScanController : ControllerBase
     {

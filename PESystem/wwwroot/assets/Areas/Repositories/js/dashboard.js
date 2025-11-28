@@ -1,4 +1,4 @@
-﻿// Hiển thị spinner
+// Hiển thị spinner
 function showSpinner() {
     document.getElementById("spinner-overlay").style.display = "flex";
 }
@@ -24,7 +24,7 @@ function showError(message) {
         showConfirmButton: true
     });
 }
-const API_BASE_URL = 'http://10.220.130.119:9090';
+const API_BASE_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com';
 const COLUMN_MAPPING = {
     serialNumber: 'SERIAL_NUMBER',
     moNumber: 'MO_NUMBER',
@@ -351,8 +351,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function removeBackdrop() {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
+    clearOrphanModalArtifacts();
+    syncModalStacking();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -614,7 +614,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const params = [];
         if (startInput.value) params.push(`startDate=${encodeURIComponent(startInput.value)}`);
         if (endInput.value) params.push(`endDate=${encodeURIComponent(endInput.value)}`);
-        return `${API_BASE_URL}/checking-b36r${params.length ? "?" + params.join("&") : ""}`;
+        return `${API_BASE_URL}/api/checking-b36r${params.length ? "?" + params.join("&") : ""}`;
     }
 
     function toRows(arr) {
@@ -907,144 +907,4 @@ document.addEventListener("DOMContentLoaded", function () {
         const sns = searchInput.value.split(/\s+/).map(s => s.trim()).filter(s => s);
         loadData(sns);
     });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('warehouse-search-btn');
-    const input = document.getElementById('warehouse-sn-input');
-    const createListBtn = document.getElementById('create-list-btn');
-    let warehouseNotFound = [];
-    let warehouseListItems = [];
-
-    let warehouseTable = $('#warehouseTable').DataTable({
-        destroy: true,
-        data: [],
-        columns: [
-            { title: 'Serial Number' },
-            { title: 'Kho' },
-            { title: 'Vị trí' },
-            { title: 'Product Line' },
-            { title: 'Model' }
-        ],
-        dom: '<"top d-flex align-items-center"flB>rt<"bottom"ip>',
-        buttons: [{
-            extend: 'excel',
-            text: '<img src="/assets/img/excel.png" class="excel-icon"/>',
-            className: 'excel-button',
-            title: 'WarehouseSearchResults'
-        }]
-    });
-
-    if (btn && input) {
-        btn.addEventListener('click', async () => {
-            const sns = input.value.split(/\s+/).map(s => s.trim().toUpperCase()).filter(s => s);
-            if (!sns.length) return;
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/Search/FindLocations`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sns)
-                });
-                const data = await res.json();
-                warehouseTable.clear();
-
-                if (data.success) {
-                    const noPositionSerials = [];
-
-                    data.data.forEach(d => {
-                        warehouseTable.row.add([
-                            d.serialNumber,
-                            d.warehouse,
-                            d.location || '',
-                            d.productLine || '',
-                            d.modelName || ''
-                        ]);
-
-                        if (!d.location || d.location === 'Borrowed') noPositionSerials.push(d.serialNumber);
-                    });
-
-                    warehouseNotFound = data.notFoundSerialNumbers || [];
-                    warehouseListItems = [...warehouseNotFound, ...noPositionSerials];
-
-                    if (warehouseNotFound.length) {
-                        warehouseNotFound.forEach(sn => {
-                            warehouseTable.row.add([sn, 'Not found', '', '', '']);
-                        });
-                    }
-                    if (createListBtn) {
-                        createListBtn.style.display = warehouseListItems.length ? 'inline-block' : 'none';
-                    }
-                } else {
-                    warehouseNotFound = [];
-                    warehouseListItems = [];
-                    if (createListBtn) createListBtn.style.display = 'none';
-                }
-
-                warehouseTable.draw();
-                $('#warehouseModal').modal('show');
-            } catch (err) {
-                console.error('FindLocations error', err);
-            }
-        });
-    }
-
-    if (createListBtn) {
-        createListBtn.addEventListener('click', async () => {
-            const currentUser = document.getElementById('entryPerson').value;
-            if (!warehouseListItems.length) {
-                showError('Không có Serial Number không tìm thấy!');
-                return;
-            }
-            $('#warehouseModal').modal('hide');
-            Swal.fire({
-                title: 'Tạo danh sách tìm kiếm',
-                input: 'text',
-                inputLabel: 'Tên danh sách',
-                inputPlaceholder: 'Nhập tên danh sách',
-                showCancelButton: true,
-                confirmButtonText: 'Lưu',
-                cancelButtonText: 'Hủy',
-                showLoaderOnConfirm: true,
-                preConfirm: async (listName) => {
-                    if (!listName || listName.trim() === '') {
-                        Swal.showValidationMessage('Vui lòng nhập tên danh sách!');
-                        return false;
-                    }
-                    try {
-                        showSpinner();
-                        const response = await fetch(`${API_BASE_URL}/api/Search/SaveSearchList`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                listName: listName.trim(),
-                                createdBy: currentUser,
-                                foundItems: [],
-                                notFoundItems: warehouseListItems.map(sn => ({
-                                    serialNumber: sn || '',
-                                    modelName: '',
-                                    location: ''
-                                }))
-                            })
-                        });
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.message || 'Không thể lưu danh sách!');
-                        }
-                        return { success: true };
-                    } catch (error) {
-                        Swal.showValidationMessage(`Lỗi: ${error.message}`);
-                        return false;
-                    } finally {
-                        hideSpinner();
-                    }
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then(result => {
-                if (result.isConfirmed && result.value.success) {
-                    showSuccess('Success!!');
-                }
-                $('#warehouseModal').modal('show');
-            });
-        });
-    }
 });

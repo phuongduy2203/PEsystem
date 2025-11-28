@@ -15,9 +15,9 @@
     // Xác định URL API
     let url;
     if (searchOption === "add-stock") {
-        url = "http://10.220.130.119:9090/DdRepositorys/GetProductsByDateRange";
+        url = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetProductsByDateRange";
     } else if (searchOption === "out-stock") {
-        url = "http://10.220.130.119:9090/DdRepositorys/GetExportedProductsByDateRange";
+        url = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetExportedProductsByDateRange";
     } else {
         alert("Tùy chọn tìm kiếm không hợp lệ.");
         return;

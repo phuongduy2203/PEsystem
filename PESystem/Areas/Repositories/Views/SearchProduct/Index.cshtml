@@ -4,7 +4,9 @@
 @{
     Layout = "~/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml";
 }
-<div class="container-fluid">
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
     <input type="hidden" id="entryPerson" value="@User.Identity.Name" />
     <div class="row mb-3">
         <!-- Cột chọn loại tìm kiếm -->
@@ -156,6 +158,8 @@
         </table>
     </div>
 </div>
+</div>
+
 <script>
     document.getElementById("search-options").addEventListener("change", function () {
     const forms = ["input-sn-form", "custom-form", "history-borrow-form"];
@@ -179,68 +183,97 @@
         max-height: 700px;
         max-width: 100%;
         overflow: auto;
+        position: relative;
     }
 
-    .datatable-table thead th {
-        position: sticky;
-        top: 0;
-        background-color: #343a40;
-        z-index: 10;
+    .datatable-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: auto;
+        width: max-content;
+        font-size: 10px;
     }
 
-    .datatable-table th:nth-child(1),
-    .datatable-table td:nth-child(1),
-    .datatable-table th:nth-child(2),
-    .datatable-table td:nth-child(2) {
-        position: sticky;
-        left: 0;
-        background-color: #343a40;
-        z-index: 5;
-    }
+        .datatable-table th,
+        .datatable-table td {
+            white-space: nowrap;
+            padding: 4px 8px;
+        }
 
-    .datatable-table td:nth-child(1),
-    .datatable-table td:nth-child(2) {
-        background-color: #fff;
-    }
+        /* ============================
+           STICKY HEADER (luôn ở trên)
+        ============================= */
+        .datatable-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #343a40 !important;
+            color: #fff;
+            z-index: 30; /* header chung */
+        }
 
-    .datatable-table th:nth-child(1),
-    .datatable-table td:nth-child(1),
-    .datatable-table th:nth-child(2),
-    .datatable-table td:nth-child(2) {
-        border-right: 2px solid #dee2e6;
-    }
+            /* ============================
+           CỘT 1 — CHECKBOX
+        ============================= */
 
-    .datatable-table th:nth-child(1),
-    .datatable-table td:nth-child(1) {
-        left: 0;
-        min-width: 50px;
-    }
+            /* Header cột 1 (giao giữa sticky row + sticky col) */
+            .datatable-table thead th:nth-child(1) {
+                position: sticky!important;
+                left: 0;
+                z-index: 40; /* cao hơn header thường + td */
+            }
 
-    .datatable-table th:nth-child(2),
-    .datatable-table td:nth-child(2) {
-        left: 50px;
-        min-width: 100px;
-    }
+        /* Body cột 1 */
+        .datatable-table tbody td:nth-child(1) {
+            position: sticky!important;
+            left: 0;
+            z-index: 20;
+            background-color: #ffffff !important;
+            min-width: 50px!important;
+            max-width: 50px!important;
+            text-align: center;
+        }
 
-    .datatable-table thead th:nth-child(1),
-    .datatable-table thead th:nth-child(2) {
-        z-index: 15;
-    }
+        /* ============================
+           CỘT 2 — SERIAL_NUMBER
+        ============================= */
 
-    /* Thêm hiệu ứng hover cho hàng */
-    .datatable-table tbody tr:hover td,
-    .datatable-table tbody tr:hover th {
-        background-color: #76b900 !important;
-        /*transition: background-color 0.2s ease;*/
-    }
+        /* Header cột 2 */
+        .datatable-table thead th:nth-child(2) {
+            position: sticky!important;
+            left: 50px; /* = chiều rộng cột 1 */
+            z-index: 60!important;
+        }
 
-    /* (Tùy chọn) Giữ màu đặc biệt cho hàng auto-block khi hover */
-    .datatable-table tbody tr.auto-block:hover td,
-    .datatable-table tbody tr.auto-block:hover th {
-        background-color: #76b900 !important;
-        /*transition: background-color 0.2s ease;*/
-    }
+        /* Body cột 2 */
+        .datatable-table tbody td:nth-child(2) {
+            position: sticky!important;
+            left: 50px; /* phải trùng với trên */
+            z-index: 20;
+            background-color: #ffffff !important;
+            min-width: 120px;
+        }
+
+        /* Viền tách 2 cột đầu */
+        .datatable-table th:nth-child(1),
+        .datatable-table td:nth-child(1),
+        .datatable-table th:nth-child(2),
+        .datatable-table td:nth-child(2) {
+            border-right: 2px solid #dee2e6;
+        }
+
+        /* Hover nguyên hàng */
+        .datatable-table tbody tr:hover td,
+        .datatable-table tbody tr:hover th {
+            background-color: #76b900 !important;
+            cursor: pointer;
+        }
+
+        .datatable-table tbody tr.auto-block:hover td,
+        .datatable-table tbody tr.auto-block:hover th {
+            background-color: #76b900 !important;
+        }
 </style>
+
 
 @section Scripts {
     <script src="~/assets/areas/repositories/js/search.js?v=@DateTime.Now.Ticks"></script>

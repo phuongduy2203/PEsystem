@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_WEB.Controllers.SmartFA
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class DataChartController : ControllerBase
     {
         private readonly OracleDbContext _oracleDbContext;

@@ -9,12 +9,13 @@
     <link href="~/css/site.min.css" rel="stylesheet" />
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
     <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
     <link href="~/assets/areas/hassbi/css/hassbi.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
     <script src="~/lib/gsap-particles/particles.min.js"></script>
     <script src="~/lib/gsap-particles/gsap.min.js"></script>
     <link href="~/lib/datatable/fixedcolumns.datatables.min.css" rel="stylesheet" />
-
 
 
 </head>
@@ -29,19 +30,23 @@
             }
         })();
     </script>
-    <header class="header d-flex justify-content-between align-items-center" id="header">
-    </header>
+
     <!-- Sidebar dọc -->
     <div id="sidebar" class="sidebar">
         <!-- Logo and Dashboard with fixed checkbox -->
         <div class="dashboard-container">
             <a href="@Url.Action("Home", "Home", new { area = "" })">
-                <img src="~/assets/img/logo-hass-bi.png" style="width:48px; height:48px;" class="logo" />
+                <img src="~/assets/img/logo-hass-bi.png" style="width:36px; height:36px;" class="logo" />
             </a>
             <span class="spanTitle" style="font-size: 1.3rem; font-weight: bold;">
                 HASS-BI
             </span>
-            <span><input type="checkbox" id="toggleSidebarFixed" title="" /></span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
         </div>
         <nav class="nav flex-column">
             <!-- Menu Items -->
@@ -52,12 +57,12 @@
         </nav>
     </div>
 
-    <main id="mainContent">
-        <div id="spinner-overlay">
-            <span class="loader"></span>
-        </div>
-        @RenderBody()
-    </main>
+
+
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+    @RenderBody()
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>

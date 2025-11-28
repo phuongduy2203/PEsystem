@@ -52,7 +52,7 @@ namespace PESystem.Controllers
 
             try
             {
-                response = await client.PostAsJsonAsync("http://10.220.130.119:9090/api/Auth/login", new LoginRequest(model.Username!, model.Password!));
+                response = await client.PostAsJsonAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/login", new LoginRequest(model.Username!, model.Password!));
             }
             catch (Exception ex)
             {
@@ -141,7 +141,7 @@ namespace PESystem.Controllers
             try
             {
                 response = await client.PostAsJsonAsync(
-                    "http://10.220.130.119:9090/api/Auth/register",
+                    "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/register",
                     new RegisterRequest(
                         model.Username!,
                         model.Password!,
@@ -192,7 +192,7 @@ namespace PESystem.Controllers
             HttpResponseMessage response;
             try
             {
-                response = await client.PostAsJsonAsync("http://10.220.130.119:9090/api/Auth/change-password", new ChangePasswordRequest(model.OldPassword, model.NewPassword));
+                response = await client.PostAsJsonAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/change-password", new ChangePasswordRequest(model.OldPassword, model.NewPassword));
             }
             catch (Exception ex)
             {
@@ -238,7 +238,7 @@ namespace PESystem.Controllers
             if (action == "send")
             {
                 // gọi API forgot-password
-                var res = await client.PostAsJsonAsync("http://10.220.130.119:9090/api/Auth/forgot-password", new { email = model.Email });
+                var res = await client.PostAsJsonAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/forgot-password", new { email = model.Email });
                 if (res.IsSuccessStatusCode)
                 {
                     ModelState.Clear();
@@ -260,7 +260,7 @@ namespace PESystem.Controllers
                     return View(model);
                 }
 
-                var res = await client.PostAsJsonAsync("http://10.220.130.119:9090/api/Auth/reset-password",
+                var res = await client.PostAsJsonAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/reset-password",
                     new { email = model.Email, otp = model.Otp, newPassword = model.NewPassword });
 
                 if (res.IsSuccessStatusCode)
@@ -296,7 +296,7 @@ namespace PESystem.Controllers
             {
                 try
                 {
-                    await client.PostAsJsonAsync("http://10.220.130.119:9090/api/Auth/logout", new RefreshRequest(refreshToken));
+                    await client.PostAsJsonAsync("https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Auth/logout", new RefreshRequest(refreshToken));
                 }
                 catch (Exception ex)
                 {

@@ -1,5 +1,5 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
-    const apiBaseUrl = "http://10.220.130.119:9090/api";
+    const apiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api";
     const elements = {
         serialNumbersInput: document.getElementById("sn-input"),
         modelNameField: document.querySelector(".model-name-field"),
@@ -107,34 +107,34 @@
         await updateSerialDetails(serials);
     });
 
-    elements.saveButton.addEventListener("click", async () => {
-        const serials = parseSerialNumbers();
-        if (!serials.length) {
-            notify("warning", "Nhập ít nhất 1 SN!");
-            return;
-        }
-        if (hasDuplicates(serials)) {
-            notify("warning", "Có SN bị trùng!");
-            return;
-        }
+    if (elements.saveButton) {
+        elements.saveButton.addEventListener("click", async () => {
+            const serials = parseSerialNumbers();
+            if (!serials.length) {
+                notify("warning", "Nhập ít nhất 1 SN!");
+                return;
+            }
+            if (hasDuplicates(serials)) {
+                notify("warning", "Có SN bị trùng!");
+                return;
+            }
 
-        const confirmExport = await Swal.fire({
-            title: "Xác Nhận Xuất Kho",
-            text: `Bạn có chắc muốn xuất ${serials.length} serial numbers?`,
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Có",
-            cancelButtonText: "Không"
+            const confirmExport = await Swal.fire({
+                title: "Xác Nhận Xuất Kho",
+                text: `Bạn có chắc muốn xuất ${serials.length} serial numbers?`,
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Có",
+                cancelButtonText: "Không"
+            });
+
+            if (confirmExport.isConfirmed) {
+                await saveExportData(serials);
+            } else {
+                notify("warning", "Đã hủy xuất kho!");
+            }
         });
-
-        if (confirmExport.isConfirmed) {
-            await saveExportData(serials);
-        } else {
-            notify("warning", "Đã hủy xuất kho!");
-        }
-    });
-
-
+    }
     //Xuất kho Repair
     const saveExportRepair = async (serials) => {
         const payload = {
@@ -177,30 +177,33 @@
         }
     };
 
-    elements.exportRepairButton.addEventListener("click", async () => {
-        const serials = parseSerialNumbers();
-        if (!serials.length) {
-            notify("warning", "Nhập ít nhất 1 SN!");
-            return;
-        }
-        if (hasDuplicates(serials)) {
-            notify("warning", "Có SN bị trùng!");
-            return;
-        }
+    if (elements.exportRepairButton) {
+        elements.exportRepairButton.addEventListener("click", async () => {
+            const serials = parseSerialNumbers();
+            if (!serials.length) {
+                notify("warning", "Nhập ít nhất 1 SN!");
+                return;
+            }
+            if (hasDuplicates(serials)) {
+                notify("warning", "Có SN bị trùng!");
+                return;
+            }
 
-        const confirmExport = await Swal.fire({
-            title: "Xác Nhận Xuất Kho Repair",
-            text: `Xác nhận xuất ${serials.length} serial numbers?`,
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Có",
-            cancelButtonText: "Không"
+            const confirmExport = await Swal.fire({
+                title: "Xác Nhận Xuất Kho Repair",
+                text: `Xác nhận xuất ${serials.length} serial numbers?`,
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Có",
+                cancelButtonText: "Không"
+            });
+
+            if (confirmExport.isConfirmed) {
+                await saveExportRepair(serials);
+            } else {
+                notify("warning", "Đã hủy xuất kho!");
+            }
         });
+    }
 
-        if (confirmExport.isConfirmed) {
-            await saveExportRepair(serials);
-        } else {
-            notify("warning", "Đã hủy xuất kho!");
-        }
-    });
 });

@@ -1,4 +1,4 @@
-﻿async function submitSerialNumberForm() {
+async function submitSerialNumberForm() {
     const snInput = document.getElementById("sn-input").value.trim();
     const searchType = document.getElementById("typeSearch").value;
 
@@ -242,6 +242,7 @@ async function openUpdateModal() {
         // Tự động áp dụng logic hiển thị
         handleStatusChange();
         // Hiển thị modal
+        removeBackdrop();
         const modal = new bootstrap.Modal(document.getElementById("updateModal"));
         modal.show();
     } catch (error) {
@@ -340,17 +341,15 @@ function updateTable(data) {
 }
 
 
-// Xóa lớp phủ khi modal đóng
-document.getElementById("updateModal").addEventListener("hidden.bs.modal", () => {
-    removeBackdrop();
-});
-
 function removeBackdrop() {
-    const backdrop = document.querySelector(".modal-backdrop");
-    if (backdrop) {
-        backdrop.parentNode.removeChild(backdrop); // Xóa lớp phủ nếu còn tồn tại
-    }
+    clearOrphanModalArtifacts();
+    syncModalStacking();
 }
+
+["updateModal", "noteModal", "editModal"].forEach(modalId => {
+    const modalElement = document.getElementById(modalId);
+    modalElement?.addEventListener("hidden.bs.modal", removeBackdrop);
+});
 
 
 let selectedSerialNumbers = [];
@@ -367,6 +366,7 @@ function openNoteModal() {
     }
 
     // Hiển thị modal
+    removeBackdrop();
     const modal = new bootstrap.Modal(document.getElementById("noteModal"));
     modal.show();
 }
@@ -487,6 +487,7 @@ function openEditModal(serialNumber, columnIndex, currentValue) {
     inputField.dataset.columnIndex = columnIndex;
 
     // Hiển thị modal
+    removeBackdrop();
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
 }

@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace API_WEB.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ReportSkipHassController : ControllerBase
     {

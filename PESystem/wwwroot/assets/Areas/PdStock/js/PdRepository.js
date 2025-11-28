@@ -43,19 +43,19 @@ document.getElementById('PdStock-search-btn').addEventListener('click', function
     let url;
     switch (searchOptionValue) {
         case 'SEARCH_S/N':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetBySerialNumber';
+            url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetBySerialNumber';
             break;
         case 'SEARCH_MODEL_NAME':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetByModelName';
+            url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetByModelName';
             break;
         case 'SEARCH_CAR':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetByCartonNo';
+            url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetByCartonNo';
             break;
         case 'SEARCH_EXPORT':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetHistoryBySerialNumber';
+            url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetHistoryBySerialNumber';
             break;
         case 'SEARCH_All':
-            url = 'http://10.220.130.119:9090/DdRepositorys/GetAll';
+            url = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/DdRepositorys/GetAll';
             break;
         default:
             resultsSection.innerHTML = '<p class="data-alert">Please select a valid search option.</p>';

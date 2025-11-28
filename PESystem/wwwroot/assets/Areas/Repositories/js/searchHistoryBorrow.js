@@ -30,7 +30,7 @@
 
         // Gửi API tìm kiếm
         $.ajax({
-            url: "http://10.220.130.119:9090/api/Borrow/Search", // Thay bằng địa chỉ API thực tế
+            url: "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Borrow/Search", // Thay bằng địa chỉ API thực tế
             type: "POST",
             contentType: "application/json",
             data: JSON.stringify(serialNumbers), // ĐÚNG ĐỊNH DẠNG JSON

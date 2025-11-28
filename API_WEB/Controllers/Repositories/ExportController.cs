@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace API_WEB.Controllers.Repositories
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ExportController : ControllerBase
     {

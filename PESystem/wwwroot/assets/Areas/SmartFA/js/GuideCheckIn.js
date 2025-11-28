@@ -18,7 +18,7 @@
     });
 
     // Gọi API lấy danh sách ProductLine khi trang được tải
-    fetch('http://10.220.130.119:9090/api/FixGuide/GetProductLines', {
+    fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/GetProductLines', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -55,7 +55,7 @@
             return;
         }
 
-        fetch(`http://10.220.130.119:9090/api/Product/SearchCheckIn?serialNumber=${serialNumber}`, {
+        fetch(`https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Product/SearchCheckIn?serialNumber=${serialNumber}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -87,7 +87,7 @@
                 existingSNs.add(serialNumber);
 
                 // Gọi API GetCheckIn
-                fetch('http://10.220.130.119:9090/api/FixGuide/GetCheckIn', {
+                fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/GetCheckIn', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -154,7 +154,7 @@
         formData.append('file', file);
         formData.append('productLine', productLine);
 
-        fetch('http://10.220.130.119:9090/api/FixGuide/UploadGuideCheckIn', {
+        fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/FixGuide/UploadGuideCheckIn', {
             method: 'POST',
             body: formData
         })
