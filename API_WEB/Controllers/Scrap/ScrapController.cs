@@ -75,7 +75,9 @@ namespace API_WEB.Controllers.Scrap
                         Purpose = record.Purpose,
                         Category = record.Category,
                         ApplyTime = appliedAt,
-                        SpeApproveTime = record.SpeApproveTime
+                        SpeApproveTime = record.SpeApproveTime,
+                        ModelName = record.ModelName,
+                        ModelType = record.ModelType
                     };
                 })
                 .ToList();
@@ -1338,6 +1340,61 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = "CreatedBy, Description, Remark và Approve không được dài quá 50 ký tự." });
                 }
 
+                // ket noi voi oracle data base
+                var oracleConnectionString = _oracleContext.Database.GetConnectionString();
+
+                // Kiểm tra MODEL_SERIAL của các SN đầu vào
+                var modelInfoBySn = new Dictionary<string, (string ModelName, string ModelSerial)>();
+                using (var modelConnection = new OracleConnection(oracleConnectionString))
+                {
+                    await modelConnection.OpenAsync();
+
+                    var snParams = string.Join(",", request.SNs.Select((_, i) => $":p{i}"));
+                    var sqlModelQuery = $@"select a.SERIAL_NUMBER, a.MODEL_NAME, b.MODEL_SERIAL
+from SFISM4.R107 a
+inner join SFIS1.C_MODEL_DESC_T b
+on a.MODEL_NAME = b.MODEL_NAME
+where serial_number in ({snParams})";
+
+                    using var modelCommand = new OracleCommand(sqlModelQuery, modelConnection);
+                    for (int i = 0; i < request.SNs.Count; i++)
+                    {
+                        modelCommand.Parameters.Add(new OracleParameter($"p{i}", OracleDbType.Varchar2) { Value = request.SNs[i] });
+                    }
+
+                    using var modelReader = await modelCommand.ExecuteReaderAsync();
+                    while (await modelReader.ReadAsync())
+                    {
+                        var serialNumber = modelReader["SERIAL_NUMBER"].ToString();
+                        var modelName = modelReader["MODEL_NAME"].ToString();
+                        var modelSerial = modelReader["MODEL_SERIAL"].ToString();
+                        if (!string.IsNullOrEmpty(serialNumber))
+                        {
+                            modelInfoBySn[serialNumber] = (modelName ?? string.Empty, modelSerial ?? string.Empty);
+                        }
+                    }
+                }
+
+                if (modelInfoBySn.Count != request.SNs.Count)
+                {
+                    var missingSNs = request.SNs.Where(sn => !modelInfoBySn.ContainsKey(sn)).ToList();
+                    return BadRequest(new { message = $"Không tìm thấy MODEL_SERIAL cho các SN: {string.Join(", ", missingSNs)}" });
+                }
+
+                var modelSerials = new HashSet<string>(modelInfoBySn.Values.Select(v => (v.ModelSerial ?? string.Empty).ToUpperInvariant()));
+                var hasAdapter = modelSerials.Contains("ADAPTER");
+                var hasSwitch = modelSerials.Contains("SWITCH");
+
+                if (hasAdapter && hasSwitch)
+                {
+                    return BadRequest(new { message = "MODEL_SERIAL bao gồm cả ADAPTER và SWITCH, không thể xử lý." });
+                }
+
+                if (!hasAdapter && hasSwitch)
+                {
+                    return Ok(new { message = "Update function in the future" });
+                }
+
                 // Kiểm tra trùng lặp SN trong bảng ScrapList
                 var existingSNs = await _sqlContext.ScrapLists
                     .Where(s => request.SNs.Contains(s.SN))
@@ -1405,9 +1462,6 @@ namespace API_WEB.Controllers.Scrap
                 {
                     return BadRequest(new { message = $"Các SN sau đã có trong scrap list: {string.Join(", ", rejectedSNs)}" });
                 }
-
-                // ket noi voi oracle data base
-                var oracleConnectionString = _oracleContext.Database.GetConnectionString();
 
                 using (var connection = new OracleConnection(oracleConnectionString))
                 {
@@ -1559,7 +1613,9 @@ namespace API_WEB.Controllers.Scrap
                         FindBoardStatus = "N/A",
                         InternalTask = "N/A",
                         Purpose = "N/A",
-                        Category = updateCategory
+                        Category = updateCategory,
+                        ModelName = modelInfoBySn.TryGetValue(sn, out var modelInfo) ? modelInfo.ModelName : null,
+                        ModelType = modelInfoBySn.TryGetValue(sn, out var modelInfoType) ? modelInfoType.ModelSerial : null
                     };
 
                     scrapListEntries.Add(scrapEntry);
@@ -1587,6 +1643,11 @@ namespace API_WEB.Controllers.Scrap
                     sn.InternalTask = "N/A";
                     sn.Purpose = "N/A";
                     sn.Category = updateCategory;
+                    if (modelInfoBySn.TryGetValue(sn.SN, out var modelInfo))
+                    {
+                        sn.ModelName = modelInfo.ModelName;
+                        sn.ModelType = modelInfo.ModelSerial;
+                    }
                 }
 
                 // Lưu vào bảng ScrapList (thêm mới và cập nhật)

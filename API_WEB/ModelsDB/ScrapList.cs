@@ -88,5 +88,13 @@ namespace API_WEB.ModelsDB
 
         [Column("SpeApproveTime")]
         public string? SpeApproveTime { get; set; } = null!; // string, cho phép NULL
+
+        [Column("ModelName")]
+        [StringLength(100)]
+        public string? ModelName { get; set; }
+
+        [Column("ModelType")]
+        [StringLength(100)]
+        public string? ModelType { get; set; }
     }
 }
